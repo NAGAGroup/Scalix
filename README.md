@@ -66,4 +66,13 @@ int main() {
 }
 ```
 
+## Performance
+
+We have shown almost perfect strong scaling for the `distributed_access` example in the repo, distributed across 2 GPUs. The example has two arrays of interest. Each kernel reads 64 elements from one array and atomically adds it to an element of the other array for each element in the result array. A portion of these reads happen across device boundaries. Also note that the source and result arrays exchange roles for each kernel, showing we can still get good performance, even for arrays that read/write equally. Finally, a distributed reduction algorithm is used to sum the values of one of the arrays together just for fun (and to check that the solution is correct). The following times were recorded on 1 vs 2 RTX 3090s, respectively.
+
+```
+1 GPU time: 163.1ms
+2 GPU time: 87.5ms
+```
+
 
