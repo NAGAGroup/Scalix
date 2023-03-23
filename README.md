@@ -1,4 +1,5 @@
 # Welcome to SCALIX!
+
 Scalix is a data parallel computing framework designed to provide an easy-to-use interface for designing data parallel
 applications that automatically scale to the available compute resources. Data distribution and load balancing
 are abstracted away from the user, allowing them to focus on the application logic. Scalix is designed to be
@@ -19,7 +20,10 @@ implementation.
 
 Think of this current version of Scalix as a proof of concept.
 
+For a more detailed outline of our roadmap, see [ROADMAP.md](ROADMAP.md).
+
 ## Getting Started
+
 For the moment, this is a header-only library, but that may change in the future. Any program that uses Scalix must
 be compiled with the nvcc flag `--extended-lambda`. The library is written in C++17. We have provided a `CMakeLists.txt`
 file that provides the `scalix` interface library that, when added as a link to a target, will automatically add the
@@ -29,6 +33,7 @@ emulate multiple devices to check for correctness. These options are described i
 ### Writing a Scalix Program
 
 In the following program we add one to all elements of a Scalix array.
+
 ```c++
 #include <scalix/scalix.cuh>
 
@@ -68,7 +73,13 @@ int main() {
 
 ## Performance
 
-We have shown almost perfect strong scaling for the `distributed_access` example in the repo, distributed across 2 GPUs. The example has two arrays of interest. Each kernel reads 64 elements from one array and atomically adds it to an element of the other array for each element in the result array. A portion of these reads happen across device boundaries. Also note that the source and result arrays exchange roles for each kernel, showing we can still get good performance, even for arrays that read/write equally. Finally, a distributed reduction algorithm is used to sum the values of one of the arrays together just for fun (and to check that the solution is correct). The following times were recorded on 1 vs 2 RTX 3090s, respectively.
+We have shown almost perfect strong scaling for the `distributed_access` example in the repo, distributed across 2 GPUs.
+The example has two arrays of interest. Each kernel reads 64 elements from one array and atomically adds it to an
+element of the other array for each element in the result array. A portion of these reads happen across device
+boundaries. Also note that the source and result arrays exchange roles for each kernel, showing we can still get good
+performance, even for arrays that read/write equally. Finally, a distributed reduction algorithm is used to sum the
+values of one of the arrays together just for fun (and to check that the solution is correct). The following times were
+recorded on 1 vs 2 RTX 3090s, respectively.
 
 ```
 1 GPU time: 163.1ms
