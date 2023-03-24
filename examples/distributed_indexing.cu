@@ -90,13 +90,15 @@ int main() {
     // fill indices with random numbers
     indices.unset_read_mostly();
     indices.prefetch_async({sclx::cuda::traits::current_device()});
-    auto rng = thrust::default_random_engine{0};
-    thrust::uniform_int_distribution<size_t> dist(0, numelem - 1);
-    thrust::generate(
-        thrust::device,
+    thrust::counting_iterator<size_t> begin(0);
+    thrust::transform(
+        begin,
+        begin + numelem * 64,
         indices.begin(),
-        indices.end(),
-        [dist = std::move(dist), rng = std::move(rng)] __device__() mutable {
+        [=] __host__ __device__(size_t n) {
+            auto rng = thrust::default_random_engine{0};
+            thrust::uniform_int_distribution<size_t> dist(0, numelem - 1);
+            rng.discard(n);
             return dist(rng);
         }
     );
@@ -202,6 +204,9 @@ int main() {
     std::cout << "arr2[0]: " << arr2[0] << std::endl;
     std::cout << "arr3[0]: " << arr3[0] << std::endl;
 
+    // here we show our reduction algorithm, partially just for fun, but also
+    // because it is checks that the solution is correct (expected value is
+    // 4.097e+06)
     auto sum_of_arr3
         = sclx::algorithm::reduce(arr3, 0.f, sclx::algorithm::plus<>());
 
