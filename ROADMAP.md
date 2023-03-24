@@ -16,8 +16,8 @@ the [oneAPI OneMKL library](https://github.com/oneapi-src/oneMKL). This version 
 likely utilizing the buffer-accessor model, as we can no longer rely on a unified memory model under the hood. The
 overall concepts from Version 1, however,
 will be maintained (e.g. load distribution, problem definition requirements, user abstractions, etc.). We already have
-come up with the general idea of how this would work, but We want to work out all the kinks first with the
-easier-to-manage unified memory model on a single CPU. Version 2 will not replace, Version 1, as Version 1 will still
+come up with the general idea of how this would work, but we want to work out all the kinks first with the
+easier-to-manage unified memory model on a single CPU. Version 2 will not replace Version 1, as it will still
 likely perform much better on single CPU systems. This is why Version 1 will continue to receive bug fixes and community
 supplied features for the foreseeable future.
 
@@ -38,8 +38,8 @@ version will be updated accordingly.
 # What Happens to the Old Versions?
 
 We expect Version 2 to be extremely close in API to Version 3, with the main differences coming from Version 3 needing
-to support multiple drop-in replacements. For this reason, we will likely fully drop Version 2 and require users to
-upgrade to Version 3.
+to support multiple drop-in replacements for different implementations using template arguments or pimpl design patterns. 
+For this reason, we will likely fully drop Version 2 and require users to upgrade to Version 3.
 
 Version 1 is special in that, being a single CPU implementation, has more relaxed requirements for implementing a
 correct algorithm. We expect that some users may prefer this simplicity and will continue to use Version 1. For this
