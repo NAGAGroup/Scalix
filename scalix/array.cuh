@@ -35,11 +35,14 @@
 
 #ifdef __CUDA_ARCH__
 #if __CUDA_ARCH__ < 600 || defined(WIN32)
-#warning "This code has been optimized for compute capability 6.0 and above, which supports on-demand page migration. If you are using an older compute capability, you may experience performance issues. Windows does not support on-demand page migration at all."
+#warning "This code has been optimized for compute capability 6.0 and above, \
+which supports on-demand page migration. If you are using an older compute \
+capability, you may experience performance issues. Windows does not \
+support on-demand page migration at all."
 #endif
 
 #if __CUDA_ARCH__ < 500
-static_assert(false, "This code requires compute capability 5.0 or above.");
+    static_assert(false, "This code requires compute capability 5.0 or above.");
 #endif
 #endif
 
@@ -284,8 +287,8 @@ class array {
         return data_.get()[index.flat_index(shape_)];
     }
 
-    template<class ... Args>
-    __host__ __device__ T& operator[](const Args& ... args) const {
+    template<class... Args>
+    __host__ __device__ T& operator[](const Args&... args) const {
         return this->operator[](md_index_t<Rank>{static_cast<size_t>(args)...});
     }
 
