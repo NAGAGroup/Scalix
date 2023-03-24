@@ -32,6 +32,17 @@
 //------------------------------------------------------------------------------
 
 #pragma once
+
+#ifdef __CUDA_ARCH__
+#if __CUDA_ARCH__ < 600 || defined(WIN32)
+#warning "This code has been optimized for compute capability 6.0 and above, which supports on-demand page migration. If you are using an older compute capability, you may experience performance issues. Windows does not support on-demand page migration at all."
+#endif
+
+#if __CUDA_ARCH__ < 500
+static_assert(false, "This code requires compute capability 5.0 or above.");
+#endif
+#endif
+
 #include "cuda.hpp"
 #include "index.cuh"
 #include "range.cuh"
