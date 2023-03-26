@@ -40,3 +40,6 @@ target_compile_options(scalix INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:
 # examples
 add_executable(distributed_indexing examples/distributed_indexing.cu)
 target_link_libraries(distributed_indexing scalix)
+
+add_executable(inclusive_scan examples/inclusive_scan.cu)
+target_link_libraries(inclusive_scan scalix)
