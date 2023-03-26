@@ -58,16 +58,16 @@ __global__ void sclx_kernel(
     sclx::md_range_t<RangeRank> global_range,
     sclx::md_index_t<RangeRank> start_idx
 ) {
-    auto idx = sclx::md_index_t<RangeRank>::from_flat_index(
+    auto idx = sclx::md_index_t<RangeRank>::create_from_linear(
         blockIdx.x * blockDim.x + threadIdx.x
-            + start_idx.flat_index(global_range),
+            + start_idx.as_linear(global_range),
         global_range
     );
-    while (idx.flat_index(global_range)
-           < start_idx.flat_index(global_range) + local_range.elements()) {
+    while (idx.as_linear(global_range)
+           < start_idx.as_linear(global_range) + local_range.elements()) {
         f(idx);
-        idx = sclx::md_index_t<RangeRank>::from_flat_index(
-            idx.flat_index(global_range) + gridDim.x * blockDim.x,
+        idx = sclx::md_index_t<RangeRank>::create_from_linear(
+            idx.as_linear(global_range) + gridDim.x * blockDim.x,
             global_range
         );
     }
@@ -343,7 +343,7 @@ class kernel_handler {
     template<uint ThreadBlockRank>
     __device__ md_index_t<ThreadBlockRank>
     get_local_thread_idx(const shape_t<ThreadBlockRank>& block_shape) const {
-        return md_index_t<ThreadBlockRank>::from_flat_index(
+        return md_index_t<ThreadBlockRank>::create_from_linear(
             threadIdx.x,
             block_shape
         );
@@ -385,7 +385,7 @@ class local_array {
             data_
                 = reinterpret_cast<T*>(kernel_handler::get_local_mem(offset_));
         }
-        return data_[idx.flat_index(shape_)];
+        return data_[idx.as_linear(shape_)];
     }
 
     __host__ __device__ size_t elements() const { return shape_.elements(); }

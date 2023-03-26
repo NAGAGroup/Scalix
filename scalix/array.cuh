@@ -265,7 +265,7 @@ class array {
     }
 
     __host__ __device__ T& operator[](const md_index_t<Rank>& index) const {
-        return data_.get()[index.flat_index(shape_)];
+        return data_.get()[index.as_linear(shape_)];
     }
 
     template<class... Args>
@@ -461,8 +461,8 @@ class array {
                                   : 0;
                 auto stream   = cuda::stream_t::create_for_device(stream_id);
                 cuda::mem_prefetch_async(
-                    data_.get() + start_idx.flat_index(shape_),
-                    data_.get() + end_idx.flat_index(shape_),
+                    data_.get() + start_idx.as_linear(shape_),
+                    data_.get() + end_idx.as_linear(shape_),
                     device_id,
                     stream
                 );
@@ -711,9 +711,9 @@ get_device_split_info(const array<T, Rank>& arr) {
                   + start_device * mem_info.elements_per_device,
               arr.data().get()
         );
-    auto end_idx = md_index_t<Rank>::from_flat_index(
+    auto end_idx = md_index_t<Rank>::create_from_linear(
         std::min(
-            num_elements_to_next_device + start_idx.flat_index(arr.shape()),
+            num_elements_to_next_device + start_idx.as_linear(arr.shape()),
             arr.elements()
         ),
         arr.shape()
@@ -724,12 +724,12 @@ get_device_split_info(const array<T, Rank>& arr) {
          end_idx[Rank - 1] - start_idx[Rank - 1]}
     );
     num_elements_to_next_device = mem_info.elements_per_device;
-    while (end_idx.flat_index(arr.shape()) < arr.elements()) {
+    while (end_idx.as_linear(arr.shape()) < arr.elements()) {
         start_idx    = end_idx;
         start_device = start_device + 1;
-        end_idx      = sclx::md_index_t<Rank>::from_flat_index(
+        end_idx      = sclx::md_index_t<Rank>::create_from_linear(
             std::min(
-                num_elements_to_next_device + start_idx.flat_index(arr.shape()),
+                num_elements_to_next_device + start_idx.as_linear(arr.shape()),
                 arr.elements()
             ),
             arr.shape()
