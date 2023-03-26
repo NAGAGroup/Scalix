@@ -42,7 +42,7 @@ support on-demand page migration at all."
 #endif
 
 #if __CUDA_ARCH__ < 500
-    static_assert(false, "This code requires compute capability 5.0 or above.");
+static_assert(false, "This code requires compute capability 5.0 or above.");
 #endif
 #endif
 
@@ -186,7 +186,12 @@ __host__ unified_ptr<T> make_unified_ptr(T&& value) {
 }  // namespace detail
 
 enum class data_capture_mode { copy, shared };
-enum class copy_policy { devicedevice, devicehost, hostdevice, hosthost };
+enum copy_policy {
+    devicedevice = cudaMemcpyDeviceToDevice,
+    devicehost   = cudaMemcpyDeviceToHost,
+    hostdevice   = cudaMemcpyHostToDevice,
+    hosthost     = cudaMemcpyHostToHost
+};
 
 template<class T>
 struct array_memory_info_t {
@@ -230,35 +235,12 @@ class array {
         : shape_(shape) {
         if (mode == data_capture_mode::copy) {
             data_ = detail::allocate_cuda_usm<T>(elements());
-            if (policy == copy_policy::hostdevice) {
-                cudaMemcpy(
-                    data_.get(),
-                    data.get(),
-                    elements() * sizeof(T),
-                    cudaMemcpyHostToDevice
-                );
-            } else if (policy == copy_policy::hosthost) {
-                cudaMemcpy(
-                    data_.get(),
-                    data.get(),
-                    elements() * sizeof(T),
-                    cudaMemcpyHostToHost
-                );
-            } else if (policy == copy_policy::devicedevice) {
-                cudaMemcpy(
-                    data_.get(),
-                    data.get(),
-                    elements() * sizeof(T),
-                    cudaMemcpyDeviceToDevice
-                );
-            } else if (policy == copy_policy::devicehost) {
-                cudaMemcpy(
-                    data_.get(),
-                    data.get(),
-                    elements() * sizeof(T),
-                    cudaMemcpyDeviceToHost
-                );
-            }
+            cudaMemcpy(
+                const_cast<std::remove_const_t<T>*>(data_.get()),
+                data.get(),
+                elements() * sizeof(T),
+                static_cast<cudaMemcpyKind>(policy)
+            );
         } else {
             data_ = data;
         }
@@ -274,7 +256,6 @@ class array {
 #endif
 
     template<class T_ = const T>
-
     __host__ __device__
     operator array<T_, Rank>() const {  // NOLINT(google-explicit-constructor)
         array<const T, Rank> new_arr;
@@ -288,7 +269,7 @@ class array {
     }
 
     template<class... Args>
-    __host__ __device__ T& operator[](const Args&... args) const {
+    __host__ __device__ T& operator()(const Args&... args) const {
         return this->operator[](md_index_t<Rank>{static_cast<size_t>(args)...});
     }
 
@@ -459,6 +440,8 @@ class array {
                 "Invalid exec_topology specified.",
                 "sclx::array::"
             );
+
+            return std::future<void>{};  // suppress compiler warning
         }
     }
 
