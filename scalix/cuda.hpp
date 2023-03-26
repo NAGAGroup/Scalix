@@ -71,15 +71,13 @@ void set_device(int device) {
 struct traits {
     static constexpr int cpu_device_id = cudaCpuDeviceId;
 
-    struct mem_advise {
-        static constexpr auto set_read_mostly   = cudaMemAdviseSetReadMostly;
-        static constexpr auto unset_read_mostly = cudaMemAdviseUnsetReadMostly;
-        static constexpr auto set_preferred_location
-            = cudaMemAdviseSetPreferredLocation;
-        static constexpr auto unset_preferred_location
-            = cudaMemAdviseUnsetPreferredLocation;
-        static constexpr auto set_accessed_by   = cudaMemAdviseSetAccessedBy;
-        static constexpr auto unset_accessed_by = cudaMemAdviseUnsetAccessedBy;
+    enum mem_advise {
+        set_read_mostly          = cudaMemAdviseSetReadMostly,
+        unset_read_mostly        = cudaMemAdviseUnsetReadMostly,
+        set_preferred_location   = cudaMemAdviseSetPreferredLocation,
+        unset_preferred_location = cudaMemAdviseUnsetPreferredLocation,
+        set_accessed_by          = cudaMemAdviseSetAccessedBy,
+        unset_accessed_by        = cudaMemAdviseUnsetAccessedBy
     };
 
     struct kernel {
@@ -106,11 +104,21 @@ struct traits {
     }
 };
 
-void mem_advise(void* ptr, size_t size, cudaMemoryAdvise advice, int device) {
+void mem_advise(
+    void* ptr,
+    size_t size,
+    cuda::traits::mem_advise advice,
+    int device
+) {
 #ifdef SCALIX_EMULATE_MULTIDEVICE
     device = 0;
 #endif
-    cudaError_t err = cudaMemAdvise(ptr, size, advice, device);
+    cudaError_t err = cudaMemAdvise(
+        ptr,
+        size,
+        static_cast<cudaMemoryAdvise>(advice),
+        device
+    );
     cuda_exception::raise_if_not_success(
         err,
         std::experimental::source_location::current()
