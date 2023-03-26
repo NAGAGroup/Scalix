@@ -246,10 +246,9 @@ class kernel_handler {
             );
         }
 
-        //        result.unset_read_mostly();
-
         auto device_info = get_device_split_info(result);
 
+        result.unset_read_mostly();
         KernelTag::template execute<RangeRank, ThreadBlockRank>(
             device_info,
             range,
@@ -258,8 +257,7 @@ class kernel_handler {
             local_mem_size_,
             f
         );
-
-        //        result.set_read_mostly();
+        result.set_read_mostly();
     }
 
     template<
@@ -403,6 +401,7 @@ class local_array {
 template<class F>
 __host__ std::future<void> execute_kernel(F&& f) {
     return std::async(std::launch::async, [=]() {
+        cuda::set_device(0);  // initialize cuda
         kernel_handler handler;
         f(handler);
     });
