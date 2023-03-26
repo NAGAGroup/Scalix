@@ -75,7 +75,7 @@ int main() {
     // memory), it is best to temporarily unset the read-mostly flag on the
     // array and then set it back to true once the code block has completed (see
     // the random integer generation code below)
-    size_t numelem = 10000;
+    size_t numelem = 100'000;
     sclx::array<float, 1> arr2({numelem});
     sclx::array<float, 1> arr3({numelem});
 
@@ -145,13 +145,13 @@ int main() {
             sclx::md_range_t<2>{indices.shape()},
             arr2,
             [=] __device__(const sclx::md_index_t<2>& idx) {
-                atomicAdd(&arr2[idx[1]], arr3[indices[idx]]);
+                atomicAdd(&arr2(idx[1]), arr3(indices[idx]));
             }
         );
     }).get();
 
-    std::cout << "arr2[0]: " << arr2[0] << std::endl;
-    std::cout << "arr3[0]: " << arr3[0] << std::endl;
+    std::cout << "arr2(0): " << arr2(0) << std::endl;
+    std::cout << "arr3(0): " << arr3(0) << std::endl;
 
     // in this following example, we show how one would use cuda shared memory
     // although not really necessary for this example
@@ -171,15 +171,15 @@ int main() {
                 handler.sync_threads();
 
                 atomicAdd(
-                    &arr3[shared_array[local_index][1]],
-                    arr2[indices[shared_array[local_index]]]
+                    &arr3(shared_array[local_index][1]),
+                    arr2(indices[shared_array[local_index]])
                 );
             }
         );
     }).get();
 
-    std::cout << "arr2[0]: " << arr2[0] << std::endl;
-    std::cout << "arr3[0]: " << arr3[0] << std::endl;
+    std::cout << "arr2(0): " << arr2(0) << std::endl;
+    std::cout << "arr3(0): " << arr3(0) << std::endl;
 
     // in this example we show how to setup a different thread grid shape
     // than the default
@@ -189,24 +189,34 @@ int main() {
     //
     // this allows the user to play around with different thread grid shapes
     // to see how it affects performance
+    //
+    // we also use a 1D iteration range so we don't need to to do atomicAdd
+    // we showcase array slicing
+    //
+    // finally, we also tag the kernel for easier profiling/debugging
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
         handler.launch<my_kernel_tag>(  // tag is used to identify the kernel
-            /* iteration range */ sclx::md_range_t<2>{indices.shape()},
+            /* iteration range */ sclx::md_range_t<1>{arr2.shape()},
             /* result array */ arr2,
             /* thread block shape */ sclx::shape_t<1>{1},
             /* grid size */ 1,  // note that this needs to be a scalar
-            [=] __device__(const sclx::md_index_t<2>& idx) {
-                atomicAdd(&arr2[idx[1]], arr3[indices[idx]]);
+            [=] __device__(const sclx::md_index_t<1>& idx) {
+                // we can slice arrays in both host and device code
+                auto index_slice = indices.get_slice(idx);
+
+                for (auto& read_idx : index_slice) {
+                    arr2[idx] += arr3(read_idx);
+                }
             }
         );
     }).get();
 
-    std::cout << "arr2[0]: " << arr2[0] << std::endl;
-    std::cout << "arr3[0]: " << arr3[0] << std::endl;
+    std::cout << "arr2(0): " << arr2(0) << std::endl;
+    std::cout << "arr3(0): " << arr3(0) << std::endl;
 
     // here we show our reduction algorithm, partially just for fun, but also
     // because it is checks that the solution is correct (expected value is
-    // 4.097e+06)
+    // 4096 * numelem)
     auto sum_of_arr3
         = sclx::algorithm::reduce(arr3, 0.f, sclx::algorithm::plus<>());
 
