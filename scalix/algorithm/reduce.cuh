@@ -34,32 +34,15 @@
 #pragma once
 #include "../array.cuh"
 #include "../execute_kernel.cuh"
+#include "functional.cuh"
 #include <mutex>
 #include <thrust/execution_policy.h>
 #include <thrust/reduce.h>
 
 namespace sclx::algorithm {
 
-template<class T = void>
-using plus = thrust::plus<T>;
-
-template<class T = void>
-using minus = thrust::minus<T>;
-
-template<class T = void>
-using multiplies = thrust::multiplies<T>;
-
-template<class T = void>
-using divides = thrust::divides<T>;
-
-template<class T = void>
-using maximum = thrust::maximum<T>;
-
-template<class T = void>
-using minimum = thrust::minimum<T>;
-
-template<class T, class F>
-__host__ T reduce(const array<T, 1>& arr, const T& identity, F&& f) {
+template<class T, uint Rank, class F>
+__host__ T reduce(const array<T, Rank>& arr, const T& identity, F&& f) {
     const auto& mem_info = arr.memory_info();
     std::vector<int> devices(
         mem_info.devices.get(),
