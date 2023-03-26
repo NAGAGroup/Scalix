@@ -41,8 +41,7 @@ namespace sclx {
 namespace detail {
 
 template<uint N, class T>
-__host__ __device__ constexpr bool
-arrays_equal(const T (&a)[N], const T (&b)[N]) {
+__host__ __device__ constexpr bool arrays_equal(const T* a, const T* b) {
     if (a[0] != b[0]) {
         return false;
     }
