@@ -268,6 +268,10 @@ class array {
         return data_.get()[index.as_linear(shape_)];
     }
 
+    __host__ __device__ T& operator[](index_t index) const {
+        return data_.get()[index];
+    }
+
     template<class... Args>
     __host__ __device__ T& operator()(const Args&... args) const {
         return this->operator[](md_index_t<Rank>{static_cast<size_t>(args)...});
