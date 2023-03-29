@@ -196,7 +196,7 @@ enum copy_policy {
 template<class T>
 struct array_memory_info_t {
     detail::unified_ptr<const T> data_start{};
-    size_t elements_per_device{};
+    detail::unified_ptr<size_t> elements_per_device{};
     detail::unified_ptr<int> devices{};
     uint num_devices{};
 };
@@ -260,10 +260,12 @@ class array {
     operator array<T_, Rank>() const {  // NOLINT(google-explicit-constructor)
         static_assert(std::is_same_v<const T, T_>, "Invalid cast");
         array<const T, Rank> new_arr;
-        new_arr.shape_ = shape_;
-        new_arr.data_  = data_;
-        new_arr.memory_info_
-            = *reinterpret_cast<const array_memory_info_t<T_>*>(&memory_info_);
+        new_arr.shape_       = shape_;
+        new_arr.data_        = data_;
+        new_arr.memory_info_ = reinterpret_cast<
+            const detail::unified_ptr<array_memory_info_t<const T>>&>(
+            memory_info_
+        );
         return new_arr;
     }
 
@@ -311,14 +313,6 @@ class array {
     }
 
     __host__ array& set_primary_devices(const std::vector<int>& devices) {
-        if (is_slice()) {
-            throw_exception<std::runtime_error>(
-                "Array is a get_slice and cannot have its primary devices "
-                "changed.",
-                "sclx::array::"
-            );
-        }
-
         size_t sig_dim       = shape_[Rank - 1];
         size_t sig_dim_split = (sig_dim + devices.size() - 1) / devices.size();
         shape_t<Rank> split_shape;
@@ -350,37 +344,96 @@ class array {
             );
         }
 
-        for (uint d = 0; d < memory_info_.num_devices; ++d) {
+        std::vector<std::tuple<int, size_t, size_t>> device_split_info;
+        for (uint d = 0; d < devices_to_use.size(); ++d) {
+            size_t slice_idx = d * sig_dim_split;
+            size_t slice_len = std::min(sig_dim - slice_idx, sig_dim_split);
+            device_split_info
+                .emplace_back(devices_to_use[d], slice_idx, slice_len);
+        }
+
+        set_primary_device(device_split_info);
+
+        return *this;
+    };
+
+    // split info is a vector of tuples of the form (device_id, slice_idx,
+    // slice_len) where we slice the array along the last dimension
+    __host__ array& set_primary_device(
+        const std::vector<std::tuple<int, size_t, size_t>>& device_split_info
+    ) {
+        if (memory_info_.get() == nullptr) {
+            memory_info_ = detail::allocate_cuda_usm<array_memory_info_t<T>>(1);
+            array_memory_info_t<T> empty_mem_info_{};
+            cudaMemcpy(
+                memory_info_.get(),
+                &empty_mem_info_,
+                sizeof(array_memory_info_t<T>),
+                cudaMemcpyHostToDevice
+            );
+        }
+        if (is_slice()) {
+            throw_exception<std::runtime_error>(
+                "Array is a get_slice and cannot have its primary devices "
+                "changed.",
+                "sclx::array::"
+            );
+        }
+        memory_info_->data_start = data_;
+        memory_info_->elements_per_device
+            = detail::allocate_cuda_usm<size_t>(device_split_info.size());
+        memory_info_->devices
+            = detail::allocate_cuda_usm<int>(device_split_info.size());
+        memory_info_->num_devices = device_split_info.size();
+
+        for (int d = 0; d < device_split_info.size(); ++d) {
+            const auto& [device_id, slice_idx, slice_range]
+                = device_split_info[d];
+            sclx::md_index_t<Rank> start_idx;
+            start_idx[Rank - 1] = slice_idx;
+            sclx::md_index_t<Rank> end_idx;
+            end_idx[Rank - 1]        = slice_idx + slice_range;
+            auto elements_per_device = std::distance(
+                &(this->operator[](start_idx)),
+                &(this->operator[](end_idx))
+            );
+            memory_info_->elements_per_device.get()[d] = elements_per_device;
+            memory_info_->devices.get()[d]             = device_id;
+        }
+
+        int device_count = cuda::traits::device_count();
+        for (int d = 0; d < device_count; ++d) {
             cuda::mem_advise(
                 data_.get(),
                 elements() * sizeof(T),
                 cuda::traits::mem_advise::unset_accessed_by,
-                memory_info_.devices.get()[d]
+                d
             );
             cuda::mem_advise(
                 data_.get(),
                 elements() * sizeof(T),
                 cuda::traits::mem_advise::unset_preferred_location,
-                memory_info_.devices.get()[d]
+                d
             );
         }
 
-        for (uint d = 0; d < devices_to_use.size(); ++d) {
+        size_t offset = 0;
+        for (int d = 0; d < device_split_info.size(); ++d) {
+            const auto& [device_id, slice_idx, slice_range]
+                = device_split_info[d];
             cuda::mem_advise(
                 data_.get(),
                 elements() * sizeof(T),
                 cuda::traits::mem_advise::set_accessed_by,
-                devices_to_use[d]
+                device_id
             );
             cuda::mem_advise(
-                data_.get() + d * elements_per_device,
-                std::min(
-                    elements_per_device,
-                    elements() - d * elements_per_device
-                ) * sizeof(T),
+                data_.get() + offset,
+                memory_info_->elements_per_device.get()[d] * sizeof(T),
                 cuda::traits::mem_advise::set_preferred_location,
-                devices_to_use[d]
+                device_id
             );
+            offset += memory_info_->elements_per_device.get()[d];
         }
 
         cuda::mem_advise(
@@ -390,29 +443,12 @@ class array {
             cuda::traits::cpu_device_id
         );
 
-        memory_info_.data_start          = data_;
-        memory_info_.elements_per_device = elements_per_device;
-        memory_info_.devices
-            = detail::allocate_cuda_usm<int>(devices_to_use.size());
-        std::copy(
-            devices_to_use.begin(),
-            devices_to_use.end(),
-            memory_info_.devices.get()
-        );
-        cuda::mem_advise(
-            memory_info_.devices.get(),
-            devices_to_use.size() * sizeof(int),
-            cuda::traits::mem_advise::set_read_mostly,
-            0
-        );
-        memory_info_.num_devices = devices_to_use.size();
-
         set_read_mostly();
 
         prefetch_async(exec_topology::distributed);
 
         return *this;
-    };
+    }
 
     __host__ array& set_read_mostly() {
         cuda::mem_advise(
@@ -487,8 +523,8 @@ class array {
             );
         } else if (topology == exec_topology::replicated) {
             return prefetch_async_replicated(std::vector<int>(
-                memory_info_.devices.get(),
-                memory_info_.devices.get() + memory_info_.num_devices
+                memory_info_->devices.get(),
+                memory_info_->devices.get() + memory_info_->num_devices
             ));
         } else {
             throw_exception<std::invalid_argument>(
@@ -500,15 +536,14 @@ class array {
         }
     }
 
-    const array_memory_info_t<T>& memory_info() const { return memory_info_; }
+    const array_memory_info_t<T>& memory_info() const { return *memory_info_; }
 
     __host__ __device__ bool is_slice() const {
-        return memory_info_.data_start.get() != data_.get()
-            && memory_info_.data_start.get() != nullptr;
+        return memory_info_->data_start.get() != data_.get()
+            && memory_info_->data_start.get() != nullptr;
     }
 
     template<uint IndexRank>
-
     __host__ __device__ array<T, Rank - IndexRank>
     get_slice(md_index_t<IndexRank> slice_idx) const {
         md_index_t<IndexRank - 1> next_slice;
@@ -538,30 +573,34 @@ class array {
 #endif
     }
 
-    __host__ __device__ array<T, Rank - 1> get_slice(md_index_t<1> slice_idx
-    ) const {
-        md_index_t<Rank> start_index;
-        start_index[Rank - 1] = slice_idx[0];
+    __host__ __device__ auto get_slice(md_index_t<1> slice_idx) const {
+        if constexpr (Rank == 1) {
+            return this->operator[](slice_idx);
+        } else {
 
-        detail::unified_ptr<T> data(
-            &(*this)[start_index],
-            detail::unified_ptr<T>::no_delete
-        );
+            md_index_t<Rank> start_index;
+            start_index[Rank - 1] = slice_idx[0];
 
-        shape_t<Rank - 1> shape;
-        if constexpr (Rank > 1) {
-            for (uint i = 0; i < Rank - 1; ++i) {
-                shape[i] = this->shape()[i];
+            detail::unified_ptr<T> data(
+                &(*this)[start_index],
+                detail::unified_ptr<T>::no_delete
+            );
+
+            shape_t<Rank - 1> shape;
+            if constexpr (Rank > 1) {
+                for (uint i = 0; i < Rank - 1; ++i) {
+                    shape[i] = this->shape()[i];
+                }
             }
-        }
 
 #ifdef __CUDA_ARCH__
-        return array<T, Rank - 1>{shape, data};
+            return array<T, Rank - 1>{shape, data};
 #else
-        array<T, Rank - 1> arr{shape, data, data_capture_mode::shared};
-        arr.memory_info_ = memory_info_;
-        return arr;
+            array<T, Rank - 1> arr{shape, data, data_capture_mode::shared};
+            arr.memory_info_ = memory_info_;
+            return arr;
 #endif
+        }
     }
 
     __host__ __device__ array
@@ -597,7 +636,7 @@ class array {
   private:
     detail::unified_ptr<T> data_{};
     shape_t<Rank> shape_{};
-    array_memory_info_t<T> memory_info_{};
+    detail::unified_ptr<array_memory_info_t<T>> memory_info_{};
 
     std::future<void>
     prefetch_async_distributed(const std::vector<int>& device_ids) {
@@ -705,19 +744,22 @@ __host__ std::vector<std::tuple<int, size_t, size_t>>
 get_device_split_info(const array<T, Rank>& arr) {
     std::vector<std::tuple<int, size_t, size_t>> splits;
 
-    auto& mem_info = arr.memory_info();
-    md_index_t<Rank> start_idx{};
-    auto start_device = static_cast<int>(
-        std::distance(mem_info.data_start.get(), arr.data().get())
-        / mem_info.elements_per_device
-    );
+    auto& mem_info           = arr.memory_info();
+    int start_device         = 0;
+    const T* device_data_ptr = mem_info.data_start.get();
+    for (int d = 0; d < mem_info.num_devices; ++d) {
+        if (device_data_ptr < arr.data().get()) {
+            device_data_ptr += mem_info.elements_per_device.get()[d];
+        } else {
+            start_device = d;
+            break;
+        }
+    }
     size_t num_elements_to_next_device
-        = mem_info.elements_per_device
-        - std::distance(
-              mem_info.data_start.get()
-                  + start_device * mem_info.elements_per_device,
-              arr.data().get()
-        );
+        = mem_info.elements_per_device.get()[start_device]
+        - std::distance(device_data_ptr, arr.data().get());
+
+    sclx::md_index_t<Rank> start_idx;
     auto end_idx = md_index_t<Rank>::create_from_linear(
         std::min(
             num_elements_to_next_device + start_idx.as_linear(arr.shape()),
@@ -730,7 +772,8 @@ get_device_split_info(const array<T, Rank>& arr) {
          start_idx[Rank - 1],
          end_idx[Rank - 1] - start_idx[Rank - 1]}
     );
-    num_elements_to_next_device = mem_info.elements_per_device;
+    num_elements_to_next_device
+        = mem_info.elements_per_device.get()[start_device + 1];
     while (end_idx.as_linear(arr.shape()) < arr.elements()) {
         start_idx    = end_idx;
         start_device = start_device + 1;
@@ -749,5 +792,7 @@ get_device_split_info(const array<T, Rank>& arr) {
     }
     return splits;
 }
+
+template class array<float, 1>;
 
 }  // namespace sclx
