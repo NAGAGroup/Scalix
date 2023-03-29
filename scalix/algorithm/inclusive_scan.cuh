@@ -164,12 +164,37 @@ __host__ void inclusive_scan(
 #endif
 }
 
+template<class T, class ResultT, uint Rank, class F>
+__host__ void inclusive_scan(
+    const array<T, Rank>& arr,
+    array<ResultT, Rank>& result,
+    const T& identity,
+    F&& f
+) {
+    inclusive_scan(
+        static_cast<const array<const T, Rank>&>(arr),
+        result,
+        identity,
+        f
+    );
+}
+
+template<class T, uint Rank, class F>
+__host__ array<T, Rank>
+inclusive_scan(const array<const T, Rank>& arr, const T& identity, F&& f) {
+    array<T, Rank> result(arr.shape());
+
+    inclusive_scan(arr, result, identity, f);
+
+    return result;
+}
+
 template<class T, uint Rank, class F>
 __host__ array<T, Rank>
 inclusive_scan(const array<T, Rank>& arr, const T& identity, F&& f) {
     array<T, Rank> result(arr.shape());
 
-    inclusive_scan(arr, result, identity, f);
+    inclusive_scan(static_cast<const array<const T, Rank>&>(arr), result, identity, f);
 
     return result;
 }
