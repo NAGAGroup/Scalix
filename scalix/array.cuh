@@ -65,13 +65,41 @@ template<class T>
 using dummy_shared_ptr_t = char[sizeof(std::shared_ptr<T>)];
 
 template<class T>
+class unified_ptr;
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr);
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr);
+
+template<class T, class U>
+__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr);
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> reinterpret_pointer_cast(const unified_ptr<U>& ptr);
+
+
+template<class T>
 class unified_ptr {
   public:
+    template <class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_> static_pointer_cast(const unified_ptr<U_>& ptr);
+
+    template <class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_> dynamic_pointer_cast(const unified_ptr<U_>& ptr);
+
+    template<class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_> const_pointer_cast(const unified_ptr<U_>& ptr);
+
+    template <class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_> reinterpret_pointer_cast(const unified_ptr<U_>& ptr);
+
     unified_ptr() = default;
 
     template<class T_ = const T>
-
     __host__ __device__ operator unified_ptr<T_>() const {
+        static_assert(std::is_same_v<const T, T_>, "Invalid cast");
         unified_ptr<T_> ptr;
         ptr.raw_ptr_ = raw_ptr_;
 #ifndef __CUDA_ARCH__
@@ -179,13 +207,57 @@ template<class T>
 __host__ unified_ptr<T> make_unified_ptr(T&& value) {
     T* ptr;
     cudaMallocManaged(&ptr, sizeof(T));
-    *ptr = value;
+    cudaMemcpy(ptr, &value, sizeof(T), cudaMemcpyHostToDevice);
     return unified_ptr<T>{ptr};
+}
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr) {
+    unified_ptr<T> new_ptr;
+    new_ptr.raw_ptr_ = static_cast<T*>(ptr.raw_ptr_);
+#ifndef __CUDA_ARCH__
+    new_ptr.ptr_ = std::static_pointer_cast<T>(ptr.ptr_);
+#endif
+
+    return new_ptr;
+}
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr) {
+    unified_ptr<T> new_ptr;
+    new_ptr.raw_ptr_ = dynamic_cast<T*>(ptr.raw_ptr_);
+#ifndef __CUDA_ARCH__
+    new_ptr.ptr_ = std::dynamic_pointer_cast<T>(ptr.ptr_);
+#endif
+
+    return new_ptr;
+}
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> reinterpret_pointer_cast(const unified_ptr<U>& ptr) {
+    unified_ptr<T> new_ptr;
+    new_ptr.raw_ptr_ = reinterpret_cast<T*>(ptr.raw_ptr_);
+#ifndef __CUDA_ARCH__
+    new_ptr.ptr_ = std::reinterpret_pointer_cast<T>(ptr.ptr_);
+#endif
+
+    return new_ptr;
+}
+
+template <class T, class U>
+__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr) {
+    unified_ptr<T> new_ptr;
+    new_ptr.raw_ptr_ = const_cast<T*>(ptr.raw_ptr_);
+#ifndef __CUDA_ARCH__
+    new_ptr.ptr_ = std::const_pointer_cast<T>(ptr.ptr_);
+#endif
+
+    return new_ptr;
 }
 
 }  // namespace detail
 
-enum class data_capture_mode { copy, shared };
+enum class data_capture_mode { copy, capture };
 enum copy_policy {
     devicedevice = cudaMemcpyDeviceToDevice,
     devicehost   = cudaMemcpyDeviceToHost,
@@ -213,6 +285,8 @@ get_device_split_info(const array<T, Rank>& arr);
 template<class T, uint Rank>
 class array {
   public:
+    using mem_info_t = array_memory_info_t<std::remove_const_t<T>>;
+
     array() = default;
 
     __host__ array(std::initializer_list<size_t> shape) : shape_(shape) {
@@ -228,7 +302,7 @@ class array {
 #ifndef __CUDA_ARCH__
     __host__ array(
         const shape_t<Rank>& shape,
-        const detail::unified_ptr<T>& data,
+        const detail::unified_ptr<const T>& data,
         data_capture_mode mode = data_capture_mode::copy,
         copy_policy policy     = copy_policy::hostdevice
     )
@@ -242,17 +316,16 @@ class array {
                 static_cast<cudaMemcpyKind>(policy)
             );
         } else {
-            data_ = data;
+            auto ptr = std::make_shared<const float>(1.f);
+            data_ = detail::const_pointer_cast<T>(std::move(data));
         }
     }
-
 #else
 
     __device__
-    array(const shape_t<Rank>& shape, const detail::unified_ptr<T>& data)
+    array(const shape_t<Rank>& shape, const detail::unified_ptr<const T>& data)
         : shape_(shape),
-          data_(data) {}
-
+          data_(detail::unified_ptr<T>{const_cast<T*>(data.get())}) {}
 #endif
 
     template<class T_ = const T>
@@ -262,10 +335,7 @@ class array {
         array<const T, Rank> new_arr;
         new_arr.shape_       = shape_;
         new_arr.data_        = data_;
-        new_arr.memory_info_ = reinterpret_cast<
-            const detail::unified_ptr<array_memory_info_t<const T>>&>(
-            memory_info_
-        );
+        new_arr.memory_info_ = memory_info_;
         return new_arr;
     }
 
@@ -352,25 +422,18 @@ class array {
                 .emplace_back(devices_to_use[d], slice_idx, slice_len);
         }
 
-        set_primary_device(device_split_info);
+        set_primary_devices(device_split_info);
 
         return *this;
     };
 
     // split info is a vector of tuples of the form (device_id, slice_idx,
     // slice_len) where we slice the array along the last dimension
-    __host__ array& set_primary_device(
+    __host__ array& set_primary_devices(
         const std::vector<std::tuple<int, size_t, size_t>>& device_split_info
     ) {
         if (memory_info_.get() == nullptr) {
-            memory_info_ = detail::allocate_cuda_usm<array_memory_info_t<T>>(1);
-            array_memory_info_t<T> empty_mem_info_{};
-            cudaMemcpy(
-                memory_info_.get(),
-                &empty_mem_info_,
-                sizeof(array_memory_info_t<T>),
-                cudaMemcpyHostToDevice
-            );
+            memory_info_ = detail::make_unified_ptr<mem_info_t>({});
         }
         if (is_slice()) {
             throw_exception<std::runtime_error>(
@@ -536,7 +599,7 @@ class array {
         }
     }
 
-    const array_memory_info_t<T>& memory_info() const { return *memory_info_; }
+    const mem_info_t& memory_info() const { return *memory_info_; }
 
     __host__ __device__ bool is_slice() const {
         return memory_info_->data_start.get() != data_.get()
@@ -567,7 +630,7 @@ class array {
 #ifdef __CUDA_ARCH__
         return array<T, Rank - IndexRank>{shape, data};
 #else
-        array<T, Rank - IndexRank> arr{shape, data, data_capture_mode::shared};
+        array<T, Rank - IndexRank> arr{shape, data, data_capture_mode::capture};
         arr.memory_info_ = partial_slice.memory_info_;
         return arr;
 #endif
@@ -596,7 +659,7 @@ class array {
 #ifdef __CUDA_ARCH__
             return array<T, Rank - 1>{shape, data};
 #else
-            array<T, Rank - 1> arr{shape, data, data_capture_mode::shared};
+            array<T, Rank - 1> arr{shape, data, data_capture_mode::capture};
             arr.memory_info_ = memory_info_;
             return arr;
 #endif
@@ -624,7 +687,7 @@ class array {
 #ifdef __CUDA_ARCH__
         return array{shape, data};
 #else
-        array arr{shape, data, data_capture_mode::shared};
+        array arr{shape, data, data_capture_mode::capture};
         arr.memory_info_ = memory_info_;
         return arr;
 #endif
@@ -636,7 +699,8 @@ class array {
   private:
     detail::unified_ptr<T> data_{};
     shape_t<Rank> shape_{};
-    detail::unified_ptr<array_memory_info_t<T>> memory_info_{};
+
+    detail::unified_ptr<mem_info_t> memory_info_{};
 
     std::future<void>
     prefetch_async_distributed(const std::vector<int>& device_ids) {
