@@ -87,7 +87,7 @@ __global__ void sclx_kernel(
         global_range
     );
 
-    auto idx = idx_gen(thread_id);
+    sclx::md_index_t<IndexGenerator::index_rank> idx = idx_gen(thread_id);
     while (thread_id.as_linear(global_range) < global_range.elements()) {
 
         if (idx[range_rank - 1] >= slice_idx

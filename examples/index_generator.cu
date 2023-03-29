@@ -115,6 +115,9 @@ class random_index_generator {
     static constexpr uint range_rank
         = RangeRank;  ///< Used to generate the thread grid with indices of type
                       ///< md_index_t<Rank> (required by execute_kernel).
+    static constexpr uint index_rank
+        = IndexRank;  ///< Used to generate the write indices with indices of
+                      ///< type md_index_t<Rank> (required by execute_kernel).
 
     random_index_generator(
         const sclx::shape_t<IndexRank>& target_shape,
