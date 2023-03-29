@@ -282,6 +282,8 @@ struct array_memory_info_t {
     detail::unified_ptr<size_t> elements_per_device{};
     detail::unified_ptr<int> devices{};
     uint num_devices{};
+
+    static_assert(!std::is_const_v<T>, "T must not be const");
 };
 
 enum class exec_topology { distributed, replicated };
