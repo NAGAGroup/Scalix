@@ -564,6 +564,20 @@ class local_array {
         return data_[idx.as_linear(shape_)];
     }
 
+    __device__ T& operator[](const index_t& idx) {
+        if (!data_) {
+            data_
+                = reinterpret_cast<T*>(kernel_handler::get_local_mem(offset_));
+        }
+        return data_[idx];
+    }
+
+    template<class... Args>
+    __device__ T& operator()(const Args&... args) {
+        return operator[](md_index_t<Rank>{static_cast<const size_t&>(args)...}
+        );
+    }
+
     __host__ __device__ size_t elements() const { return shape_.elements(); }
 
     __host__ __device__ const shape_t<Rank>& shape() const { return shape_; }
