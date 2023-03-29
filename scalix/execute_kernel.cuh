@@ -394,7 +394,16 @@ class kernel_handler {
             );
         }
 
+        auto device_split_first = get_device_split_info(result[0]);
         for (auto& array : result) {
+            if (!is_same_device_split(device_split_first, get_device_split_info(array))) {
+                array.set_primary_devices(device_split_first);
+                std::cerr
+                    << "Warning: Not every array in the list has the same "
+                       "memory split, setting primary devices for all "
+                       "arrays to the same as the first array in the list"
+                    << std::endl;
+            }
             array.unset_read_mostly();
         }
 
@@ -496,7 +505,17 @@ class kernel_handler {
         size_t grid_size,
         F&& f
     ) const {
+
+        auto device_split_first = get_device_split_info(result[0]);
         for (auto& array : result) {
+            if (!is_same_device_split(device_split_first, get_device_split_info(array))) {
+                array.set_primary_devices(device_split_first);
+                std::cerr
+                    << "Warning: Not every array in the list has the same "
+                       "memory split, setting primary devices for all "
+                       "arrays to the same as the first array in the list"
+                    << std::endl;
+            }
             array.unset_read_mostly();
         }
 

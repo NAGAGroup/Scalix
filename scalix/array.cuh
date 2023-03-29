@@ -877,6 +877,23 @@ get_device_split_info(const array<T, Rank>& arr) {
     return splits;
 }
 
-template class array<float, 1>;
+__host__  inline bool is_same_device_split(const std::vector<std::tuple<int, size_t, size_t>> &lhs,
+                                           const std::vector<std::tuple<int, size_t, size_t>> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (std::get<0>(lhs[i]) != std::get<0>(rhs[i])) {
+            return false;
+        }
+        if (std::get<1>(lhs[i]) != std::get<1>(rhs[i])) {
+            return false;
+        }
+        if (std::get<2>(lhs[i]) != std::get<2>(rhs[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
 }  // namespace sclx
