@@ -194,7 +194,12 @@ __host__ array<T, Rank>
 inclusive_scan(const array<T, Rank>& arr, const T& identity, F&& f) {
     array<T, Rank> result(arr.shape());
 
-    inclusive_scan(static_cast<const array<const T, Rank>&>(arr), result, identity, f);
+    inclusive_scan(
+        static_cast<const array<const T, Rank>&>(arr),
+        result,
+        identity,
+        f
+    );
 
     return result;
 }

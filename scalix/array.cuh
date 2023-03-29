@@ -67,33 +67,40 @@ using dummy_shared_ptr_t = char[sizeof(std::shared_ptr<T>)];
 template<class T>
 class unified_ptr;
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr);
-
-template <class T, class U>
-__host__ __device__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr);
+template<class T, class U>
+__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr
+);
 
 template<class T, class U>
-__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr);
+__host__ __device__ unified_ptr<T>
+dynamic_pointer_cast(const unified_ptr<U>& ptr);
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> reinterpret_pointer_cast(const unified_ptr<U>& ptr);
+template<class T, class U>
+__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr
+);
 
+template<class T, class U>
+__host__ __device__ unified_ptr<T>
+reinterpret_pointer_cast(const unified_ptr<U>& ptr);
 
 template<class T>
 class unified_ptr {
   public:
-    template <class T_, class U_>
-    friend __host__ __device__ unified_ptr<T_> static_pointer_cast(const unified_ptr<U_>& ptr);
-
-    template <class T_, class U_>
-    friend __host__ __device__ unified_ptr<T_> dynamic_pointer_cast(const unified_ptr<U_>& ptr);
+    template<class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_>
+    static_pointer_cast(const unified_ptr<U_>& ptr);
 
     template<class T_, class U_>
-    friend __host__ __device__ unified_ptr<T_> const_pointer_cast(const unified_ptr<U_>& ptr);
+    friend __host__ __device__ unified_ptr<T_>
+    dynamic_pointer_cast(const unified_ptr<U_>& ptr);
 
-    template <class T_, class U_>
-    friend __host__ __device__ unified_ptr<T_> reinterpret_pointer_cast(const unified_ptr<U_>& ptr);
+    template<class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_>
+    const_pointer_cast(const unified_ptr<U_>& ptr);
+
+    template<class T_, class U_>
+    friend __host__ __device__ unified_ptr<T_>
+    reinterpret_pointer_cast(const unified_ptr<U_>& ptr);
 
     unified_ptr() = default;
 
@@ -211,8 +218,9 @@ __host__ unified_ptr<T> make_unified_ptr(T&& value) {
     return unified_ptr<T>{ptr};
 }
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr) {
+template<class T, class U>
+__host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr
+) {
     unified_ptr<T> new_ptr;
     new_ptr.raw_ptr_ = static_cast<T*>(ptr.raw_ptr_);
 #ifndef __CUDA_ARCH__
@@ -222,8 +230,9 @@ __host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr
     return new_ptr;
 }
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr) {
+template<class T, class U>
+__host__ __device__ unified_ptr<T>
+dynamic_pointer_cast(const unified_ptr<U>& ptr) {
     unified_ptr<T> new_ptr;
     new_ptr.raw_ptr_ = dynamic_cast<T*>(ptr.raw_ptr_);
 #ifndef __CUDA_ARCH__
@@ -233,8 +242,9 @@ __host__ __device__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& pt
     return new_ptr;
 }
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> reinterpret_pointer_cast(const unified_ptr<U>& ptr) {
+template<class T, class U>
+__host__ __device__ unified_ptr<T>
+reinterpret_pointer_cast(const unified_ptr<U>& ptr) {
     unified_ptr<T> new_ptr;
     new_ptr.raw_ptr_ = reinterpret_cast<T*>(ptr.raw_ptr_);
 #ifndef __CUDA_ARCH__
@@ -244,8 +254,9 @@ __host__ __device__ unified_ptr<T> reinterpret_pointer_cast(const unified_ptr<U>
     return new_ptr;
 }
 
-template <class T, class U>
-__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr) {
+template<class T, class U>
+__host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr
+) {
     unified_ptr<T> new_ptr;
     new_ptr.raw_ptr_ = const_cast<T*>(ptr.raw_ptr_);
 #ifndef __CUDA_ARCH__
@@ -317,7 +328,7 @@ class array {
             );
         } else {
             auto ptr = std::make_shared<const float>(1.f);
-            data_ = detail::const_pointer_cast<T>(std::move(data));
+            data_    = detail::const_pointer_cast<T>(std::move(data));
         }
     }
 #else
