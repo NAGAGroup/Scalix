@@ -87,12 +87,12 @@ __global__ void sclx_kernel(
         global_range
     );
 
-    sclx::md_index_t<IndexGenerator::index_rank> idx = idx_gen(thread_id);
     while (thread_id.as_linear(global_range) < global_range.elements()) {
+        sclx::md_index_t<IndexGenerator::index_rank> idx = idx_gen(thread_id);
 
         if (idx[range_rank - 1] >= slice_idx
             && idx[range_rank - 1] < slice_idx + slice_size) {
-            f(idx);
+            f(idx, thread_id);
         }
 
         thread_id = sclx::md_index_t<range_rank>::create_from_linear(
@@ -622,12 +622,13 @@ __host__ std::future<void> execute_kernel(F&& f) {
             global_range                                                       \
         );                                                                     \
                                                                                \
-        auto idx = idx_gen(thread_id);                                         \
         while (thread_id.as_linear(global_range) < global_range.elements()) {  \
+            sclx::md_index_t<IndexGenerator::index_rank> idx                   \
+                = idx_gen(thread_id);                                          \
                                                                                \
             if (idx[range_rank - 1] >= slice_idx                               \
                 && idx[range_rank - 1] < slice_idx + slice_size) {             \
-                f(idx);                                                        \
+                f(idx, thread_id);                                             \
             }                                                                  \
                                                                                \
             thread_id = sclx::md_index_t<range_rank>::create_from_linear(      \
