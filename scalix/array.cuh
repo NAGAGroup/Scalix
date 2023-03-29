@@ -463,6 +463,13 @@ class array {
         for (int d = 0; d < device_split_info.size(); ++d) {
             const auto& [device_id, slice_idx, slice_range]
                 = device_split_info[d];
+            if (slice_range == 0) {
+                throw_exception<std::invalid_argument>(
+                    "Invalid device split info; slice length must be greater "
+                    "than 0.",
+                    "sclx::array::"
+                );
+            }
             sclx::md_index_t<Rank> start_idx;
             start_idx[Rank - 1] = slice_idx;
             sclx::md_index_t<Rank> end_idx;
