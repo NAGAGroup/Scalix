@@ -262,9 +262,8 @@ class array {
         array<const T, Rank> new_arr;
         new_arr.shape_ = shape_;
         new_arr.data_  = data_;
-        new_arr.memory_info_ = *reinterpret_cast<const array_memory_info_t<T_>*>(
-            &memory_info_
-        );
+        new_arr.memory_info_
+            = *reinterpret_cast<const array_memory_info_t<T_>*>(&memory_info_);
         return new_arr;
     }
 

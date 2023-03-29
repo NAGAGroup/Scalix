@@ -37,16 +37,17 @@
 
 namespace sclx {
 
-template <class T, uint Rank>
+template<class T, uint Rank>
 void fill(const array<T, Rank>& arr, const T& value) {
     execute_kernel([&](kernel_handler& handler) {
         handler.launch(
-        md_range_t<Rank>(arr.shape()),
-        arr,
-        [=] __device__(const md_index_t<Rank>& index) {
-            arr[index] = value;
-        });
+            md_range_t<Rank>(arr.shape()),
+            arr,
+            [=] __device__(const md_index_t<Rank>& index) {
+                arr[index] = value;
+            }
+        );
     }).get();
 }
 
-}
+}  // namespace sclx

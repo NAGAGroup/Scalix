@@ -68,7 +68,7 @@ __host__ void inclusive_scan(
 
     auto device_info = get_device_split_info(arr);
 
-     #ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust
+#ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust
     // library
     for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
 
@@ -161,7 +161,7 @@ __host__ void inclusive_scan(
     cuda::set_device(current_device);
 
     result.set_read_mostly();
-     #endif
+#endif
 }
 
 template<class T, uint Rank, class F>

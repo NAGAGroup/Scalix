@@ -51,7 +51,7 @@ class md_index_t : public shape_like_t<Rank> {
         : shape_like_t<Rank>(shape) {}
 
     __host__ __device__
-    md_index_t(const index_t &flat_index, const shape_t<Rank>& shape) {
+    md_index_t(const index_t& flat_index, const shape_t<Rank>& shape) {
         this->create_from_linear(flat_index, shape);
     }
 
@@ -81,7 +81,5 @@ class md_index_t : public shape_like_t<Rank> {
         return md_index;
     }
 };
-
-
 
 }  // namespace sclx

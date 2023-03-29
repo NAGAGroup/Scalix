@@ -63,19 +63,18 @@
  */
 
 #include <scalix/array.cuh>
-#include <scalix/fill.cuh>
 #include <scalix/execute_kernel.cuh>
+#include <scalix/fill.cuh>
 #include <thrust/execution_policy.h>
 #include <thrust/random.h>
 
-template <uint IndexRank, uint RangeRank>
+template<uint IndexRank, uint RangeRank>
 sclx::array<sclx::md_index_t<IndexRank>, RangeRank> generate_random_indices(
     const sclx::shape_t<RangeRank>& generator_shape,
     const sclx::shape_t<IndexRank>& target_shape,
     int seed = 0
 ) {
-    sclx::array<sclx::md_index_t<IndexRank>, RangeRank> indices(
-        generator_shape
+    sclx::array<sclx::md_index_t<IndexRank>, RangeRank> indices(generator_shape
     );
 
     // we don't have a distributed algorithm for generating random numbers
@@ -126,21 +125,17 @@ class random_index_generator {
     )
         : generator_shape_(generator_shape),
           target_shape_(target_shape) {
-        indices_ = generate_random_indices(
-            generator_shape,
-            target_shape,
-            seed
-        );
+        indices_ = generate_random_indices(generator_shape, target_shape, seed);
     }
 
-    __host__ __device__ const sclx::md_index_t<IndexRank>& operator()(
-        sclx::md_index_t<RangeRank> index
-    ) const {
+    __host__ __device__ const sclx::md_index_t<IndexRank>&
+    operator()(sclx::md_index_t<RangeRank> index) const {
         return indices_[index];
     }
 
     __host__ __device__ const sclx::md_range_t<RangeRank>& range() const {
-        return static_cast<const sclx::md_range_t<RangeRank>&>(generator_shape_);
+        return static_cast<const sclx::md_range_t<RangeRank>&>(generator_shape_
+        );
     }
 
   private:
@@ -149,27 +144,26 @@ class random_index_generator {
     sclx::array<sclx::md_index_t<IndexRank>, RangeRank> indices_;
 };
 
-
 int main() {
     sclx::array<int, 3> arr({4, 4, 4});
     sclx::fill(arr, 0);
     sclx::shape_t<2> generator_shape({100, 100});
     random_index_generator<3, 2> generator(arr.shape(), generator_shape);
 
-    sclx::execute_kernel([&](sclx::kernel_handler &handler) {
-        handler.launch(generator,
-                        arr,
-                       [=] __device__ (const sclx::md_index_t<3> &index) {
-                           atomicAdd(&arr[index], 1);
-        });
+    sclx::execute_kernel([&](sclx::kernel_handler& handler) {
+        handler.launch(
+            generator,
+            arr,
+            [=] __device__(const sclx::md_index_t<3>& index) {
+                atomicAdd(&arr[index], 1);
+            }
+        );
     });
 
     arr.prefetch_async({sclx::cuda::traits::cpu_device_id});
     for (size_t linear_idx = 0; linear_idx < arr.elements(); ++linear_idx) {
-        auto index = sclx::md_index_t<3>::create_from_linear(
-            linear_idx,
-            arr.shape()
-        );
+        auto index
+            = sclx::md_index_t<3>::create_from_linear(linear_idx, arr.shape());
         std::cout << "arr[" << index << "] = " << arr[index] << std::endl;
     }
 }
