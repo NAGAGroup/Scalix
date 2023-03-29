@@ -258,9 +258,13 @@ class array {
     template<class T_ = const T>
     __host__ __device__
     operator array<T_, Rank>() const {  // NOLINT(google-explicit-constructor)
+        static_assert(std::is_same_v<const T, T_>, "Invalid cast");
         array<const T, Rank> new_arr;
         new_arr.shape_ = shape_;
         new_arr.data_  = data_;
+        new_arr.memory_info_ = *reinterpret_cast<const array_memory_info_t<T_>*>(
+            &memory_info_
+        );
         return new_arr;
     }
 

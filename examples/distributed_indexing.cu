@@ -92,6 +92,7 @@ int main() {
     indices.prefetch_async({sclx::cuda::traits::current_device()});
     thrust::counting_iterator<size_t> begin(0);
     thrust::transform(
+        thrust::device,
         begin,
         begin + numelem * 64,
         indices.begin(),

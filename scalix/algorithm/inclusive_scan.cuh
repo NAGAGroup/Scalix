@@ -42,7 +42,7 @@ namespace sclx::algorithm {
 
 template<class T, class ResultT, uint Rank, class F>
 __host__ void inclusive_scan(
-    const array<T, Rank>& arr,
+    const array<const T, Rank>& arr,
     array<ResultT, Rank>& result,
     const T& identity,
     F&& f
