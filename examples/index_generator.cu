@@ -144,6 +144,8 @@ class random_index_generator {
     sclx::array<sclx::md_index_t<IndexRank>, RangeRank> indices_;
 };
 
+REGISTER_SCALIX_KERNEL_TAG(random_index_generator_example);
+
 int main() {
     sclx::array<int, 3> arr({4, 4, 4});
     sclx::fill(arr, 0);
@@ -151,10 +153,10 @@ int main() {
     random_index_generator<3, 2> generator(arr.shape(), generator_shape);
 
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
-        handler.launch(
+        handler.launch<random_index_generator_example>(
             generator,
             arr,
-            [=] __device__(const sclx::md_index_t<3>& index) {
+            [=] __device__(const sclx::md_index_t<3>& index, const sclx::md_index_t<2>& global_thread_id) {
                 atomicAdd(&arr[index], 1);
             }
         );
