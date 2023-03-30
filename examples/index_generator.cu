@@ -138,6 +138,10 @@ class random_index_generator {
         );
     }
 
+    __host__ __device__ const sclx::md_range_t<IndexRank>& index_range() const {
+        return static_cast<const sclx::md_range_t<IndexRank>&>(target_shape_);
+    }
+
   private:
     sclx::shape_t<RangeRank> generator_shape_;
     sclx::shape_t<IndexRank> target_shape_;
