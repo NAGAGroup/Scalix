@@ -877,8 +877,10 @@ get_device_split_info(const array<T, Rank>& arr) {
     return splits;
 }
 
-__host__  inline bool is_same_device_split(const std::vector<std::tuple<int, size_t, size_t>> &lhs,
-                                           const std::vector<std::tuple<int, size_t, size_t>> &rhs) {
+__host__ inline bool is_same_device_split(
+    const std::vector<std::tuple<int, size_t, size_t>>& lhs,
+    const std::vector<std::tuple<int, size_t, size_t>>& rhs
+) {
     if (lhs.size() != rhs.size()) {
         return false;
     }

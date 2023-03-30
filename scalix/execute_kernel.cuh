@@ -396,7 +396,10 @@ class kernel_handler {
 
         auto device_split_first = get_device_split_info(result[0]);
         for (auto& array : result) {
-            if (!is_same_device_split(device_split_first, get_device_split_info(array))) {
+            if (!is_same_device_split(
+                    device_split_first,
+                    get_device_split_info(array)
+                )) {
                 array.set_primary_devices(device_split_first);
                 std::cerr
                     << "Warning: Not every array in the list has the same "
@@ -508,7 +511,10 @@ class kernel_handler {
 
         auto device_split_first = get_device_split_info(result[0]);
         for (auto& array : result) {
-            if (!is_same_device_split(device_split_first, get_device_split_info(array))) {
+            if (!is_same_device_split(
+                    device_split_first,
+                    get_device_split_info(array)
+                )) {
                 array.set_primary_devices(device_split_first);
                 std::cerr
                     << "Warning: Not every array in the list has the same "
