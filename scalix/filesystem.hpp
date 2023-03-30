@@ -39,20 +39,4 @@ namespace sclx::filesystem {
 
 using namespace std::filesystem;
 
-std::string inline dirname(const std::string& path) {
-    auto last_slash = path.find_last_of('/');
-    if (last_slash == std::string::npos) {
-        return "";
-    }
-    return path.substr(0, last_slash);
-}
-
-std::string inline basename(const std::string& path) {
-    auto last_slash = path.find_last_of('/');
-    if (last_slash == std::string::npos) {
-        return path;
-    }
-    return path.substr(last_slash + 1);
-}
-
 }  // namespace sclx::filesystem
