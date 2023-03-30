@@ -158,7 +158,7 @@ int main() {
             arr,
             [=] __device__(
                 const sclx::md_index_t<3>& index,
-                const sclx::md_index_t<2>& global_thread_id
+                const auto&
             ) { atomicAdd(&arr[index], 1); }
         );
     });

@@ -142,7 +142,7 @@ __host__ void inclusive_scan(
                 handler.launch(
                     md_range_t<Rank>(arr_slice.shape()),
                     arr_slice,
-                    [=] __device__(auto& idx) {
+                    [=] __device__(auto& idx, const auto&) {
                         if (&arr_slice[idx] == arr_slice.end() - 1)
                             return;
                         arr_slice[idx] = f(arr_slice[idx], back_val);

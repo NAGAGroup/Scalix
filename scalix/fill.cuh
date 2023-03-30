@@ -43,7 +43,7 @@ void fill(const array<T, Rank>& arr, const T& value) {
         handler.launch(
             md_range_t<Rank>(arr.shape()),
             arr,
-            [=] __device__(const md_index_t<Rank>& index) {
+            [=] __device__(const md_index_t<Rank>& index, const auto&) {
                 arr[index] = value;
             }
         );

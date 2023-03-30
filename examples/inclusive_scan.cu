@@ -59,7 +59,8 @@ int main() {
         handler.launch(
             sclx::md_range_t<3>{arr.shape()},
             arr,
-            [=] __device__(const sclx::md_index_t<3>& idx) { arr[idx] = 1; }
+            [=] __device__(const sclx::md_index_t<3>& idx, const auto&)
+            { arr[idx] = 1; }
         );
     }).get();
 
@@ -95,7 +96,8 @@ int main() {
         handler.launch(
             sclx::md_range_t<3>{arr.shape()},
             arr,
-            [=] __device__(const sclx::md_index_t<3>& idx) { arr[idx] = 1; }
+            [=] __device__(const sclx::md_index_t<3>& idx, const auto&)
+            { arr[idx] = 1; }
         );
     }).get();
 

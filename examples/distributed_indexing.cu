@@ -127,7 +127,7 @@ int main() {
         handler.launch(
             /* iteration range */ sclx::md_range_t<1>{arr3.shape()},
             /* result array */ arr3,
-            [=] __device__(const sclx::md_index_t<1>& idx) { arr3[idx] = 1.f; }
+            [=] __device__(const sclx::md_index_t<1>& idx, const auto&) { arr3[idx] = 1.f; }
         );
     }).get();
 
@@ -145,7 +145,7 @@ int main() {
         handler.launch(
             sclx::md_range_t<2>{indices.shape()},
             arr2,
-            [=] __device__(const sclx::md_index_t<2>& idx) {
+            [=] __device__(const sclx::md_index_t<2>& idx, const auto&) {
                 atomicAdd(&arr2(idx[1]), arr3(indices[idx]));
             }
         );
@@ -165,11 +165,11 @@ int main() {
         handler.launch(
             sclx::md_range_t<2>{indices.shape()},
             arr3,
-            [=] __device__(const sclx::md_index_t<2>& idx
+            [=] __device__(const sclx::md_index_t<2>& idx, const auto&
             ) mutable {  // mutable is required for local_array
                 auto local_index          = handler.get_local_thread_idx();
                 shared_array[local_index] = idx;
-                handler.sync_threads();
+                handler.syncthreads();
 
                 atomicAdd(
                     &arr3(shared_array[local_index][1]),
@@ -201,7 +201,7 @@ int main() {
             /* result array */ arr2,
             /* thread block shape */ sclx::shape_t<1>{1},
             /* grid size */ 1,  // note that this needs to be a scalar
-            [=] __device__(const sclx::md_index_t<1>& idx) {
+            [=] __device__(const sclx::md_index_t<1>& idx, const auto&) {
                 // we can slice arrays in both host and device code
                 auto index_slice = indices.get_slice(idx);
 

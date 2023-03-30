@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-convert-member-functions-to-static"
 //------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
@@ -39,6 +41,49 @@
 
 namespace sclx {
 
+template<uint ProblemRank, uint ThreadBlockRank>
+class kernel_info {
+  public:
+    kernel_info(const kernel_info&)                = default;
+    kernel_info(kernel_info&&) noexcept            = default;
+    kernel_info& operator=(const kernel_info&)     = default;
+    kernel_info& operator=(kernel_info&&) noexcept = default;
+
+    __host__ kernel_info(
+        const md_range_t<ProblemRank>& global_range,
+        const shape_t<ThreadBlockRank>& thread_block_shape
+    )
+        : thread_block_shape_(thread_block_shape),
+          global_range_(global_range) {}
+
+    __host__ __device__ const shape_t<ThreadBlockRank>&
+    thread_block_shape() const {
+        return thread_block_shape_;
+    }
+
+    __host__ __device__ const md_range_t<ProblemRank>& global_range() const {
+        return global_range_;
+    }
+
+    __device__ md_index_t<ThreadBlockRank> local_thread_id() const {
+        return md_index_t<>::create_from_linear(
+            threadIdx.x,
+            thread_block_shape_
+        );
+    }
+
+    __device__ md_index_t<ProblemRank> global_thread_id() const {
+        return md_index_t<>::create_from_linear(
+            blockIdx.x * blockDim.x + threadIdx.x,
+            global_range_
+        );
+    }
+
+  private:
+    shape_t<ThreadBlockRank> thread_block_shape_;
+    md_range_t<ProblemRank> global_range_;
+};
+
 namespace detail {
 
 struct _debug_kernel_mutex {
@@ -51,21 +96,18 @@ std::mutex _debug_kernel_mutex::mutex{};
 constexpr bool _debug_kernel_launch = false;
 #endif
 
-template<class F, uint RangeRank>
+template<class F, uint RangeRank, uint ThreadBlockRank>
 __global__ void sclx_kernel(
     F f,
-    sclx::md_range_t<RangeRank> local_range,
-    sclx::md_range_t<RangeRank> global_range,
+    sclx::kernel_info<RangeRank, ThreadBlockRank> metadata,
+    sclx::md_range_t<RangeRank> device_range,
     sclx::md_index_t<RangeRank> start_idx
 ) {
-    auto idx = sclx::md_index_t<RangeRank>::create_from_linear(
-        blockIdx.x * blockDim.x + threadIdx.x
-            + start_idx.as_linear(global_range),
-        global_range
-    );
+    const sclx::md_range_t<RangeRank>& global_range = metadata.global_range();
+    sclx::md_index_t<RangeRank> idx = metadata.global_thread_id();
     while (idx.as_linear(global_range)
-           < start_idx.as_linear(global_range) + local_range.elements()) {
-        f(idx);
+           < start_idx.as_linear(global_range) + device_range.elements()) {
+        f(idx, metadata);
         idx = sclx::md_index_t<RangeRank>::create_from_linear(
             idx.as_linear(global_range) + gridDim.x * blockDim.x,
             global_range
@@ -73,30 +115,29 @@ __global__ void sclx_kernel(
     }
 }
 
-template<class F, class IndexGenerator>
+template<class F, class IndexGenerator, uint ThreadBlockRank>
 __global__ void sclx_kernel(
     F f,
+    sclx::kernel_info<IndexGenerator::range_rank, ThreadBlockRank> metadata,
     IndexGenerator idx_gen,
     sclx::index_t slice_idx,
     sclx::index_t slice_size
 ) {
     constexpr uint range_rank = IndexGenerator::range_rank;
-    const sclx::md_range_t<range_rank>& global_range = idx_gen.range();
-    auto thread_id = sclx::md_index_t<range_rank>::create_from_linear(
-        blockIdx.x * blockDim.x + threadIdx.x,
-        global_range
-    );
+    const sclx::md_range_t<range_rank>& global_range = metadata.global_range();
+    sclx::md_index_t<range_rank> global_thread_id = metadata.global_thread_id();
 
-    while (thread_id.as_linear(global_range) < global_range.elements()) {
-        sclx::md_index_t<IndexGenerator::index_rank> idx = idx_gen(thread_id);
+    while (global_thread_id.as_linear(global_range) < global_range.elements()) {
+        sclx::md_index_t<IndexGenerator::index_rank> idx
+            = idx_gen(global_thread_id);
 
         if (idx[range_rank - 1] >= slice_idx
             && idx[range_rank - 1] < slice_idx + slice_size) {
-            f(idx, thread_id);
+            f(idx, metadata);
         }
 
-        thread_id = sclx::md_index_t<range_rank>::create_from_linear(
-            thread_id.as_linear(global_range) + gridDim.x * blockDim.x,
+        global_thread_id = sclx::md_index_t<>::create_from_linear(
+            global_thread_id.as_linear(global_range) + gridDim.x * blockDim.x,
             global_range
         );
     }
@@ -123,6 +164,11 @@ struct default_kernel_tag {
             sclx::detail::_debug_kernel_mutex::mutex.lock();
             std::cout << "Launching Scalix Kernel" << std::endl;
         }
+
+        sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(
+            global_range,
+            block_shape
+        );
 
         int iter = 0;
         for (auto& [device_id, slice_idx, slice_size] : device_info) {
@@ -160,7 +206,7 @@ struct default_kernel_tag {
                 grid_size,
                 block_shape.elements(),
                 local_mem_size,
-                stream>>>(f, device_range, global_range, device_start_idx);
+                stream>>>(f, metadata, device_range, device_start_idx);
         }
 
         if constexpr (sclx::detail::_debug_kernel_launch) {
@@ -199,6 +245,13 @@ struct default_kernel_tag {
             }
         }
 
+        constexpr uint range_rank
+            = std::remove_reference_t<IndexGenerator>::range_rank;
+        sclx::kernel_info<range_rank, ThreadBlockRank> metadata(
+            index_generator.range(),
+            block_shape
+        );
+
         int iter = 0;
         for (auto& [device_id, slice_idx, slice_size] : device_info) {
             sclx::cuda::set_device(device_id);  // init context
@@ -225,7 +278,7 @@ struct default_kernel_tag {
                 grid_size,
                 block_shape.elements(),
                 local_mem_size,
-                stream>>>(f, index_generator, slice_idx, slice_size);
+                stream>>>(f, metadata, index_generator, slice_idx, slice_size);
         }
 
         if constexpr (sclx::detail::_debug_kernel_launch) {
@@ -541,24 +594,8 @@ class kernel_handler {
         }
     }
 
-    template<uint ThreadBlockRank>
-    __device__ md_index_t<ThreadBlockRank>
-    get_local_thread_idx(const shape_t<ThreadBlockRank>& block_shape) const {
-        return md_index_t<ThreadBlockRank>::create_from_linear(
-            threadIdx.x,
-            block_shape
-        );
-    }
-
-    __device__ md_index_t<1> get_local_thread_idx() const {
-        return {threadIdx.x};
-    }
-
-    __device__ md_index_t<1> get_device_block_idx() const {
-        return {blockIdx.x};
-    }
-
-    __device__ void sync_threads() const { __syncthreads(); }
+    __device__ void syncthreads() const { __syncthreads(); }
+    __device__ void threadfence() const { __threadfence(); }
 
     template<class T, uint Rank>
     friend class local_array;
@@ -625,21 +662,20 @@ __host__ std::future<void> execute_kernel(F&& f) {
 }  // namespace sclx
 
 #define REGISTER_SCALIX_KERNEL_TAG(Tag)                                        \
-    template<class F, uint RangeRank>                                          \
+                                                                               \
+    template<class F, uint RangeRank, uint ThreadBlockRank>                    \
     __global__ void sclx_##Tag(                                                \
         F f,                                                                   \
-        sclx::md_range_t<RangeRank> local_range,                               \
-        sclx::md_range_t<RangeRank> global_range,                              \
+        sclx::kernel_info<RangeRank, ThreadBlockRank> metadata,                \
+        sclx::md_range_t<RangeRank> device_range,                              \
         sclx::md_index_t<RangeRank> start_idx                                  \
     ) {                                                                        \
-        auto idx = sclx::md_index_t<RangeRank>::create_from_linear(            \
-            blockIdx.x * blockDim.x + threadIdx.x                              \
-                + start_idx.as_linear(global_range),                           \
-            global_range                                                       \
-        );                                                                     \
-        while (idx.as_linear(global_range)                                     \
-               < start_idx.as_linear(global_range) + local_range.elements()) { \
-            f(idx);                                                            \
+        const sclx::md_range_t<RangeRank>& global_range                        \
+            = metadata.global_range();                                         \
+        sclx::md_index_t<RangeRank> idx = metadata.global_thread_id();         \
+        while (idx.as_linear(global_range) < start_idx.as_linear(global_range) \
+                                                 + device_range.elements()) {  \
+            f(idx, metadata);                                                  \
             idx = sclx::md_index_t<RangeRank>::create_from_linear(             \
                 idx.as_linear(global_range) + gridDim.x * blockDim.x,          \
                 global_range                                                   \
@@ -647,31 +683,34 @@ __host__ std::future<void> execute_kernel(F&& f) {
         }                                                                      \
     }                                                                          \
                                                                                \
-    template<class F, class IndexGenerator>                                    \
+    template<class F, class IndexGenerator, uint ThreadBlockRank>              \
     __global__ void sclx_##Tag(                                                \
         F f,                                                                   \
+        sclx::kernel_info<IndexGenerator::range_rank, ThreadBlockRank>         \
+            metadata,                                                          \
         IndexGenerator idx_gen,                                                \
         sclx::index_t slice_idx,                                               \
         sclx::index_t slice_size                                               \
     ) {                                                                        \
         constexpr uint range_rank = IndexGenerator::range_rank;                \
-        const sclx::md_range_t<range_rank>& global_range = idx_gen.range();    \
-        auto thread_id = sclx::md_index_t<range_rank>::create_from_linear(     \
-            blockIdx.x * blockDim.x + threadIdx.x,                             \
-            global_range                                                       \
-        );                                                                     \
+        const sclx::md_range_t<range_rank>& global_range                       \
+            = metadata.global_range();                                         \
+        sclx::md_index_t<range_rank> global_thread_id                          \
+            = metadata.global_thread_id();                                     \
                                                                                \
-        while (thread_id.as_linear(global_range) < global_range.elements()) {  \
+        while (global_thread_id.as_linear(global_range)                        \
+               < global_range.elements()) {                                    \
             sclx::md_index_t<IndexGenerator::index_rank> idx                   \
-                = idx_gen(thread_id);                                          \
+                = idx_gen(global_thread_id);                                   \
                                                                                \
             if (idx[range_rank - 1] >= slice_idx                               \
                 && idx[range_rank - 1] < slice_idx + slice_size) {             \
-                f(idx, thread_id);                                             \
+                f(idx, metadata);                                              \
             }                                                                  \
                                                                                \
-            thread_id = sclx::md_index_t<range_rank>::create_from_linear(      \
-                thread_id.as_linear(global_range) + gridDim.x * blockDim.x,    \
+            global_thread_id = sclx::md_index_t<>::create_from_linear(         \
+                global_thread_id.as_linear(global_range)                       \
+                    + gridDim.x * blockDim.x,                                  \
                 global_range                                                   \
             );                                                                 \
         }                                                                      \
@@ -698,6 +737,11 @@ __host__ std::future<void> execute_kernel(F&& f) {
                 sclx::detail::_debug_kernel_mutex::mutex.lock();               \
                 std::cout << "Launching Scalix Kernel" << std::endl;           \
             }                                                                  \
+                                                                               \
+            sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(            \
+                global_range,                                                  \
+                block_shape                                                    \
+            );                                                                 \
                                                                                \
             int iter = 0;                                                      \
             for (auto& [device_id, slice_idx, slice_size] : device_info) {     \
@@ -737,12 +781,7 @@ __host__ std::future<void> execute_kernel(F&& f) {
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
                     local_mem_size,                                            \
-                    stream>>>(                                                 \
-                    f,                                                         \
-                    device_range,                                              \
-                    global_range,                                              \
-                    device_start_idx                                           \
-                );                                                             \
+                    stream>>>(f, metadata, device_range, device_start_idx);    \
             }                                                                  \
                                                                                \
             if constexpr (sclx::detail::_debug_kernel_launch) {                \
@@ -782,6 +821,13 @@ __host__ std::future<void> execute_kernel(F&& f) {
                 }                                                              \
             }                                                                  \
                                                                                \
+            constexpr uint range_rank                                          \
+                = std::remove_reference_t<IndexGenerator>::range_rank;         \
+            sclx::kernel_info<range_rank, ThreadBlockRank> metadata(           \
+                index_generator.range(),                                       \
+                block_shape                                                    \
+            );                                                                 \
+                                                                               \
             int iter = 0;                                                      \
             for (auto& [device_id, slice_idx, slice_size] : device_info) {     \
                 sclx::cuda::set_device(device_id);                             \
@@ -811,7 +857,13 @@ __host__ std::future<void> execute_kernel(F&& f) {
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
                     local_mem_size,                                            \
-                    stream>>>(f, index_generator, slice_idx, slice_size);      \
+                    stream>>>(                                                 \
+                    f,                                                         \
+                    metadata,                                                  \
+                    index_generator,                                           \
+                    slice_idx,                                                 \
+                    slice_size                                                 \
+                );                                                             \
             }                                                                  \
                                                                                \
             if constexpr (sclx::detail::_debug_kernel_launch) {                \
@@ -825,3 +877,5 @@ __host__ std::future<void> execute_kernel(F&& f) {
             }                                                                  \
         }                                                                      \
     }
+
+#pragma clang diagnostic pop

@@ -39,7 +39,7 @@ namespace sclx {
 
 using index_t = size_t;
 
-template<uint Rank>
+template<uint Rank = 1>
 class md_index_t : public shape_like_t<Rank> {
   public:
     __host__ __device__ constexpr md_index_t() : shape_like_t<Rank>() {}
@@ -93,24 +93,19 @@ class md_index_t : public shape_like_t<Rank> {
         return *this;
     }
 
-    static __host__ __device__ md_index_t
-    create_from_linear(index_t linear_index, const shape_t<Rank>& shape) {
-        md_index_t md_index;
-        if constexpr (Rank > 1) {
-            for (uint i = 0; i < Rank - 1; ++i) {
+    template <uint OtherRank = Rank>
+    static __host__ __device__ md_index_t<OtherRank>
+    create_from_linear(index_t linear_index, const shape_t<OtherRank>& shape) {
+        md_index_t<OtherRank> md_index;
+        if constexpr (OtherRank > 1) {
+            for (uint i = 0; i < OtherRank - 1; ++i) {
                 md_index[i] = linear_index % shape[i];
                 linear_index /= shape[i];
             }
         }
-        md_index[Rank - 1] = linear_index;
+        md_index[OtherRank - 1] = linear_index;
         return md_index;
     }
 };
-
-template <uint Rank>
-__host__ __device__ md_index_t<Rank> create_md_index_from_linear(
-    index_t linear_index, const shape_t<Rank>& shape) {
-    return md_index_t<Rank>::create_from_linear(linear_index, shape);
-}
 
 }  // namespace sclx
