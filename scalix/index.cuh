@@ -50,36 +50,67 @@ class md_index_t : public shape_like_t<Rank> {
     __host__ __device__ constexpr md_index_t(const shape_like_t<Rank>& shape)
         : shape_like_t<Rank>(shape) {}
 
-    __host__ __device__
-    md_index_t(const index_t& flat_index, const shape_t<Rank>& shape) {
-        this->create_from_linear(flat_index, shape);
-    }
-
     __host__ __device__ index_t as_linear(const shape_t<Rank>& shape) const {
-        index_t flat_index = 0;
+        index_t linear_index = 0;
         size_t stride      = 1;
         if constexpr (Rank > 1) {
             for (uint i = 0; i < Rank - 1; ++i) {
-                flat_index += (*this)[i] * stride;
+                linear_index += (*this)[i] * stride;
                 stride *= shape[i];
             }
         }
-        flat_index += (*this)[Rank - 1] * stride;
-        return flat_index;
+        linear_index += (*this)[Rank - 1] * stride;
+        return linear_index;
+    }
+
+    __host__ __device__ md_index_t operator+(const md_index_t& other) const {
+        md_index_t result;
+        for (uint i = 0; i < Rank; ++i) {
+            result[i] = (*this)[i] + other[i];
+        }
+        return result;
+    }
+
+    __host__ __device__ md_index_t operator-(const md_index_t& other) const {
+        md_index_t result;
+        for (uint i = 0; i < Rank; ++i) {
+            result[i] = (*this)[i] - other[i];
+        }
+        return result;
+    }
+
+    __host__ __device__ md_index_t& operator+=(const md_index_t& other) {
+        for (uint i = 0; i < Rank; ++i) {
+            (*this)[i] += other[i];
+        }
+        return *this;
+    }
+
+    __host__ __device__ md_index_t& operator-=(const md_index_t& other) {
+        for (uint i = 0; i < Rank; ++i) {
+            (*this)[i] -= other[i];
+        }
+        return *this;
     }
 
     static __host__ __device__ md_index_t
-    create_from_linear(index_t flat_index, const shape_t<Rank>& shape) {
+    create_from_linear(index_t linear_index, const shape_t<Rank>& shape) {
         md_index_t md_index;
         if constexpr (Rank > 1) {
             for (uint i = 0; i < Rank - 1; ++i) {
-                md_index[i] = flat_index % shape[i];
-                flat_index /= shape[i];
+                md_index[i] = linear_index % shape[i];
+                linear_index /= shape[i];
             }
         }
-        md_index[Rank - 1] = flat_index;
+        md_index[Rank - 1] = linear_index;
         return md_index;
     }
 };
+
+template <uint Rank>
+__host__ __device__ md_index_t<Rank> create_md_index_from_linear(
+    index_t linear_index, const shape_t<Rank>& shape) {
+    return md_index_t<Rank>::create_from_linear(linear_index, shape);
+}
 
 }  // namespace sclx
