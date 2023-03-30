@@ -127,7 +127,9 @@ int main() {
         handler.launch(
             /* iteration range */ sclx::md_range_t<1>{arr3.shape()},
             /* result array */ arr3,
-            [=] __device__(const sclx::md_index_t<1>& idx, const auto&) { arr3[idx] = 1.f; }
+            [=] __device__(const sclx::md_index_t<1>& idx, const auto&) {
+                arr3[idx] = 1.f;
+            }
         );
     }).get();
 
@@ -165,8 +167,7 @@ int main() {
         handler.launch(
             sclx::md_range_t<2>{indices.shape()},
             arr3,
-            [=] __device__(const sclx::md_index_t<2>& idx, const auto&
-            ) mutable {  // mutable is required for local_array
+            [=] __device__(const sclx::md_index_t<2>& idx, const auto&) mutable {  // mutable is required for local_array
                 auto local_index          = handler.get_local_thread_idx();
                 shared_array[local_index] = idx;
                 handler.syncthreads();

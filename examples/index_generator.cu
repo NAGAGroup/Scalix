@@ -156,10 +156,9 @@ int main() {
         handler.launch<random_index_generator_example>(
             generator,
             arr,
-            [=] __device__(
-                const sclx::md_index_t<3>& index,
-                const auto&
-            ) { atomicAdd(&arr[index], 1); }
+            [=] __device__(const sclx::md_index_t<3>& index, const auto&) {
+                atomicAdd(&arr[index], 1);
+            }
         );
     });
 

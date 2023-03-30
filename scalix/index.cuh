@@ -52,7 +52,7 @@ class md_index_t : public shape_like_t<Rank> {
 
     __host__ __device__ index_t as_linear(const shape_t<Rank>& shape) const {
         index_t linear_index = 0;
-        size_t stride      = 1;
+        size_t stride        = 1;
         if constexpr (Rank > 1) {
             for (uint i = 0; i < Rank - 1; ++i) {
                 linear_index += (*this)[i] * stride;
@@ -93,7 +93,7 @@ class md_index_t : public shape_like_t<Rank> {
         return *this;
     }
 
-    template <uint OtherRank = Rank>
+    template<uint OtherRank = Rank>
     static __host__ __device__ md_index_t<OtherRank>
     create_from_linear(index_t linear_index, const shape_t<OtherRank>& shape) {
         md_index_t<OtherRank> md_index;
