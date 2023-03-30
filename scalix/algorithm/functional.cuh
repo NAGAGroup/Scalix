@@ -53,4 +53,10 @@ using maximum = thrust::maximum<T>;
 template<class T = void>
 using minimum = thrust::minimum<T>;
 
+template <class T = void>
+using max = thrust::maximum<T>;
+
+template <class T = void>
+using min = thrust::minimum<T>;
+
 }  // namespace sclx::algorithm

@@ -46,3 +46,6 @@ target_link_libraries(inclusive_scan scalix)
 
 add_executable(index_generator examples/index_generator.cu)
 target_link_libraries(index_generator scalix)
+
+add_executable(reduce_last_dim examples/reduce_last_dim.cu)
+target_link_libraries(reduce_last_dim scalix)
