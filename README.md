@@ -58,25 +58,93 @@ int main() {
     // for the result array
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
         handler.launch(
-                sclx::md_range_t<2>(arr.shape()),
-                arr,  // need to provide a result array to guide the distribution of work
-                [=] __device__ (const sclx::index_t<2> &idx) {
-                    arr[idx] = 0;
-                }
+            sclx::md_range_t<2>(arr.shape()),
+            arr,  // need to provide a result array to guide the distribution of
+                  // work
+            [=] __device__(const sclx::md_index_t<2>& idx,
+                           /*see below for what this is*/ const auto&) {
+                arr[idx] = 0;
+            }
         );
     });
 
-    // add one to all elements
+    // we also provide a kernel info object (sclx::kernel_info<RangeRank,
+    // ThreadBlockRank>) add one to all elements and print out the block thread
+    // id
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
         handler.launch(
-                sclx::md_range_t<2>(arr.shape()),
-                arr,
-                [=] __device__ (const sclx::index_t<2> &idx) {
-                    arr[idx] += 1;
-                }
+            sclx::md_range_t<2>(arr.shape()),
+            arr,
+            [=] __device__(
+                const sclx::md_index_t<2>& idx,
+                const sclx::kernel_info<
+                    2,
+                    sclx::cuda::traits::kernel::default_block_shape.rank()>&
+                    info
+            ) {
+                printf(
+                    "block thread id: %u\n",
+                    static_cast<uint>(info.local_thread_id()[0])
+                );
+                arr[idx] += 1;
+            }
         );
     });
 }
+```
+
+A special type of problem one may face is one where the write pattern cannot fit
+into a neat range. For example, suppose we want to generate a histogram for some
+values in an array. Sequentially, we would do something like iterate over each
+value, determine the bin it belongs to, and increment the value of that bin.
+
+To do this in Scalix, we instead would use the "index generator"-based kernel
+API. The index generator in this case would take an index from the range
+associated with the values and return the bin index. Our kernel implementation
+replicates the entire range over each device, but only calls the provided
+functor if the write index is local to the device. So, unfortunately, this means
+scaling will not be ideal, and in many cases worse than a single device
+implementation. However, what this does allow is the prevention of expensive
+memory transfers for a problem that mostly scales well using the range-based
+API.
+
+```c++
+#include <scalix/scalix.cuh>
+
+// required interface for an index generator
+class histogram_index_generator {
+  public:
+    static constexpr uint range_rank = 1;
+    static constexpr uint index_rank = 1;
+
+    __host__ __device__ const sclx::md_range_t<range_rank>& range() const;
+
+    __host__ __device__ const sclx::md_range_t<index_rank>& index_range() const;
+
+    __host__ __device__ sclx::md_index_t<index_rank>
+    operator()(const sclx::md_index_t<range_rank>&) const;
+
+    ...
+};
+
+int main() {
+
+    sclx::array<int, 1> values({1000});
+    sclx::array<int, 1> histogram({100});
+
+    histogram_index_generator index_generator(...);
+
+    sclx::execute_kernel([&](sclx::kernel_handler& handler) {
+        handler.launch(
+            index_generator,
+            histogram,
+            [=] __device__(const sclx::md_index_t<1>& histogram_idx, const auto&) {
+                atomicAdd(&histogram[histogram_idx], 1);
+            }
+        );
+    });
+}
+
 ```
 
 ## Performance
