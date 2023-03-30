@@ -42,10 +42,12 @@
 
 namespace sclx::algorithm {
 
-template <class T>
+template<class T>
 class strided_iterator {
   public:
-    __host__ __device__ strided_iterator(T* ptr, size_t stride) : ptr_(ptr), stride_(stride) {}
+    __host__ __device__ strided_iterator(T* ptr, size_t stride)
+        : ptr_(ptr),
+          stride_(stride) {}
 
     __host__ __device__ strided_iterator& operator++() {
         ptr_ += stride_;
@@ -91,13 +93,9 @@ class strided_iterator {
         return ptr_[n * stride_];
     }
 
-    __host__ __device__ T& operator*() const {
-        return *ptr_;
-    }
+    __host__ __device__ T& operator*() const { return *ptr_; }
 
-    __host__ __device__ T* operator->() const {
-        return ptr_;
-    }
+    __host__ __device__ T* operator->() const { return ptr_; }
 
     __host__ __device__ bool operator==(const strided_iterator& other) const {
         return ptr_ == other.ptr_;
@@ -123,18 +121,16 @@ class strided_iterator {
         return ptr_ >= other.ptr_;
     }
 
-    __host__ __device__ const size_t& stride() const {
-        return stride_;
-    }
+    __host__ __device__ const size_t& stride() const { return stride_; }
 
     __host__ __device__ size_t operator-(const strided_iterator& other) const {
         return (ptr_ - other.ptr_) / stride_;
     }
 
-    using difference_type = std::size_t;
-    using value_type = T;
-    using pointer = T*;
-    using reference = T&;
+    using difference_type   = std::size_t;
+    using value_type        = T;
+    using pointer           = T*;
+    using reference         = T&;
     using iterator_category = std::random_access_iterator_tag;
 
   private:
@@ -143,7 +139,8 @@ class strided_iterator {
 };
 
 template<class T, uint Rank, class F>
-__host__ array<T, Rank - 1> reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
+__host__ array<T, Rank - 1>
+reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
     const auto& mem_info = arr.memory_info();
     std::vector<int> devices(
         mem_info.devices.get(),
@@ -170,12 +167,13 @@ __host__ array<T, Rank - 1> reduce_last_dim(const array<const T, Rank>& arr, con
 
     std::mutex result_mutex;
 
-    #ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust library
+#ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust library
     for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
         auto lambda = [&](int device_id, size_t slice_idx, size_t slice_size) {
             cuda::set_device(device_id);
 
-            auto arr_slice = arr.get_range({slice_idx}, {slice_idx + slice_size});
+            auto arr_slice
+                = arr.get_range({slice_idx}, {slice_idx + slice_size});
             size_t stride = 1;
             for (uint i = 0; i < Rank - 1; ++i) {
                 stride *= arr_slice.shape()[i];
@@ -185,19 +183,14 @@ __host__ array<T, Rank - 1> reduce_last_dim(const array<const T, Rank>& arr, con
             sclx::md_index_t<Rank> stride_start_idx;
             sclx::md_index_t<Rank> stride_end_idx;
             stride_end_idx[Rank - 1] = arr_slice.shape()[Rank - 1];
-            auto begin_ptr = &arr_slice[stride_start_idx];
-            auto end_ptr = &arr_slice[stride_end_idx];
+            auto begin_ptr           = &arr_slice[stride_start_idx];
+            auto end_ptr             = &arr_slice[stride_end_idx];
 
             for (size_t s = 0; s < stride; ++s) {
                 strided_iterator<const T> begin(begin_ptr + s, stride);
                 strided_iterator<const T> end(end_ptr + s, stride);
-                partial_results[s] = thrust::reduce(
-                    thrust::device,
-                    begin,
-                    end,
-                    identity,
-                    f
-                );
+                partial_results[s]
+                    = thrust::reduce(thrust::device, begin, end, identity, f);
             }
 
             std::lock_guard<std::mutex> lock(result_mutex);
@@ -206,15 +199,13 @@ __host__ array<T, Rank - 1> reduce_last_dim(const array<const T, Rank>& arr, con
             }
         };
 
-        futures.emplace_back(
-            std::async(
-                std::launch::async,
-                lambda,
-                _device_id,
-                _slice_idx,
-                _slice_size
-            )
-        );
+        futures.emplace_back(std::async(
+            std::launch::async,
+            lambda,
+            _device_id,
+            _slice_idx,
+            _slice_size
+        ));
     }
 
     cuda::set_device(current_device);
@@ -231,8 +222,13 @@ __host__ array<T, Rank - 1> reduce_last_dim(const array<const T, Rank>& arr, con
 }
 
 template<class T, uint Rank, class F>
-__host__ array<T, Rank - 1> reduce_last_dim(const array<T, Rank>& arr, const T& identity, F&& f) {
-    return reduce_last_dim(static_cast<const array<const T, Rank>&>(arr), identity, f);
+__host__ array<T, Rank - 1>
+reduce_last_dim(const array<T, Rank>& arr, const T& identity, F&& f) {
+    return reduce_last_dim(
+        static_cast<const array<const T, Rank>&>(arr),
+        identity,
+        f
+    );
 }
 
 }  // namespace sclx::algorithm

@@ -39,8 +39,8 @@
  *
  * This algorithm scales poorly unless the reduction functor is computationally
  * expensive. However, it avoids expensive memory transfers by remaining
- * distributed. If you don't want to distribute the work, first set the preferred
- * devices to a single device.
+ * distributed. If you don't want to distribute the work, first set the
+ * preferred devices to a single device.
  *
  * In this example we show how distributed vs. single device performance
  * compares. Single device performance including and excluding memory transfers
@@ -48,12 +48,12 @@
  * and single device performance will be the same.
  */
 
-#include <scalix/algorithm/reduce_last_dim.cuh>
 #include <chrono>
+#include <scalix/algorithm/reduce_last_dim.cuh>
 
 int main() {
     sclx::array<uint, 4> a{3, 3, 3, 5'000'000};
-    sclx::execute_kernel([&](sclx::kernel_handler &handler){
+    sclx::execute_kernel([&](sclx::kernel_handler& handler) {
         handler.launch(
             sclx::md_range_t<4>{a.shape()},
             a,
@@ -65,11 +65,16 @@ int main() {
 
     uint identity = std::numeric_limits<uint>::min();
 
-    auto now = std::chrono::high_resolution_clock::now();
-    auto reduced = sclx::algorithm::reduce_last_dim(a, identity, sclx::algorithm::max<>());
+    auto now     = std::chrono::high_resolution_clock::now();
+    auto reduced = sclx::algorithm::reduce_last_dim(
+        a,
+        identity,
+        sclx::algorithm::max<>()
+    );
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - now;
-    std::cout << "Time for distributed reduce: " << elapsed.count() / 1000 << "ms" << std::endl;
+    std::cout << "Time for distributed reduce: " << elapsed.count() / 1000
+              << "ms" << std::endl;
 
     reduced.prefetch_async({sclx::cuda::traits::cpu_device_id});
     for (auto& val : reduced) {
@@ -80,15 +85,22 @@ int main() {
 
     // let's do the same, but this time moving all the work to a single device
     now = std::chrono::high_resolution_clock::now();
-    a.set_primary_devices(std::vector<int>{sclx::cuda::traits::current_device()});
+    a.set_primary_devices(std::vector<int>{sclx::cuda::traits::current_device()}
+    );
 
     auto now_after_mem_transfer = std::chrono::high_resolution_clock::now();
-    reduced = sclx::algorithm::reduce_last_dim(a, identity, sclx::algorithm::max<>());
-    end = std::chrono::high_resolution_clock::now();
+    reduced                     = sclx::algorithm::reduce_last_dim(
+        a,
+        identity,
+        sclx::algorithm::max<>()
+    );
+    end     = std::chrono::high_resolution_clock::now();
     elapsed = end - now;
-    std::cout << "Time for single device reduce, including memory transfers: " << elapsed.count() / 1000 << "ms" << std::endl;
+    std::cout << "Time for single device reduce, including memory transfers: "
+              << elapsed.count() / 1000 << "ms" << std::endl;
     elapsed = end - now_after_mem_transfer;
-    std::cout << "Time for single device reduce, excluding memory transfers: " << elapsed.count() / 1000 << "ms" << std::endl;
+    std::cout << "Time for single device reduce, excluding memory transfers: "
+              << elapsed.count() / 1000 << "ms" << std::endl;
 
     reduced.prefetch_async({sclx::cuda::traits::cpu_device_id});
     for (auto& val : reduced) {
@@ -99,5 +111,3 @@ int main() {
 
     return 0;
 }
-
-
