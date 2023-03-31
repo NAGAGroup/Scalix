@@ -230,8 +230,8 @@ int main() {
               << std::chrono::duration_cast<std::chrono::microseconds>(
                      end - now
                  )
-                     .count()
-              << "us" << std::endl;
+                     .count() / 1000.f
+              << "ms" << std::endl;
 
     return 0;
 }
