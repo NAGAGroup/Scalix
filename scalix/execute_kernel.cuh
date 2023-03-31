@@ -388,58 +388,6 @@ class kernel_handler {
         uint ThreadBlockRank,
         class T,
         uint ResultRank,
-        class F>
-    __host__ void launch(
-        md_range_t<RangeRank> range,
-        array<T, ResultRank> result,
-        shape_t<ThreadBlockRank> block_shape,
-        size_t grid_size,
-        F&& f
-    ) const {
-        if (range[RangeRank - 1] != result.shape()[ResultRank - 1]) {
-            throw std::runtime_error(
-                "Range and result last dimension must be the same"
-            );
-        }
-
-        auto device_info = get_device_split_info(result);
-
-        result.unset_read_mostly();
-        KernelTag::template execute<RangeRank, ThreadBlockRank>(
-            device_info,
-            range,
-            block_shape,
-            grid_size,
-            local_mem_size_,
-            f
-        );
-        result.set_read_mostly();
-    }
-
-    template<
-        class KernelTag = detail::default_kernel_tag,
-        uint RangeRank,
-        class T,
-        uint ResultRank,
-        class F>
-    __host__ void
-    launch(md_range_t<RangeRank> range, array<T, ResultRank> result, F&& f)
-        const {
-        launch<KernelTag>(
-            range,
-            result,
-            cuda::traits::kernel::default_block_shape,
-            cuda::traits::kernel::default_grid_size,
-            f
-        );
-    }
-
-    template<
-        class KernelTag = detail::default_kernel_tag,
-        uint RangeRank,
-        uint ThreadBlockRank,
-        class T,
-        uint ResultRank,
         uint NResult,
         class F>
     __host__ void launch(
@@ -510,52 +458,38 @@ class kernel_handler {
 
     template<
         class KernelTag = detail::default_kernel_tag,
-        class IndexGenerator,
+        uint RangeRank,
         uint ThreadBlockRank,
         class T,
         uint ResultRank,
         class F>
     __host__ void launch(
-        IndexGenerator&& index_generator,
+        md_range_t<RangeRank> range,
         array<T, ResultRank> result,
         shape_t<ThreadBlockRank> block_shape,
         size_t grid_size,
         F&& f
     ) const {
-        auto device_info = get_device_split_info(result);
-
-        using generator_t = std::remove_reference_t<IndexGenerator>;
-        if (index_generator.index_range()[generator_t::index_rank - 1]
-            != result.shape()[ResultRank - 1]) {
-            throw std::invalid_argument(
-                "Index generator indices and result array must have the same "
-                "last dimension"
-            );
-        }
-
-        result.unset_read_mostly();
-        KernelTag::template execute<IndexGenerator, ThreadBlockRank>(
-            device_info,
-            index_generator,
+        launch(
+            range,
+            array_list<T, ResultRank, 1>({result}),
             block_shape,
             grid_size,
-            local_mem_size_,
             f
         );
-        result.set_read_mostly();
     }
 
     template<
         class KernelTag = detail::default_kernel_tag,
-        class IndexGenerator,
+        uint RangeRank,
         class T,
         uint ResultRank,
         class F>
     __host__ void
-    launch(IndexGenerator&& index_generator, array<T, ResultRank> result, F&& f)
+    launch(md_range_t<RangeRank> range, array<T, ResultRank> result, F&& f)
         const {
         launch<KernelTag>(
-            index_generator,
+            range,
             result,
             cuda::traits::kernel::default_block_shape,
             cuda::traits::kernel::default_grid_size,
@@ -578,7 +512,6 @@ class kernel_handler {
         size_t grid_size,
         F&& f
     ) const {
-
         auto device_split_first = get_device_split_info(result[0]);
         for (auto& array : result) {
             if (!is_same_device_split(
@@ -618,6 +551,67 @@ class kernel_handler {
         for (auto& array : result) {
             array.set_read_mostly();
         }
+    }
+
+    template<
+        class KernelTag = detail::default_kernel_tag,
+        class IndexGenerator,
+        class T,
+        uint ResultRank,
+        uint NResult,
+        class F>
+    __host__ void launch(
+        IndexGenerator&& index_generator,
+        array_list<T, ResultRank, NResult> result,
+        F&& f) {
+        launch<KernelTag>(
+            index_generator,
+            result,
+            cuda::traits::kernel::default_block_shape,
+            cuda::traits::kernel::default_grid_size,
+            f
+        );
+    }
+
+    template<
+        class KernelTag = detail::default_kernel_tag,
+        class IndexGenerator,
+        uint ThreadBlockRank,
+        class T,
+        uint ResultRank,
+        class F>
+    __host__ void launch(
+        IndexGenerator&& index_generator,
+        array<T, ResultRank> result,
+        shape_t<ThreadBlockRank> block_shape,
+        size_t grid_size,
+        F&& f
+    ) const {
+        launch(
+            index_generator,
+            array_list<T, ResultRank, 1>({result}),
+            block_shape,
+            grid_size,
+            f
+        );
+    }
+
+    template<
+        class KernelTag = detail::default_kernel_tag,
+        class IndexGenerator,
+        class T,
+        uint ResultRank,
+        class F>
+    __host__ void
+    launch(IndexGenerator&& index_generator, array<T, ResultRank> result, F&& f)
+        const {
+        launch<KernelTag>(
+            index_generator,
+            result,
+            cuda::traits::kernel::default_block_shape,
+            cuda::traits::kernel::default_grid_size,
+            f
+        );
     }
 
     __device__ void syncthreads() const { __syncthreads(); }
