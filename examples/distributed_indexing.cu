@@ -167,8 +167,8 @@ int main() {
         handler.launch(
             sclx::md_range_t<2>{indices.shape()},
             arr3,
-            [=] __device__(const sclx::md_index_t<2>& idx, const auto&) mutable {  // mutable is required for local_array
-                auto local_index          = handler.get_local_thread_idx();
+            [=] __device__(const sclx::md_index_t<2>& idx, const auto&info) mutable {  // mutable is required for local_array
+                auto local_index          = info.local_thread_id();
                 shared_array[local_index] = idx;
                 handler.syncthreads();
 
