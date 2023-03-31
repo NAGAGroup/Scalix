@@ -49,3 +49,6 @@ target_link_libraries(index_generator scalix)
 
 add_executable(reduce_last_dim examples/reduce_last_dim.cu)
 target_link_libraries(reduce_last_dim scalix)
+
+add_executable(scaling_performance examples/scaling_performance.cu)
+target_link_libraries(scaling_performance scalix)
