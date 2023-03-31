@@ -167,7 +167,10 @@ int main() {
         handler.launch(
             sclx::md_range_t<2>{indices.shape()},
             arr3,
-            [=] __device__(const sclx::md_index_t<2>& idx, const auto&info) mutable {  // mutable is required for local_array
+            [=] __device__(
+                const sclx::md_index_t<2>& idx,
+                const auto& info
+            ) mutable {  // mutable is required for local_array
                 auto local_index          = info.local_thread_id();
                 shared_array[local_index] = idx;
                 handler.syncthreads();
@@ -230,7 +233,8 @@ int main() {
               << std::chrono::duration_cast<std::chrono::microseconds>(
                      end - now
                  )
-                     .count() / 1000.f
+                         .count()
+                     / 1000.f
               << "ms" << std::endl;
 
     return 0;

@@ -31,9 +31,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
-#include <thrust/tuple.h>
 #include "array_traits.cuh"
 #include "detail/array_tuple.cuh"
+#include <thrust/tuple.h>
 
 namespace sclx {
 
@@ -80,4 +80,4 @@ template<class... Types>
 array_tuple<Types...> make_array_tuple(Types&&... args) {
     return array_tuple<Types...>(std::forward<Types>(args)...);
 }
-}
+}  // namespace sclx

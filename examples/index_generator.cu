@@ -62,10 +62,10 @@
  *  not.
  */
 
+#include "utilities/random_index_generator.cuh"
 #include <scalix/array.cuh>
 #include <scalix/execute_kernel.cuh>
 #include <scalix/fill.cuh>
-#include "utilities/random_index_generator.cuh"
 
 REGISTER_SCALIX_KERNEL_TAG(random_index_generator_example);
 

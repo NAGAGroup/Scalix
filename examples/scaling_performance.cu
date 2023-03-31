@@ -43,10 +43,10 @@
  * made the aforementioned read-only copies of the data.
  */
 
-#include <chrono>
-#include <scalix/scalix.cuh>
-#include <scalix/fill.cuh>
 #include "utilities/random_index_generator.cuh"
+#include <chrono>
+#include <scalix/fill.cuh>
+#include <scalix/scalix.cuh>
 
 int main() {
     sclx::array<float, 3> source{4, 4, 5'000'000};
@@ -57,12 +57,18 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
-        sclx::local_array<float, 1> local_cache(handler, sclx::cuda::traits::kernel::default_block_shape);
+        sclx::local_array<float, 1> local_cache(
+            handler,
+            sclx::cuda::traits::kernel::default_block_shape
+        );
         handler.launch(
             sclx::md_range_t<3>{target.shape()},
             target,
-            [=] __device__(const sclx::md_index_t<3>& index, const auto& info) mutable {
-                auto local_thread_id = info.local_thread_id();
+            [=] __device__(
+                const sclx::md_index_t<3>& index,
+                const auto& info
+            ) mutable {
+                auto local_thread_id         = info.local_thread_id();
                 local_cache[local_thread_id] = source[generator(index)];
                 for (int i = 0; i < 1000; ++i) {
                     target[index] = sqrt(local_cache[local_thread_id]);
@@ -72,16 +78,23 @@ int main() {
     }).get();
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Elapsed time: " << elapsed.count() * 1000 << " ms" << std::endl;
+    std::cout << "Elapsed time: " << elapsed.count() * 1000 << " ms"
+              << std::endl;
 
     start = std::chrono::high_resolution_clock::now();
     sclx::execute_kernel([&](sclx::kernel_handler& handler) {
-        sclx::local_array<float, 1> local_cache(handler, sclx::cuda::traits::kernel::default_block_shape);
+        sclx::local_array<float, 1> local_cache(
+            handler,
+            sclx::cuda::traits::kernel::default_block_shape
+        );
         handler.launch(
             sclx::md_range_t<3>{target.shape()},
             target,
-            [=] __device__(const sclx::md_index_t<3>& index, const auto& info) mutable {
-                auto local_thread_id = info.local_thread_id();
+            [=] __device__(
+                const sclx::md_index_t<3>& index,
+                const auto& info
+            ) mutable {
+                auto local_thread_id         = info.local_thread_id();
                 local_cache[local_thread_id] = source[generator(index)];
                 for (int i = 0; i < 1000; ++i) {
                     target[index] = sqrt(local_cache[local_thread_id]);
@@ -89,7 +102,8 @@ int main() {
             }
         );
     }).get();
-    end = std::chrono::high_resolution_clock::now();
+    end     = std::chrono::high_resolution_clock::now();
     elapsed = end - start;
-    std::cout << "Elapsed time: " << elapsed.count() * 1000 << " ms" << std::endl;
+    std::cout << "Elapsed time: " << elapsed.count() * 1000 << " ms"
+              << std::endl;
 }

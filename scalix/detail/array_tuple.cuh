@@ -77,4 +77,4 @@ __host__ __device__ auto apply(F&& f, Tuple t, Types&&... args) {
     }
 }
 
-}
+}  // namespace sclx::detail

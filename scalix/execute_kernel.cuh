@@ -35,9 +35,9 @@
 
 #pragma once
 #include "array.cuh"
-#include "cuda.hpp"
 #include "array_list.cuh"
 #include "array_tuple.cuh"
+#include "cuda.hpp"
 #include "detail/execute_kernel.cuh"
 #include <future>
 #include <mutex>
@@ -197,7 +197,7 @@ class kernel_handler {
         uint RangeRank,
         class F,
         uint ThreadBlockRank = cuda::traits::kernel::default_block_shape.rank(),
-        class ... ArrayTypes>
+        class... ArrayTypes>
     __host__ void launch(
         md_range_t<RangeRank> range,
         array_tuple<ArrayTypes...> result,
@@ -220,7 +220,7 @@ class kernel_handler {
         class IndexGenerator,
         class F,
         uint ThreadBlockRank = cuda::traits::kernel::default_block_shape.rank(),
-        class ... ArrayTypes>
+        class... ArrayTypes>
     __host__ void launch(
         IndexGenerator&& index_generator,
         array_tuple<ArrayTypes...> result,
@@ -354,13 +354,12 @@ class kernel_handler {
         }
     }
 
-
     template<
         class KernelTag = detail::default_kernel_tag,
         uint RangeRank,
         uint ThreadBlockRank,
         class F,
-        class ... ArrayTypes>
+        class... ArrayTypes>
     __host__ void launch_tuple_impl(
         md_range_t<RangeRank> range,
         array_tuple<ArrayTypes...> result,
@@ -375,7 +374,9 @@ class kernel_handler {
 
         result.unset_read_mostly();
 
-        auto device_info = get_device_split_info(thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result)));
+        auto device_info = get_device_split_info(
+            thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result))
+        );
 
         KernelTag::template execute<RangeRank, ThreadBlockRank>(
             device_info,
@@ -394,7 +395,7 @@ class kernel_handler {
         class IndexGenerator,
         uint ThreadBlockRank,
         class F,
-        class ... ArrayTypes>
+        class... ArrayTypes>
     __host__ void launch_tuple_impl(
         IndexGenerator&& index_generator,
         array_tuple<ArrayTypes...> result,
@@ -404,7 +405,8 @@ class kernel_handler {
     ) const {
         using generator_t = std::remove_reference_t<IndexGenerator>;
         if (index_generator.index_range()[generator_t::index_rank - 1]
-            != thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result)).shape()[0]) {
+            != thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result))
+                   .shape()[0]) {
             throw std::invalid_argument("Index generator indices and "
                                         "result array must have the same "
                                         "last dimension");
@@ -416,7 +418,9 @@ class kernel_handler {
 
         result.unset_read_mostly();
 
-        auto device_info = get_device_split_info(thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result)));
+        auto device_info = get_device_split_info(
+            thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result))
+        );
 
         KernelTag::template execute<IndexGenerator, ThreadBlockRank>(
             device_info,

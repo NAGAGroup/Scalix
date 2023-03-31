@@ -131,4 +131,4 @@ class dynamic_array_list {
     detail::unified_ptr<T> data_{};  // pointer to data
     size_t size_{};                  // number of elements
 };
-}
+}  // namespace sclx

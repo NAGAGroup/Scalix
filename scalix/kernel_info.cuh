@@ -31,9 +31,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include "index.cuh"
 #include "range.cuh"
 #include "shape.cuh"
-#include "index.cuh"
 
 namespace sclx {
 template<uint ProblemRank, uint ThreadBlockRank>
@@ -98,4 +98,4 @@ class kernel_info {
     md_index_t<ProblemRank> start_index_;
     int device_id_;
 };
-}
+}  // namespace sclx

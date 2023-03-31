@@ -54,4 +54,4 @@ struct is_scalix_arrays<T> : is_scalix_array<T> {};
 template<class T, class... Types>
 constexpr bool is_scalix_arrays_v = is_scalix_arrays<T, Types...>::value;
 
-}
+}  // namespace sclx
