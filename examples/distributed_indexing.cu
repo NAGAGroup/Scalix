@@ -200,8 +200,6 @@ int main() {
         handler.launch<my_kernel_tag>(  // tag is used to identify the kernel
             /* iteration range */ sclx::md_range_t<1>{arr2.shape()},
             /* result array */ arr2,
-            /* thread block shape */ sclx::shape_t<1>{1},
-            /* grid size */ 1,  // note that this needs to be a scalar
             [=] __device__(const sclx::md_index_t<1>& idx, const auto&) {
                 // we can slice arrays in both host and device code
                 auto index_slice = indices.get_slice(idx);
@@ -209,7 +207,9 @@ int main() {
                 for (auto& read_idx : index_slice) {
                     arr2[idx] += arr3(read_idx);
                 }
-            }
+            },
+            /* thread block shape */ sclx::shape_t<1>{1},
+            /* grid size */ 1  // note that this needs to be a scalar
         );
     }).get();
 
