@@ -138,8 +138,6 @@ class strided_iterator {
     size_t stride_;
 };
 
-#undef __CLION_IDE__
-
 template<class T, class ResultT, uint Rank, class F>
 __host__ void
 reduce_last_dim(const array<const T, Rank>& arr, array<ResultT, Rank - 1> &result, const T& identity, F&& f) {
