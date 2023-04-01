@@ -278,7 +278,7 @@ class kernel_handler {
                     << std::endl;
             }
             if (array.shape()[array.rank() - 1] != last_dim) {
-                throw std::invalid_argument("All arrays in the result must "
+                throw_exception<std::invalid_argument>("All arrays in the result must "
                                             "have the same last dimension");
             }
             array.unset_read_mostly();
@@ -368,8 +368,8 @@ class kernel_handler {
         F&& f
     ) const {
         if (!result.last_dims_all_equal()) {
-            throw std::invalid_argument("All arrays in the result must "
-                                        "have the same last dimension");
+            throw_exception<std::invalid_argument>("All arrays in the result must "
+                                                   "have the same last dimension");
         }
 
         result.unset_read_mostly();
@@ -407,13 +407,13 @@ class kernel_handler {
         if (index_generator.index_range()[generator_t::index_rank - 1]
             != thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result))
                    .shape()[0]) {
-            throw std::invalid_argument("Index generator indices and "
+            throw_exception<std::invalid_argument>("Index generator indices and "
                                         "result array must have the same "
                                         "last dimension");
         }
         if (!result.last_dims_all_equal()) {
-            throw std::invalid_argument("All arrays in the result must "
-                                        "have the same last dimension");
+            throw_exception<std::invalid_argument>("All arrays in the result must "
+                                                   "have the same last dimension");
         }
 
         result.unset_read_mostly();

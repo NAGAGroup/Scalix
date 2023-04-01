@@ -138,9 +138,11 @@ class strided_iterator {
     size_t stride_;
 };
 
-template<class T, uint Rank, class F>
-__host__ array<T, Rank - 1>
-reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
+#undef __CLION_IDE__
+
+template<class T, class ResultT, uint Rank, class F>
+__host__ void
+reduce_last_dim(const array<const T, Rank>& arr, array<ResultT, Rank - 1> &result, const T& identity, F&& f) {
     const auto& mem_info = arr.memory_info();
     std::vector<int> devices(
         mem_info.devices.get(),
@@ -154,16 +156,19 @@ reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
 
     auto device_info = get_device_split_info(arr);
 
-    T result = identity;
     sclx::shape_t<Rank - 1> result_shape;
     for (uint i = 0; i < Rank - 1; ++i) {
         result_shape[i] = arr.shape()[i];
     }
 
-    sclx::array<T, Rank - 1> result_arr(result_shape);
-    result_arr.unset_read_mostly();
-    sclx::fill(result_arr, identity);
-    result_arr.prefetch_async({sclx::cuda::traits::cpu_device_id});
+    if (result_shape != result.shape()) {
+        std::stringstream error_stream;
+        error_stream << "Result array has wrong shape: " << "expected: " << result_shape << ", got: " << result.shape();
+        throw_exception<std::invalid_argument>(error_stream.str(), "sclx::algorithm::");
+    }
+    result.unset_read_mostly();
+    sclx::fill(result, identity);
+    result.prefetch_async({sclx::cuda::traits::cpu_device_id});
 
     std::mutex result_mutex;
 
@@ -195,7 +200,7 @@ reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
 
             std::lock_guard<std::mutex> lock(result_mutex);
             for (size_t s = 0; s < stride; ++s) {
-                result_arr[s] = f(result_arr[s], partial_results[s]);
+                result[s] = f(result[s], partial_results[s]);
             }
         };
 
@@ -215,13 +220,34 @@ reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
     }
 #endif
 
-    result_arr.set_read_mostly();
-    result_arr.prefetch_async(sclx::exec_topology::replicated);
+    result.set_read_mostly();
+    result.prefetch_async(sclx::exec_topology::distributed);
+}
 
-    return result_arr;
+template<class T, class ResultT, uint Rank, class F>
+__host__ void
+reduce_last_dim(const array<T, Rank>& arr, array<ResultT, Rank - 1> &result, const T& identity, F&& f) {
+    return reduce_last_dim(
+        static_cast<const array<const T, Rank>&>(arr),
+        result,
+        identity,
+        f
+    );
 }
 
 template<class T, uint Rank, class F>
+__host__ array<T, Rank - 1>
+reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
+    sclx::shape_t<Rank - 1> result_shape;
+    for (uint i = 0; i < Rank - 1; ++i) {
+        result_shape[i] = arr.shape()[i];
+    }
+    sclx::array<T, Rank - 1> result(result_shape);
+    reduce_last_dim(arr, result, identity, f);
+    return result;
+}
+
+template <class T, uint Rank, class F>
 __host__ array<T, Rank - 1>
 reduce_last_dim(const array<T, Rank>& arr, const T& identity, F&& f) {
     return reduce_last_dim(

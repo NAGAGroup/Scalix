@@ -31,6 +31,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <thrust/tuple.h>
 
 namespace sclx::detail {
 

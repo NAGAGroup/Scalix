@@ -33,7 +33,6 @@
 #pragma once
 #include "array_traits.cuh"
 #include "detail/array_tuple.cuh"
-#include <thrust/tuple.h>
 
 namespace sclx {
 
