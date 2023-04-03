@@ -104,7 +104,7 @@ struct traits {
     }
 };
 
-template <class T>
+template<class T>
 void mem_advise(
     T* ptr,
     size_t bytes,

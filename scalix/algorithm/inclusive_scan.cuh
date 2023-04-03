@@ -33,8 +33,8 @@
 #pragma once
 #include "../array.cuh"
 #include "../execute_kernel.cuh"
-#include "functional.cuh"
 #include "../throw_exception.hpp"
+#include "functional.cuh"
 #include <mutex>
 #include <thrust/execution_policy.h>
 #include <thrust/scan.h>
@@ -49,7 +49,10 @@ __host__ void inclusive_scan(
     F&& f
 ) {
     if (arr.shape() != result.shape()) {
-        throw_exception<std::invalid_argument>("Input and result arrays must have the same shape", "sclx::algorithm::");
+        throw_exception<std::invalid_argument>(
+            "Input and result arrays must have the same shape",
+            "sclx::algorithm::"
+        );
     }
 
     result.unset_read_mostly();

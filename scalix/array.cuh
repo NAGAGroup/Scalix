@@ -72,8 +72,7 @@ __host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr
 );
 
 template<class T, class U>
-__host__ unified_ptr<T>
-dynamic_pointer_cast(const unified_ptr<U>& ptr);
+__host__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr);
 
 template<class T, class U>
 __host__ __device__ unified_ptr<T> const_pointer_cast(const unified_ptr<U>& ptr
@@ -207,7 +206,7 @@ class unified_ptr {
     static constexpr auto no_delete = [](T* ptr) {};
 
     class safe_delete_array {
-        public:
+      public:
         __host__ safe_delete_array(size_t n) : n_(n) {}
 
         __host__ void operator()(T* ptr) {
@@ -239,7 +238,9 @@ template<class T>
 __host__ unified_ptr<T> allocate_cuda_usm(size_t size) {
     T* ptr;
     cudaMallocManaged(&ptr, size * sizeof(T));
-    return unified_ptr<T>{ptr, typename unified_ptr<T>::safe_delete_array(size)};
+    return unified_ptr<T>{
+        ptr,
+        typename unified_ptr<T>::safe_delete_array(size)};
 }
 
 template<class T>
@@ -263,8 +264,7 @@ __host__ __device__ unified_ptr<T> static_pointer_cast(const unified_ptr<U>& ptr
 }
 
 template<class T, class U>
-__host__ unified_ptr<T>
-dynamic_pointer_cast(const unified_ptr<U>& ptr) {
+__host__ unified_ptr<T> dynamic_pointer_cast(const unified_ptr<U>& ptr) {
     unified_ptr<T> new_ptr;
     new_ptr.raw_ptr_ = dynamic_cast<T*>(ptr.raw_ptr_);
 #ifndef __CUDA_ARCH__

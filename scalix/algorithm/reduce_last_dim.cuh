@@ -139,8 +139,12 @@ class strided_iterator {
 };
 
 template<class T, class ResultT, uint Rank, class F>
-__host__ void
-reduce_last_dim(const array<const T, Rank>& arr, array<ResultT, Rank - 1> &result, const T& identity, F&& f) {
+__host__ void reduce_last_dim(
+    const array<const T, Rank>& arr,
+    array<ResultT, Rank - 1>& result,
+    const T& identity,
+    F&& f
+) {
     const auto& mem_info = arr.memory_info();
     std::vector<int> devices(
         mem_info.devices.get(),
@@ -161,8 +165,13 @@ reduce_last_dim(const array<const T, Rank>& arr, array<ResultT, Rank - 1> &resul
 
     if (result_shape != result.shape()) {
         std::stringstream error_stream;
-        error_stream << "Result array has wrong shape: " << "expected: " << result_shape << ", got: " << result.shape();
-        throw_exception<std::invalid_argument>(error_stream.str(), "sclx::algorithm::");
+        error_stream << "Result array has wrong shape: "
+                     << "expected: " << result_shape
+                     << ", got: " << result.shape();
+        throw_exception<std::invalid_argument>(
+            error_stream.str(),
+            "sclx::algorithm::"
+        );
     }
     result.unset_read_mostly();
     sclx::fill(result, identity);
@@ -223,8 +232,12 @@ reduce_last_dim(const array<const T, Rank>& arr, array<ResultT, Rank - 1> &resul
 }
 
 template<class T, class ResultT, uint Rank, class F>
-__host__ void
-reduce_last_dim(const array<T, Rank>& arr, array<ResultT, Rank - 1> &result, const T& identity, F&& f) {
+__host__ void reduce_last_dim(
+    const array<T, Rank>& arr,
+    array<ResultT, Rank - 1>& result,
+    const T& identity,
+    F&& f
+) {
     return reduce_last_dim(
         static_cast<const array<const T, Rank>&>(arr),
         result,
@@ -245,7 +258,7 @@ reduce_last_dim(const array<const T, Rank>& arr, const T& identity, F&& f) {
     return result;
 }
 
-template <class T, uint Rank, class F>
+template<class T, uint Rank, class F>
 __host__ array<T, Rank - 1>
 reduce_last_dim(const array<T, Rank>& arr, const T& identity, F&& f) {
     return reduce_last_dim(
