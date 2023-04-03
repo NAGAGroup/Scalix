@@ -14,7 +14,7 @@ find_package(CUDAToolkit 12.0 REQUIRED)
 add_library(scalix INTERFACE)
 target_include_directories(scalix INTERFACE ${PROJECT_SOURCE_DIR}/.)
 target_compile_options(scalix INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:
-                                        --extended-lambda >)
+                                        --extended-lambda --expt-relaxed-constexpr >)
 
 # if SCALIX_DEBUG_KERNEL_LAUNCH is on, then useful diagnostic information is
 # printed to stdout when a kernel is launched.
