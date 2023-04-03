@@ -104,9 +104,10 @@ struct traits {
     }
 };
 
+template <class T>
 void mem_advise(
-    void* ptr,
-    size_t size,
+    T* ptr,
+    size_t bytes,
     cuda::traits::mem_advise advice,
     int device
 ) {
@@ -114,8 +115,8 @@ void mem_advise(
     device = 0;
 #endif
     cudaError_t err = cudaMemAdvise(
-        ptr,
-        size,
+        static_cast<void*>(const_cast<std::remove_const_t<T>*>(ptr)),
+        bytes,
         static_cast<cudaMemoryAdvise>(advice),
         device
     );
