@@ -57,7 +57,7 @@ struct cuda_exception : std::runtime_error {
     }
 };
 
-void set_device(int device) {
+void inline set_device(int device) {
 #ifdef SCALIX_EMULATE_MULTIDEVICE
     device = 0;
 #endif
@@ -143,7 +143,7 @@ void mem_prefetch_async(T* begin, T* end, int device, cudaStream_t stream = 0) {
     );
 }
 
-void stream_synchronize(cudaStream_t stream = 0) {
+void inline stream_synchronize(cudaStream_t stream = 0) {
     cudaError_t err = cudaStreamSynchronize(stream);
     cuda_exception::raise_if_not_success(
         err,
@@ -151,7 +151,7 @@ void stream_synchronize(cudaStream_t stream = 0) {
     );
 }
 
-void peak_last_error_and_throw_if_error(
+void inline peak_last_error_and_throw_if_error(
     const std::experimental::source_location& location,
     const std::string& function_prefix = "sclx::cuda::"
 ) {
@@ -159,7 +159,7 @@ void peak_last_error_and_throw_if_error(
     cuda_exception::raise_if_not_success(err, location, function_prefix);
 }
 
-void get_last_error_and_throw_if_error(
+void inline get_last_error_and_throw_if_error(
     const std::experimental::source_location& location,
     const std::string& function_prefix = "sclx::cuda::"
 ) {
