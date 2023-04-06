@@ -399,7 +399,7 @@ class array {
 
     __host__ __device__ const shape_t<Rank>& shape() const { return shape_; }
 
-    __host__ __device__ detail::unified_ptr<const T> data() const {
+    __host__ __device__ detail::unified_ptr<T> data() const {
         return data_;
     }
 
@@ -873,7 +873,7 @@ get_device_split_info(const array<T, Rank>& arr) {
     }
     size_t num_elements_to_next_device
         = mem_info.elements_per_device.get()[start_device]
-        - std::distance(device_data_ptr, arr.data().get());
+        - std::distance(const_cast<const T*>(device_data_ptr), const_cast<const T*>(arr.data().get()));
 
     sclx::md_index_t<Rank> start_idx;
     auto end_idx = md_index_t<Rank>::create_from_linear(
