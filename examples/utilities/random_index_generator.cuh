@@ -31,6 +31,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
+#include <scalix/array.cuh>
 #include <thrust/execution_policy.h>
 #include <thrust/random.h>
 
