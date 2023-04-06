@@ -84,6 +84,11 @@ class shape_like_t {
         detail::cexpr_memcpy<Rank>(shape_, other.shape_);
     }
 
+    __host__
+        __device__ constexpr shape_like_t(const size_t (&shape)[Rank]) {
+        detail::cexpr_memcpy<Rank>(shape_, shape);
+    }
+
     __host__ __device__ const size_t& operator[](size_t i) const {
         return shape_[i];
     }
