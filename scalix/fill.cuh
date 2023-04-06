@@ -50,28 +50,28 @@ void fill(const array<T, Rank>& arr, const T& value) {
     }).get();
 }
 
-template <class T, uint Rank>
+template<class T, uint Rank>
 __host__ array<T, Rank> zeros(const size_t (&shape)[Rank]) {
     array<T, Rank> arr{shape_t<Rank>(shape)};
     fill(arr, T(0));
     return arr;
 }
 
-template <class T, uint Rank>
+template<class T, uint Rank>
 __host__ array<T, Rank> zeros(const shape_t<Rank>& shape) {
     array<T, Rank> arr{shape};
     fill(arr, T(0));
     return arr;
 }
 
-template <class T, uint Rank>
+template<class T, uint Rank>
 __host__ array<T, Rank> ones(const size_t (&shape)[Rank]) {
     array<T, Rank> arr{shape_t<Rank>(shape)};
     fill(arr, T(1));
     return arr;
 }
 
-template <class T, uint Rank>
+template<class T, uint Rank>
 __host__ array<T, Rank> ones(const shape_t<Rank>& shape) {
     array<T, Rank> arr{shape};
     fill(arr, T(1));
