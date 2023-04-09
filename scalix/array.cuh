@@ -334,20 +334,21 @@ class array {
 
     array() = default;
 
-    __host__ array(std::initializer_list<size_t> shape) : shape_(shape) {
+    __host__ array(std::initializer_list<size_t> shape, bool call_prefetch = true) : shape_(shape) {
         data_ = detail::allocate_cuda_usm<T>(elements());
-        set_primary_devices();
+        set_primary_devices(call_prefetch);
     }
 
-    __host__ explicit array(const shape_t<Rank>& shape) : shape_(shape) {
+    __host__ explicit array(const shape_t<Rank>& shape, bool call_prefetch = true) : shape_(shape) {
         data_ = detail::allocate_cuda_usm<T>(elements());
-        set_primary_devices();
+        set_primary_devices(call_prefetch);
     }
 
 #ifndef __CUDA_ARCH__
     __host__ array(
         const shape_t<Rank>& shape,
         const detail::unified_ptr<const T>& data,
+        bool call_prefetch = true,
         data_capture_mode mode = data_capture_mode::copy,
         copy_policy policy     = copy_policy::hostdevice
     )
@@ -364,6 +365,7 @@ class array {
             auto ptr = std::make_shared<const float>(1.f);
             data_    = detail::const_pointer_cast<T>(std::move(data));
         }
+        set_primary_devices(call_prefetch);
     }
 #else
 
@@ -411,7 +413,7 @@ class array {
         return Rank;
     }
 
-    __host__ array& set_primary_devices() {
+    __host__ array& set_primary_devices(bool call_prefetch = true) {
         int device_count = cuda::traits::device_count();
         std::vector<int> devices(device_count);
         for (int i = 0; i < device_count; ++i) {
@@ -425,7 +427,7 @@ class array {
         return *this;
     }
 
-    __host__ array& set_primary_devices(const std::vector<int>& devices) {
+    __host__ array& set_primary_devices(const std::vector<int>& devices, bool call_prefetch = true) {
         size_t sig_dim       = shape_[Rank - 1];
         size_t sig_dim_split = (sig_dim + devices.size() - 1) / devices.size();
         shape_t<Rank> split_shape;
@@ -473,7 +475,7 @@ class array {
     // split info is a vector of tuples of the form (device_id, slice_idx,
     // slice_len) where we slice the array along the last dimension
     __host__ array& set_primary_devices(
-        const std::vector<std::tuple<int, size_t, size_t>>& device_split_info
+        const std::vector<std::tuple<int, size_t, size_t>>& device_split_info, bool call_prefetch = true
     ) {
         if (memory_info_.get() == nullptr) {
             memory_info_ = detail::make_unified_ptr<mem_info_t>({});
@@ -558,7 +560,9 @@ class array {
 
         set_read_mostly();
 
-        prefetch_async(exec_topology::distributed);
+        if (call_prefetch) {
+            prefetch_async(exec_topology::distributed);
+        }
 
         return *this;
     }
@@ -709,7 +713,8 @@ class array {
 #ifdef __CUDA_ARCH__
             return array<T, Rank - 1>{shape, data};
 #else
-            array<T, Rank - 1> arr{shape, data, data_capture_mode::capture};
+            array<T, Rank - 1> arr{shape, data,
+                false, data_capture_mode::capture};
             arr.memory_info_ = memory_info_;
             return arr;
 #endif
@@ -737,7 +742,7 @@ class array {
 #ifdef __CUDA_ARCH__
         return array{shape, data};
 #else
-        array arr{shape, data, data_capture_mode::capture};
+        array arr{shape, data, false, data_capture_mode::capture};
         arr.memory_info_ = memory_info_;
         return arr;
 #endif
@@ -816,7 +821,12 @@ reshape(const array<T, RankOld>& arr, const shape_t<RankNew>& shape) {
 #ifdef __CUDA_ARCH__
     return array<T, RankNew>{shape, arr.data()};
 #else
-    return array<T, RankNew>{shape, arr.data(), data_capture_mode::copy};
+    return array<T, RankNew>{
+        {arr.shape().elements()},
+        arr.data(),
+        true,
+        data_capture_mode::copy,
+        copy_policy::devicedevice};
 #endif
 }
 
@@ -828,7 +838,9 @@ __host__ __device__ array<T, 1> flatten(const array<T, Rank>& arr) {
     return array<T, 1>{
         {arr.shape().elements()},
         arr.data(),
-        data_capture_mode::copy};
+        true,
+        data_capture_mode::copy,
+        copy_policy::devicedevice};
 #endif
 }
 
