@@ -13,22 +13,6 @@ class task_scheduler;
 
 namespace detail {
 
-struct virtual_task {
-    virtual void operator()() = 0;
-    virtual ~virtual_task()   = default;
-};
-
-template<class ReturnType, class... Args>
-struct packaged_task final : virtual_task {
-    std::function<ReturnType(Args...)> function;
-    std::promise<ReturnType> promise;
-
-    explicit packaged_task(std::function<ReturnType(Args...)> function)
-        : function(std::move(function)) {}
-
-    void operator()() override { promise.set_value(function()); }
-};
-
 class cuda_thread_pool {
   public:
     cuda_thread_pool()                                   = delete;
@@ -46,7 +30,7 @@ class cuda_thread_pool {
     }
 
   private:
-    std::vector<std::queue<std::unique_ptr<virtual_task>>> queues;
+    std::vector<std::queue<std::unique_ptr<std::packaged_task<void()>>>> queues;
     std::vector<std::thread> threads;
     std::vector<std::mutex> queue_mutexes;
     std::atomic_bool stop = false;
@@ -67,7 +51,7 @@ class cuda_thread_pool {
             cudaSetDevice(thread);
 #endif
             while (true) {
-                std::unique_ptr<virtual_task> task;
+                std::unique_ptr<std::packaged_task<void()>> task;
                 {
                     std::lock_guard<std::mutex> lock(queue_mutexes[thread]);
                     if (stop && queues[thread].empty()) {
@@ -88,14 +72,25 @@ class cuda_thread_pool {
         threads.emplace_back(thread_loop);
     }
 
-    template<class ReturnType, class... Args>
-    std::future<ReturnType>
-    submit_task(int thread, std::function<ReturnType(Args...)> function) {
-        std::lock_guard<std::mutex> lock(queue_mutexes[thread]);
-        auto task_
-            = std::make_unique<packaged_task<ReturnType, Args...>>(function);
-        auto future = task_->promise.get_future();
-        queues[thread].push(std::move(task_));
+    template<class F, class... Args>
+    std::future<std::invoke_result_t<F, Args...>>
+    submit_task(int device_id, F&& f, Args&&... args) {
+
+        auto args_tuple = std::make_tuple(args...);
+
+        auto task_lambda = [f = std::forward<F>(f), args_tuple]() mutable {
+            return std::apply(f, args_tuple);
+        };
+
+        using return_type = std::invoke_result_t<F, Args...>;
+        auto task         = std::packaged_task<return_type()>(task_lambda);
+        auto future       = task.get_future();
+        {
+            std::lock_guard<std::mutex> lock(queue_mutexes[device_id]);
+            queues[device_id].emplace(
+                new std::packaged_task<void()>(std::move(task))
+            );
+        }
         return future;
     }
 };

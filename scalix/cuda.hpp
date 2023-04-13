@@ -225,9 +225,9 @@ class stream_t {
 
 struct task_scheduler {
   public:
-    template<class ReturnType, class... Args>
-    static std::future<ReturnType>
-    submit_task(int device_id, std::function<ReturnType(Args...)> function) {
+    template<class F, class... Args>
+    static std::future<std::invoke_result_t<F, Args...>>
+    submit_task(int device_id, F&& f, Args&&... args) {
         if (!initialized_) {
             if (!initializing_.exchange(true)) {
                 pool_ = std::shared_ptr<detail::cuda_thread_pool>(
@@ -243,7 +243,11 @@ struct task_scheduler {
             }
         }
 
-        return get().submit_task(device_id, function);
+        return get().submit_task(
+            device_id,
+            std::forward<F>(f),
+            std::forward<Args>(args)...
+        );
     }
 
   private:

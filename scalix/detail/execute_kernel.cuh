@@ -45,7 +45,7 @@ struct _debug_kernel_mutex {
 };
 #ifdef SCALIX_DEBUG_KERNEL_LAUNCH
 constexpr bool _debug_kernel_launch = true;
-std::mutex _debug_kernel_mutex::mutex{};
+std::mutex _debug_kernel_mutex::mutex_{};
 #else
 constexpr bool _debug_kernel_launch = false;
 #endif
@@ -167,11 +167,9 @@ struct default_kernel_tag {
                 return stream;
             };
 
-            std::function<sclx::cuda::stream_t()> packaged_task = task_lambda;
-
             auto task_future = sclx::cuda::task_scheduler::submit_task(
                 device_id,
-                std::move(packaged_task)
+                task_lambda
             );
 
             streams.push_back(task_future.get());
@@ -266,10 +264,9 @@ struct default_kernel_tag {
                 return stream;
             };
 
-            std::function<sclx::cuda::stream_t()> packaged_task = task_lambda;
             auto task_future = sclx::cuda::task_scheduler::submit_task(
                 device_id,
-                std::move(packaged_task)
+                task_lambda
             );
 
             streams.push_back(task_future.get());
