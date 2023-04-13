@@ -186,7 +186,7 @@ int main() {
     std::cout << "arr2(0): " << arr2(0) << std::endl;
     std::cout << "arr3(0): " << arr3(0) << std::endl;
 
-    // in this example we show how to setup a different thread grid shape
+    // in this example we show how to set up a different thread grid shape
     // than the default
     //
     // note that internally we use a strided grid step to ensure the entire
@@ -195,7 +195,7 @@ int main() {
     // this allows the user to play around with different thread grid shapes
     // to see how it affects performance
     //
-    // we also use a 1D iteration range so we don't need to to do atomicAdd
+    // we also use a 1D iteration range, so we don't need to do atomicAdd
     // we showcase array slicing
     //
     // finally, we also tag the kernel for easier profiling/debugging
