@@ -32,6 +32,7 @@
 //------------------------------------------------------------------------------
 
 #pragma once
+#include "detail/cuda.hpp"
 #include "shape.cuh"
 #include "throw_exception.hpp"
 #include <memory>
@@ -220,6 +221,37 @@ class stream_t {
             delete stream;
         }
     );
+};
+
+struct task_scheduler {
+  public:
+    template<class ReturnType, class... Args>
+    static std::future<ReturnType>
+    submit_task(int device_id, std::function<ReturnType(Args...)> function) {
+        if (!initialized_) {
+            if (!initializing_.exchange(true)) {
+                pool_ = std::shared_ptr<detail::cuda_thread_pool>(
+                    new detail::cuda_thread_pool{
+                        sclx::cuda::traits::device_count()}
+                );
+                initialized_  = true;
+                initializing_ = false;
+            } else {
+                while (!initialized_) {
+                    std::this_thread::yield();
+                }
+            }
+        }
+
+        return get().submit_task(device_id, function);
+    }
+
+  private:
+    static inline std::shared_ptr<detail::cuda_thread_pool> pool_ = nullptr;
+    static inline std::atomic<bool> initialized_                  = false;
+    static inline std::atomic<bool> initializing_                 = false;
+
+    static detail::cuda_thread_pool& get() { return *pool_; }
 };
 
 }  // namespace sclx::cuda

@@ -105,11 +105,6 @@ struct default_kernel_tag {
         F&& f
     ) {
         std::vector<sclx::cuda::stream_t> streams;
-        for (auto& [device_id, slice_idx, slice_size] : device_info) {
-            streams.emplace_back(
-                sclx::cuda::stream_t::create_for_device(device_id)
-            );
-        }
 
         if constexpr (sclx::detail::_debug_kernel_launch) {
             sclx::detail::_debug_kernel_mutex::mutex.lock();
@@ -117,51 +112,70 @@ struct default_kernel_tag {
         }
 
         int iter = 0;
-        for (auto& [device_id, slice_idx, slice_size] : device_info) {
-            sclx::cuda::set_device(device_id);  // init context
+        for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
 
-            sclx::md_range_t<RangeRank> device_range{};
-            if constexpr (RangeRank > 1) {
-                for (uint i = 0; i < RangeRank - 1; i++) {
-                    device_range[i] = global_range[i];
+            int device_id     = _device_id;
+            size_t slice_idx  = _slice_idx;
+            size_t slice_size = _slice_size;
+
+            auto task_lambda = [=]() mutable {
+                sclx::md_range_t<RangeRank> device_range{};
+                if constexpr (RangeRank > 1) {
+                    for (uint i = 0; i < RangeRank - 1; i++) {
+                        device_range[i] = global_range[i];
+                    }
                 }
-            }
-            device_range[RangeRank - 1] = slice_size;
+                device_range[RangeRank - 1] = slice_size;
 
-            sclx::md_index_t<RangeRank> device_start_idx{};
-            device_start_idx[RangeRank - 1] = slice_idx;
+                sclx::md_index_t<RangeRank> device_start_idx{};
+                device_start_idx[RangeRank - 1] = slice_idx;
 
-            size_t total_threads = device_range.elements();
-            size_t max_grid_size = (total_threads + block_shape.elements() - 1)
-                                 / block_shape.elements();
-            grid_size = std::min(max_grid_size, grid_size);
+                size_t total_threads = device_range.elements();
+                size_t max_grid_size
+                    = (total_threads + block_shape.elements() - 1)
+                    / block_shape.elements();
+                grid_size = std::min(max_grid_size, grid_size);
 
-            sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(
-                global_range,
-                device_range,
-                block_shape,
-                device_start_idx,
-                iter
+                sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(
+                    global_range,
+                    device_range,
+                    block_shape,
+                    device_start_idx,
+                    iter
+                );
+
+                auto stream = sclx::cuda::stream_t::create();
+
+                if constexpr (sclx::detail::_debug_kernel_launch) {
+                    std::cout << "  Launching kernel on device " << device_id
+                              << std::endl;
+                    std::cout << "      Device range: " << device_range
+                              << std::endl;
+                    std::cout
+                        << "      Device start index: " << device_start_idx
+                        << std::endl;
+                    std::cout << "      Global range: " << global_range
+                              << std::endl;
+                }
+
+                sclx_kernel<<<
+                    grid_size,
+                    block_shape.elements(),
+                    local_mem_size,
+                    stream>>>(f, metadata);
+
+                return stream;
+            };
+
+            std::function<sclx::cuda::stream_t()> packaged_task = task_lambda;
+
+            auto task_future = sclx::cuda::task_scheduler::submit_task(
+                device_id,
+                std::move(packaged_task)
             );
 
-            auto& stream = streams[iter++];
-
-            if constexpr (sclx::detail::_debug_kernel_launch) {
-                std::cout << "  Launching kernel on device " << device_id
-                          << std::endl;
-                std::cout << "      Device range: " << device_range
-                          << std::endl;
-                std::cout << "      Device start index: " << device_start_idx
-                          << std::endl;
-                std::cout << "      Global range: " << global_range
-                          << std::endl;
-            }
-
-            sclx_kernel<<<
-                grid_size,
-                block_shape.elements(),
-                local_mem_size,
-                stream>>>(f, metadata);
+            streams.push_back(task_future.get());
+            iter++;
         }
 
         if constexpr (sclx::detail::_debug_kernel_launch) {
@@ -201,42 +215,65 @@ struct default_kernel_tag {
         }
 
         int iter = 0;
-        for (auto& [device_id, slice_idx, slice_size] : device_info) {
-            sclx::cuda::set_device(device_id);  // init context
+        for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
 
-            size_t total_threads = index_generator.range().elements();
-            size_t max_grid_size = (total_threads + block_shape.elements() - 1)
-                                 / block_shape.elements();
-            grid_size = std::min(max_grid_size, grid_size);
+            int device_id     = _device_id;
+            size_t slice_idx  = _slice_idx;
+            size_t slice_size = _slice_size;
 
-            constexpr uint range_rank
-                = std::remove_reference_t<IndexGenerator>::range_rank;
-            sclx::kernel_info<range_rank, ThreadBlockRank> metadata(
-                index_generator.range(),
-                index_generator.range(),
-                block_shape,
-                {},
-                iter
+            auto task_lambda = [=]() mutable {
+                size_t total_threads = index_generator.range().elements();
+                size_t max_grid_size
+                    = (total_threads + block_shape.elements() - 1)
+                    / block_shape.elements();
+                grid_size = std::min(max_grid_size, grid_size);
+
+                constexpr uint range_rank
+                    = std::remove_reference_t<IndexGenerator>::range_rank;
+                sclx::kernel_info<range_rank, ThreadBlockRank> metadata(
+                    index_generator.range(),
+                    index_generator.range(),
+                    block_shape,
+                    {},
+                    iter
+                );
+
+                auto stream = sclx::cuda::stream_t::create();
+
+                if constexpr (sclx::detail::_debug_kernel_launch) {
+                    std::cout << "  Launching kernel on device " << device_id
+                              << std::endl;
+                    std::cout << "      Device slice size: " << slice_size
+                              << std::endl;
+                    std::cout << "      Device slice start index: " << slice_idx
+                              << std::endl;
+                    std::cout << "      Total slice size: " << total_slice_size
+                              << std::endl;
+                }
+
+                sclx_kernel<<<
+                    grid_size,
+                    block_shape.elements(),
+                    local_mem_size,
+                    stream>>>(
+                    f,
+                    metadata,
+                    index_generator,
+                    slice_idx,
+                    slice_size
+                );
+
+                return stream;
+            };
+
+            std::function<sclx::cuda::stream_t()> packaged_task = task_lambda;
+            auto task_future = sclx::cuda::task_scheduler::submit_task(
+                device_id,
+                std::move(packaged_task)
             );
 
-            auto& stream = streams[iter++];
-
-            if constexpr (sclx::detail::_debug_kernel_launch) {
-                std::cout << "  Launching kernel on device " << device_id
-                          << std::endl;
-                std::cout << "      Device slice size: " << slice_size
-                          << std::endl;
-                std::cout << "      Device slice start index: " << slice_idx
-                          << std::endl;
-                std::cout << "      Total slice size: " << total_slice_size
-                          << std::endl;
-            }
-
-            sclx_kernel<<<
-                grid_size,
-                block_shape.elements(),
-                local_mem_size,
-                stream>>>(f, metadata, index_generator, slice_idx, slice_size);
+            streams.push_back(task_future.get());
+            iter++;
         }
 
         if constexpr (sclx::detail::_debug_kernel_launch) {
