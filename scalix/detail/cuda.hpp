@@ -13,6 +13,21 @@ class task_scheduler;
 
 namespace detail {
 
+struct packaged_task_interface {
+    virtual void operator()()             = 0;
+    virtual ~packaged_task_interface() = default;
+};
+
+template<class R>
+struct packaged_task_wrapper : public packaged_task_interface {
+    std::packaged_task<R()> task;
+
+    explicit packaged_task_wrapper(std::packaged_task<R()>&& task)
+        : task(std::move(task)) {}
+
+    void operator()() override { task(); }
+};
+
 class cuda_thread_pool {
   public:
     cuda_thread_pool()                                   = delete;
@@ -30,7 +45,7 @@ class cuda_thread_pool {
     }
 
   private:
-    std::vector<std::queue<std::unique_ptr<std::packaged_task<void()>>>> queues;
+    std::vector<std::queue<std::unique_ptr<packaged_task_interface>>> queues;
     std::vector<std::thread> threads;
     std::vector<std::mutex> queue_mutexes;
     std::atomic_bool stop = false;
@@ -51,7 +66,7 @@ class cuda_thread_pool {
             cudaSetDevice(thread);
 #endif
             while (true) {
-                std::unique_ptr<std::packaged_task<void()>> task;
+                std::unique_ptr<packaged_task_interface> task;
                 {
                     std::lock_guard<std::mutex> lock(queue_mutexes[thread]);
                     if (stop && queues[thread].empty()) {
@@ -85,12 +100,10 @@ class cuda_thread_pool {
         using return_type = std::invoke_result_t<F, Args...>;
         auto task         = std::packaged_task<return_type()>(task_lambda);
         auto future       = task.get_future();
-        {
-            std::lock_guard<std::mutex> lock(queue_mutexes[device_id]);
-            queues[device_id].emplace(
-                new std::packaged_task<void()>(std::move(task))
-            );
-        }
+        std::lock_guard<std::mutex> lock(queue_mutexes[device_id]);
+        queues[device_id].emplace(
+            new packaged_task_wrapper<return_type>(std::move(task))
+        );
         return future;
     }
 };
