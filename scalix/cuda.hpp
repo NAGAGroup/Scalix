@@ -168,6 +168,36 @@ void inline get_last_error_and_throw_if_error(
     cuda_exception::raise_if_not_success(err, location, function_prefix);
 }
 
+struct memory_status_info {
+    size_t free;
+    size_t total;
+};
+
+memory_status_info inline query_memory_status(int device = 0) {
+#ifdef SCALIX_EMULATE_MULTIDEVICE
+    device = 0;
+#endif
+    size_t free, total;
+    cudaError_t err = cudaMemGetInfo(&free, &total);
+    cuda_exception::raise_if_not_success(
+        err,
+        std::experimental::source_location::current()
+    );
+    return {free, total};
+}
+
+namespace host {
+memory_status_info inline query_memory_status() {
+#ifdef _WIN32
+    auto [free, total] = detail::host::query_windows_memory_status();
+    return {free, total};
+#else
+    auto [free, total] = detail::host::query_unix_memory_status();
+    return {free, total};
+#endif
+}
+}  // namespace host
+
 class stream_t {
   public:
     stream_t() = default;

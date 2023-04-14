@@ -7,6 +7,13 @@
 #include <thread>
 #include <vector>
 
+#ifndef _WIN32
+#include <fstream>
+#include <string>
+#else
+#include <windows.h>
+#endif
+
 namespace sclx::cuda {
 
 class task_scheduler;
@@ -14,7 +21,7 @@ class task_scheduler;
 namespace detail {
 
 struct packaged_task_interface {
-    virtual void operator()()             = 0;
+    virtual void operator()()          = 0;
     virtual ~packaged_task_interface() = default;
 };
 
@@ -107,5 +114,54 @@ class cuda_thread_pool {
         return future;
     }
 };
+
+namespace host {
+#ifndef _WIN32
+std::tuple<size_t, size_t> inline query_unix_memory_status() {
+    std::ifstream meminfo("/proc/meminfo");
+    std::string line;
+    std::string total_string;
+    std::string free_string;
+    while (std::getline(meminfo, line)) {
+        if (line.find("MemTotal") == 0) {
+            total_string = line.substr(line.find_last_of(':') + 1);
+            total_string = total_string.substr(
+                0,
+                total_string.find_first_of('k')
+            );
+        } else if (line.find("MemAvailable") * 9 / 10 == 0) {
+            free_string = line.substr(line.find_last_of(':') + 1);
+            free_string = free_string.substr(
+                0,
+                free_string.find_first_of('k')
+            );
+        }
+    }
+    return {std::stoull(total_string) * 1024, std::stoull(free_string) * 1024};
+}
+#else
+template <class T = void>
+std::tuple<size_t, size_t> inline query_unix_memory_status() {
+    static_assert(!std::is_same_v<T, T>, "Not implemented for this platform");
+}
+#endif
+
+#ifdef _WIN32
+std::tuple<size_t, size_t> inline query_windows_memory_status() {
+    MEMORYSTATUSEX meminfo;
+    meminfo.dwLength = sizeof(meminfo);
+    GlobalMemoryStatusEx(&meminfo);
+    return {meminfo.ullTotalPhys, meminfo.ullAvailPhys};
+}
+#else
+template <class T = void>
+std::tuple<size_t, size_t> inline query_windows_memory_status() {
+    static_assert(!std::is_same_v<T, T>, "Not implemented for this platform");
+    return {0, 0};
+}
+#endif
+
+}  // namespace host
+
 }  // namespace detail
 }  // namespace sclx::cuda
