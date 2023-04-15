@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
 // Copyright (c) 2023 Jack Myers
@@ -29,33 +28,69 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
-#pragma once
-
-#include "shape.cuh"
+#include "array.cuh"
 
 namespace sclx {
 
-template<uint Rank>
-class md_range_t : public shape_t<Rank> {
-  public:
-    constexpr md_range_t() = default;
+__host__ bool is_same_device_split(
+    const std::vector<std::tuple<int, size_t, size_t>>& lhs,
+    const std::vector<std::tuple<int, size_t, size_t>>& rhs
+) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < lhs.size(); ++i) {
+        if (std::get<0>(lhs[i]) != std::get<0>(rhs[i])) {
+            return false;
+        }
+        if (std::get<1>(lhs[i]) != std::get<1>(rhs[i])) {
+            return false;
+        }
+        if (std::get<2>(lhs[i]) != std::get<2>(rhs[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 
-    __host__ __device__ constexpr md_range_t(std::initializer_list<size_t> list)
-        : shape_t<Rank>(list) {}
+SCALIX_INSTANTIATE_ARRAY_LIKE(class, array, float, )
+SCALIX_INSTANTIATE_ARRAY_LIKE(class, array, double, )
+SCALIX_INSTANTIATE_ARRAY_LIKE(class, array, int, )
+SCALIX_INSTANTIATE_ARRAY_LIKE(class, array, uint, )
+SCALIX_INSTANTIATE_ARRAY_LIKE(class, array, size_t, )
 
-    __host__ __device__ constexpr explicit md_range_t(const shape_t<Rank>& shape
-    )
-        : shape_t<Rank>(shape) {}
+template<class T, uint Rank>
+using get_device_split_info_t = decltype(get_device_split_info<T, Rank>);
+SCALIX_INSTANTIATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    float,
+    get_device_split_info
+)
+SCALIX_INSTANTIATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    double,
+    get_device_split_info
+)
+SCALIX_INSTANTIATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    int,
+    get_device_split_info
+)
+SCALIX_INSTANTIATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    uint,
+    get_device_split_info
+)
+SCALIX_INSTANTIATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    size_t,
+    get_device_split_info
+)
 
-    __host__ __device__ constexpr md_range_t(const md_range_t& other)
-        : shape_t<Rank>(other) {}
-};
-
-extern template class md_range_t<1>;
-extern template class md_range_t<2>;
-extern template class md_range_t<3>;
-extern template class md_range_t<4>;
-
-}  // namespace sclx
+}

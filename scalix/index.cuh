@@ -108,4 +108,9 @@ class md_index_t : public shape_like_t<Rank> {
     }
 };
 
+extern template class md_index_t<1>;
+extern template class md_index_t<2>;
+extern template class md_index_t<3>;
+extern template class md_index_t<4>;
+
 }  // namespace sclx

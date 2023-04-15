@@ -34,7 +34,7 @@
 #pragma once
 
 #ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ < 600 || defined(WIN32)
+#if __CUDA_ARCH__ < 600 || defined(_WIN32)
 #warning "This code has been optimized for compute capability 6.0 and above, \
 which supports on-demand page migration. If you are using an older compute \
 capability, you may experience performance issues. Windows does not \
@@ -56,6 +56,18 @@ static_assert(false, "This code requires compute capability 5.0 or above.");
 #include <iostream>
 #include <memory>
 #include <vector>
+
+#define SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(Specifier, Target, ValueType, End)   \
+    extern template Specifier Target<ValueType, 1> End;                        \
+    extern template Specifier Target<ValueType, 2> End;                        \
+    extern template Specifier Target<ValueType, 3> End;                        \
+    extern template Specifier Target<ValueType, 4> End;
+
+#define SCALIX_INSTANTIATE_ARRAY_LIKE(Specifier, Target, ValueType, End)       \
+    template Specifier Target<ValueType, 1> End;                               \
+    template Specifier Target<ValueType, 2> End;                               \
+    template Specifier Target<ValueType, 3> End;                               \
+    template Specifier Target<ValueType, 4> End;
 
 namespace sclx {
 
@@ -334,12 +346,18 @@ class array {
 
     array() = default;
 
-    __host__ array(std::initializer_list<size_t> shape, bool call_prefetch = true) : shape_(shape) {
+    __host__
+    array(std::initializer_list<size_t> shape, bool call_prefetch = true)
+        : shape_(shape) {
         data_ = detail::allocate_cuda_usm<T>(elements());
         set_primary_devices(call_prefetch);
     }
 
-    __host__ explicit array(const shape_t<Rank>& shape, bool call_prefetch = true) : shape_(shape) {
+    __host__ explicit array(
+        const shape_t<Rank>& shape,
+        bool call_prefetch = true
+    )
+        : shape_(shape) {
         data_ = detail::allocate_cuda_usm<T>(elements());
         set_primary_devices(call_prefetch);
     }
@@ -348,7 +366,7 @@ class array {
     __host__ array(
         const shape_t<Rank>& shape,
         const detail::unified_ptr<const T>& data,
-        bool call_prefetch = true,
+        bool call_prefetch     = true,
         data_capture_mode mode = data_capture_mode::copy,
         copy_policy policy     = copy_policy::hostdevice
     )
@@ -427,7 +445,10 @@ class array {
         return *this;
     }
 
-    __host__ array& set_primary_devices(const std::vector<int>& devices, bool call_prefetch = true) {
+    __host__ array& set_primary_devices(
+        const std::vector<int>& devices,
+        bool call_prefetch = true
+    ) {
         size_t sig_dim       = shape_[Rank - 1];
         size_t sig_dim_split = (sig_dim + devices.size() - 1) / devices.size();
         shape_t<Rank> split_shape;
@@ -475,7 +496,8 @@ class array {
     // split info is a vector of tuples of the form (device_id, slice_idx,
     // slice_len) where we slice the array along the last dimension
     __host__ array& set_primary_devices(
-        const std::vector<std::tuple<int, size_t, size_t>>& device_split_info, bool call_prefetch = true
+        const std::vector<std::tuple<int, size_t, size_t>>& device_split_info,
+        bool call_prefetch = true
     ) {
         if (memory_info_.get() == nullptr) {
             memory_info_ = detail::make_unified_ptr<mem_info_t>({});
@@ -713,8 +735,11 @@ class array {
 #ifdef __CUDA_ARCH__
             return array<T, Rank - 1>{shape, data};
 #else
-            array<T, Rank - 1> arr{shape, data,
-                false, data_capture_mode::capture};
+            array<T, Rank - 1> arr{
+                shape,
+                data,
+                false,
+                data_capture_mode::capture};
             arr.memory_info_ = memory_info_;
             return arr;
 #endif
@@ -922,25 +947,48 @@ get_device_split_info(const array<T, Rank>& arr) {
     return splits;
 }
 
-__host__ inline bool is_same_device_split(
+__host__ bool is_same_device_split(
     const std::vector<std::tuple<int, size_t, size_t>>& lhs,
     const std::vector<std::tuple<int, size_t, size_t>>& rhs
-) {
-    if (lhs.size() != rhs.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < lhs.size(); ++i) {
-        if (std::get<0>(lhs[i]) != std::get<0>(rhs[i])) {
-            return false;
-        }
-        if (std::get<1>(lhs[i]) != std::get<1>(rhs[i])) {
-            return false;
-        }
-        if (std::get<2>(lhs[i]) != std::get<2>(rhs[i])) {
-            return false;
-        }
-    }
-    return true;
-}
+);
+
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(class, array, float, )
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(class, array, double, )
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(class, array, int, )
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(class, array, uint, )
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(class, array, size_t, )
+
+template<class T, uint Rank>
+using get_device_split_info_t = decltype(get_device_split_info<T, Rank>);
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    float,
+    get_device_split_info
+)
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    double,
+    get_device_split_info
+)
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    int,
+    get_device_split_info
+)
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    uint,
+    get_device_split_info
+)
+SCALIX_EXTERN_TEMPLATE_ARRAY_LIKE(
+    ,
+    __host__ get_device_split_info_t,
+    size_t,
+    get_device_split_info
+)
 
 }  // namespace sclx

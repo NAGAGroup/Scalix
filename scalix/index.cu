@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
 // Copyright (c) 2023 Jack Myers
@@ -29,33 +28,12 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
-#pragma once
-
-#include "shape.cuh"
+#include "index.cuh"
 
 namespace sclx {
-
-template<uint Rank>
-class md_range_t : public shape_t<Rank> {
-  public:
-    constexpr md_range_t() = default;
-
-    __host__ __device__ constexpr md_range_t(std::initializer_list<size_t> list)
-        : shape_t<Rank>(list) {}
-
-    __host__ __device__ constexpr explicit md_range_t(const shape_t<Rank>& shape
-    )
-        : shape_t<Rank>(shape) {}
-
-    __host__ __device__ constexpr md_range_t(const md_range_t& other)
-        : shape_t<Rank>(other) {}
-};
-
-extern template class md_range_t<1>;
-extern template class md_range_t<2>;
-extern template class md_range_t<3>;
-extern template class md_range_t<4>;
-
-}  // namespace sclx
+template class md_index_t<1>;
+template class md_index_t<2>;
+template class md_index_t<3>;
+template class md_index_t<4>;
+}

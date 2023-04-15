@@ -12,8 +12,16 @@ find_package(CUDAToolkit 12.0 REQUIRED)
 
 # scalix shared library
 set(SCALIX_HEADER_FILES
+        scalix/array.cuh
+        scalix/shape.cuh
+        scalix/range.cuh
+        scalix/index.cuh
         scalix/kernel_info.cuh)
 set(SCALIX_SOURCE_FILES
+        scalix/array.cu
+        scalix/shape.cu
+        scalix/range.cu
+        scalix/index.cu
         scalix/kernel_info.cu)
 add_library(scalix SHARED ${SCALIX_HEADER_FILES} ${SCALIX_SOURCE_FILES})
 target_include_directories(scalix PUBLIC ${PROJECT_SOURCE_DIR}/.)
