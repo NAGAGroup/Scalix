@@ -98,4 +98,21 @@ class kernel_info {
     md_index_t<ProblemRank> start_index_;
     int device_id_;
 };
+
+extern template class kernel_info<1, 1>;
+extern template class kernel_info<1, 2>;
+extern template class kernel_info<1, 3>;
+extern template class kernel_info<1, 4>;
+extern template class kernel_info<2, 1>;
+extern template class kernel_info<2, 2>;
+extern template class kernel_info<2, 3>;
+extern template class kernel_info<2, 4>;
+extern template class kernel_info<3, 1>;
+extern template class kernel_info<3, 2>;
+extern template class kernel_info<3, 3>;
+extern template class kernel_info<3, 4>;
+extern template class kernel_info<4, 1>;
+extern template class kernel_info<4, 2>;
+extern template class kernel_info<4, 3>;
+extern template class kernel_info<4, 4>;
 }  // namespace sclx

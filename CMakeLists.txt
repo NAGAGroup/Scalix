@@ -10,18 +10,22 @@ set(CMAKE_CXX_STANDARD 17)
 # require CUDA 12.0 or higher
 find_package(CUDAToolkit 12.0 REQUIRED)
 
-# scalix is a header-only library
-add_library(scalix INTERFACE)
-target_include_directories(scalix INTERFACE ${PROJECT_SOURCE_DIR}/.)
+# scalix shared library
+set(SCALIX_HEADER_FILES
+        scalix/kernel_info.cuh)
+set(SCALIX_SOURCE_FILES
+        scalix/kernel_info.cu)
+add_library(scalix SHARED ${SCALIX_HEADER_FILES} ${SCALIX_SOURCE_FILES})
+target_include_directories(scalix PUBLIC ${PROJECT_SOURCE_DIR}/.)
 target_compile_options(
-  scalix INTERFACE $<$<COMPILE_LANGUAGE:CUDA>: --extended-lambda
-                   --expt-relaxed-constexpr >)
+        scalix PUBLIC $<$<COMPILE_LANGUAGE:CUDA>: --extended-lambda
+        --expt-relaxed-constexpr >)
 
 # if SCALIX_DEBUG_KERNEL_LAUNCH is on, then useful diagnostic information is
 # printed to stdout when a kernel is launched.
 option(SCALIX_DEBUG_KERNEL_LAUNCH "Enable debug output for kernel launches" OFF)
 if(SCALIX_DEBUG_KERNEL_LAUNCH)
-  target_compile_definitions(scalix INTERFACE SCALIX_DEBUG_KERNEL_LAUNCH)
+  target_compile_definitions(scalix PUBLIC SCALIX_DEBUG_KERNEL_LAUNCH)
 endif()
 
 # if SCALIX_EMULATE_MULTIDEVICE is set to a value other than 0, then
@@ -34,7 +38,7 @@ if(DEFINED SCALIX_EMULATE_MULTIDEVICE)
       STATUS
         "SCALIX_EMULATE_MULTIDEVICE is set to ${SCALIX_EMULATE_MULTIDEVICE}")
     target_compile_definitions(
-      scalix INTERFACE SCALIX_EMULATE_MULTIDEVICE=${SCALIX_EMULATE_MULTIDEVICE})
+      scalix PUBLIC SCALIX_EMULATE_MULTIDEVICE=${SCALIX_EMULATE_MULTIDEVICE})
   endif()
 endif()
 
