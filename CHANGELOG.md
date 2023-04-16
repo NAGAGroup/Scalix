@@ -1,3 +1,29 @@
+# Release 0.3.0
+
+## Features
+
+- Added some useful operator overloading for `sclx::md_index_t`
+- Kernels are now provided with a `sclx::kernel_info` object which provides
+  information about the current kernel execution such as global and local thread id's, global vs device range sizes, etc.
+- A reduction algorithm for reducing along the last dimension of a multidimensional array, `sclx::algorithm::reduce_last_dim`. The resulting array has one less dimension than the original array.
+- Better exceptions for identifying where errors occur in the library
+- `sclx::shape_like_t` derivatives can now be constructed from C-style arrays, useful for something like `sclx::shape_t<2>({100, 100})`
+- Added `sclx::zeros` and `sclx::ones` functions for creating arrays of zeros and ones in `scalix/fill.cuh`
+- Added memory query APIs for both host and devices
+- Added a `sclx::cuda::task_scheduler` that guarantees a task is executed on a specific device in its own thread, useful when calling to external libraries like `cuBLAS` 
+
+## API Changes
+
+- `sclx::md_index_t` now has better method names for converting to/from linear indices
+- Returned data pointer for `sclx::array::data()` is no longer constant by default.
+
+## Bug Fixes
+- Fixed memory leak issue in `sclx::detail::unified_ptr` that only occurred for exotic use cases
+- Fixed issues with some APIs not working when using `sclx::array` data type was const-qualified
+- Some bug fixes to the example programs
+
+---
+
 # Release 0.2.0
 
 This release is a result of the work on the `rectangular_partitioner` in the
