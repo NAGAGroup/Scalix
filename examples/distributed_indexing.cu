@@ -43,10 +43,10 @@
  * For fun, we also show the distributed reduce algorithm in action.
  */
 
-#include <scalix/algorithm/reduce.cuh>
-#include <scalix/scalix.cuh>
 #include <chrono>
 #include <iostream>
+#include <scalix/algorithm/reduce.cuh>
+#include <scalix/scalix.cuh>
 #include <thrust/execution_policy.h>
 #include <thrust/random.h>
 

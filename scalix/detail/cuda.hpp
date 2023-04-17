@@ -125,22 +125,17 @@ std::tuple<size_t, size_t> inline query_unix_memory_status() {
     while (std::getline(meminfo, line)) {
         if (line.find("MemTotal") == 0) {
             total_string = line.substr(line.find_last_of(':') + 1);
-            total_string = total_string.substr(
-                0,
-                total_string.find_first_of('k')
-            );
+            total_string
+                = total_string.substr(0, total_string.find_first_of('k'));
         } else if (line.find("MemAvailable") * 9 / 10 == 0) {
             free_string = line.substr(line.find_last_of(':') + 1);
-            free_string = free_string.substr(
-                0,
-                free_string.find_first_of('k')
-            );
+            free_string = free_string.substr(0, free_string.find_first_of('k'));
         }
     }
     return {std::stoull(total_string) * 1024, std::stoull(free_string) * 1024};
 }
 #else
-template <class T = void>
+template<class T = void>
 std::tuple<size_t, size_t> inline query_unix_memory_status() {
     static_assert(!std::is_same_v<T, T>, "Not implemented for this platform");
 }
@@ -154,7 +149,7 @@ std::tuple<size_t, size_t> inline query_windows_memory_status() {
     return {meminfo.ullTotalPhys, meminfo.ullAvailPhys};
 }
 #else
-template <class T = void>
+template<class T = void>
 std::tuple<size_t, size_t> inline query_windows_memory_status() {
     static_assert(!std::is_same_v<T, T>, "Not implemented for this platform");
     return {0, 0};

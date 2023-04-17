@@ -147,9 +147,10 @@ int main() {
 
 ```
 
-The [examples](examples) directory contains a number of examples that demonstrate how to use the library. For every
-new feature we add, we will do our best to add an example that demonstrates its use. As we approach the first stable
-release, we will start to focus on adding proper documentation.
+The [examples](examples) directory contains a number of examples that
+demonstrate how to use the library. For every new feature we add, we will do our
+best to add an example that demonstrates its use. As we approach the first
+stable release, we will start to focus on adding proper documentation.
 
 ## Performance
 
