@@ -132,7 +132,7 @@ std::tuple<size_t, size_t> inline query_unix_memory_status() {
             free_string = free_string.substr(0, free_string.find_first_of('k'));
         }
     }
-    return {std::stoull(total_string) * 1024, std::stoull(free_string) * 1024};
+    return {std::stoull(total_string) * 1000, std::stoull(free_string) * 1000};
 }
 #else
 template<class T = void>

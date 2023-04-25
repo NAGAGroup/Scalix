@@ -189,10 +189,10 @@ memory_status_info inline query_memory_status(int device = 0) {
 namespace host {
 memory_status_info inline query_memory_status() {
 #ifdef _WIN32
-    auto [free, total] = detail::host::query_windows_memory_status();
+    auto [total, free] = detail::host::query_windows_memory_status();
     return {free, total};
 #else
-    auto [free, total] = detail::host::query_unix_memory_status();
+    auto [total, free] = detail::host::query_unix_memory_status();
     return {free, total};
 #endif
 }
