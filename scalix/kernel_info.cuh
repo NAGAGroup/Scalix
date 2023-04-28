@@ -36,7 +36,7 @@
 #include "shape.cuh"
 
 namespace sclx {
-template<uint ProblemRank, uint ThreadBlockRank>
+template<uint ProblemRank=1, uint ThreadBlockRank=1>
 class kernel_info {
   public:
     kernel_info(const kernel_info&)                = default;
