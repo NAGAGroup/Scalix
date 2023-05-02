@@ -157,6 +157,13 @@ struct default_kernel_tag {
                           << std::endl;
             }
 
+            int max_shared_mem_bytes = 1024 * 48;
+            if (local_mem_size > max_shared_mem_bytes) {
+                sclx::throw_exception<std::runtime_error>(
+                    "Local memory size exceeds maximum allowed size",
+                    "sclx::cuda::detail::default_kernel_tag::"
+                );
+            }
             sclx_kernel<<<
                 grid_size,
                 block_shape.elements(),
@@ -232,6 +239,13 @@ struct default_kernel_tag {
                           << std::endl;
             }
 
+            int max_shared_mem_bytes = 1024 * 48;
+            if (local_mem_size > max_shared_mem_bytes) {
+                sclx::throw_exception<std::runtime_error>(
+                    "Local memory size exceeds maximum allowed size",
+                    "sclx::cuda::detail::default_kernel_tag::"
+                );
+            }
             sclx_kernel<<<
                 grid_size,
                 block_shape.elements(),
@@ -253,7 +267,6 @@ struct default_kernel_tag {
 }  // namespace sclx::detail
 
 #define REGISTER_SCALIX_KERNEL_TAG(Tag)                                        \
-                                                                               \
     template<class F, uint RangeRank, uint ThreadBlockRank>                    \
     __global__ void sclx_##Tag(                                                \
         F f,                                                                   \
@@ -371,6 +384,13 @@ struct default_kernel_tag {
                               << std::endl;                                    \
                 }                                                              \
                                                                                \
+                int max_shared_mem_bytes = 1024 * 48;                          \
+                if (local_mem_size > max_shared_mem_bytes) {                   \
+                    sclx::throw_exception<std::runtime_error>(                 \
+                        "Local memory size exceeds maximum allowed size",      \
+                        "sclx::cuda::detail::default_kernel_tag::"             \
+                    );                                                         \
+                }                                                              \
                 sclx_##Tag<<<                                                  \
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
@@ -450,6 +470,13 @@ struct default_kernel_tag {
                         << std::endl;                                          \
                 }                                                              \
                                                                                \
+                int max_shared_mem_bytes = 1024 * 48;                          \
+                if (local_mem_size > max_shared_mem_bytes) {                   \
+                    sclx::throw_exception<std::runtime_error>(                 \
+                        "Local memory size exceeds maximum allowed size",      \
+                        "sclx::cuda::detail::default_kernel_tag::"             \
+                    );                                                         \
+                }                                                              \
                 sclx_##Tag<<<                                                  \
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
