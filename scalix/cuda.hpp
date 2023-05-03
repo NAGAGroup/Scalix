@@ -91,7 +91,11 @@ struct traits {
     static int device_count() {
 #ifndef SCALIX_EMULATE_MULTIDEVICE
         int device_count;
-        cudaGetDeviceCount(&device_count);
+        auto error = cudaGetDeviceCount(&device_count);
+        cuda_exception::raise_if_not_success(
+            error,
+            std::experimental::source_location::current()
+        );
         return device_count;
 #else
         return SCALIX_EMULATE_MULTIDEVICE;
