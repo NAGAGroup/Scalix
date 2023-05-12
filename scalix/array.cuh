@@ -419,24 +419,6 @@ class array {
         return Rank;
     }
 
-    __host__ void assign_from(
-        const array<T, Rank>& other,
-        copy_policy policy = copy_policy::devicedevice
-    ) {
-        if (other.elements() != elements()) {
-            throw_exception<std::runtime_error>(
-                "Cannot assign array of different size",
-                "sclx::array::"
-            );
-        }
-        cudaMemcpy(
-            data_.get(),
-            other.data_.get(),
-            elements() * sizeof(T),
-            static_cast<cudaMemcpyKind>(policy)
-        );
-    }
-
     __host__ array& set_primary_devices(bool call_prefetch = true) {
         int device_count = cuda::traits::device_count();
         std::vector<int> devices(device_count);
