@@ -38,7 +38,7 @@ namespace sclx {
 
 template<class T, class U, uint Rank>
 __host__ void assign_array(
-    const array<const T, Rank>& source,
+    const array<T, Rank>& source,
     array<U, Rank>& result
 ) {
     if (source.elements() != result.elements()) {
