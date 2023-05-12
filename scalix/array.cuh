@@ -427,7 +427,7 @@ class array {
         }
         const auto& old_buf = std::cerr.rdbuf();
         std::cerr.rdbuf(nullptr);
-        set_primary_devices(devices);
+        set_primary_devices(devices, call_prefetch);
         std::cerr.rdbuf(old_buf);
 
         return *this;
@@ -476,7 +476,7 @@ class array {
                 .emplace_back(devices_to_use[d], slice_idx, slice_len);
         }
 
-        set_primary_devices(device_split_info);
+        set_primary_devices(device_split_info, call_prefetch);
 
         return *this;
     };
