@@ -178,15 +178,16 @@ struct memory_status_info {
 };
 
 memory_status_info inline query_memory_status(int device = 0) {
-#ifdef SCALIX_EMULATE_MULTIDEVICE
-    device = 0;
-#endif
     size_t free, total;
     cudaError_t err = cudaMemGetInfo(&free, &total);
     cuda_exception::raise_if_not_success(
         err,
         std::experimental::source_location::current()
     );
+#ifdef SCALIX_EMULATE_MULTIDEVICE
+    free /= SCALIX_EMULATE_MULTIDEVICE;
+    total /= SCALIX_EMULATE_MULTIDEVICE;
+#endif
     return {free, total};
 }
 
