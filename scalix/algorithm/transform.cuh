@@ -37,6 +37,8 @@
 
 namespace sclx::algorithm {
 
+REGISTER_SCALIX_KERNEL_TAG(transform_kernel);
+
 template <class R, class T, uint Rank, class U, class BinaryOp>
 void transform(sclx::array<R, Rank> &result, const sclx::array<T, Rank> &arr, const U& scalar, BinaryOp&& op) {
     if (result.shape() != arr.shape()) {
@@ -44,7 +46,7 @@ void transform(sclx::array<R, Rank> &result, const sclx::array<T, Rank> &arr, co
                                                "sclx::algorithm::");
     }
     sclx::execute_kernel([&](const kernel_handler& handler) {
-        handler.launch(
+        handler.launch<transform_kernel>(
             md_range_t<Rank>(result.shape()),
             result,
             [=] __device__(const md_index_t<Rank>& idx, const auto&) {

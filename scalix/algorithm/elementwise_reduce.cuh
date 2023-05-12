@@ -92,6 +92,8 @@ struct reduce_along_index {
     }
 };
 
+REGISTER_SCALIX_KERNEL_TAG(elementwise_reduce_kernel);
+
 template<class BinaryOp, class R, class T, class U, uint Rank, class... Ts>
 void elementwise_reduce(
     BinaryOp&& op,
@@ -108,7 +110,7 @@ void elementwise_reduce(
     reduce_along_index<R, T, U, Rank, Ts...> functor(a, b, args...);
 
     sclx::execute_kernel([&](const kernel_handler& handler) {
-        handler.launch(
+        handler.launch<elementwise_reduce_kernel>(
             md_range_t<Rank>(result.shape()),
             result,
             [=] __device__(const md_index_t<Rank>& idx, const auto&) {
