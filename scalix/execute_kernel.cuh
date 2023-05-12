@@ -110,7 +110,7 @@ class kernel_handler {
         = cuda::traits::kernel::default_block_shape,
         size_t grid_size = cuda::traits::kernel::default_grid_size
     ) const {
-        launch(
+        launch<KernelTag>(
             range,
             array_list<T, ResultRank, 1>({result}),
             std::forward<F>(f),
@@ -183,7 +183,7 @@ class kernel_handler {
         = cuda::traits::kernel::default_block_shape,
         size_t grid_size = cuda::traits::kernel::default_grid_size
     ) const {
-        launch(
+        launch<KernelTag>(
             index_generator,
             array_list<T, ResultRank, 1>({result}),
             std::forward<F>(f),
