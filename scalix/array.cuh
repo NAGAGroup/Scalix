@@ -350,10 +350,14 @@ class array {
         set_primary_devices(call_prefetch);
     }
 
-#ifndef __CUDA_ARCH__
+    __host__ __device__
+    array(const shape_t<Rank>& shape, detail::unified_ptr<T> data)
+        : shape_(shape),
+          data_(std::move(data)) {}
+
     __host__ array(
         const shape_t<Rank>& shape,
-        const detail::unified_ptr<const T>& data,
+        T* data,
         bool call_prefetch     = true,
         data_capture_mode mode = data_capture_mode::copy,
         copy_policy policy     = copy_policy::hostdevice
@@ -363,23 +367,15 @@ class array {
             data_ = detail::allocate_cuda_usm<T>(elements());
             cudaMemcpy(
                 const_cast<std::remove_const_t<T>*>(data_.get()),
-                data.get(),
+                data,
                 elements() * sizeof(T),
                 static_cast<cudaMemcpyKind>(policy)
             );
         } else {
-            auto ptr = std::make_shared<const float>(1.f);
-            data_    = detail::const_pointer_cast<T>(std::move(data));
+            data_ = detail::unified_ptr<T>{data};
         }
         set_primary_devices(call_prefetch);
     }
-#else
-
-    __device__
-    array(const shape_t<Rank>& shape, const detail::unified_ptr<const T>& data)
-        : shape_(shape),
-          data_(detail::unified_ptr<T>{const_cast<T*>(data.get())}) {}
-#endif
 
     template<class T_ = const T>
     __host__ __device__
@@ -694,7 +690,7 @@ class array {
 #ifdef __CUDA_ARCH__
         return array<T, Rank - IndexRank>{shape, data};
 #else
-        array<T, Rank - IndexRank> arr{shape, data, data_capture_mode::capture};
+        array<T, Rank - IndexRank> arr{shape, data};
         arr.memory_info_ = partial_slice.memory_info_;
         return arr;
 #endif
@@ -723,11 +719,7 @@ class array {
 #ifdef __CUDA_ARCH__
             return array<T, Rank - 1>{shape, data};
 #else
-            array<T, Rank - 1> arr{
-                shape,
-                data,
-                false,
-                data_capture_mode::capture};
+            array<T, Rank - 1> arr{shape, data};
             arr.memory_info_ = memory_info_;
             return arr;
 #endif
@@ -755,7 +747,7 @@ class array {
 #ifdef __CUDA_ARCH__
         return array{shape, data};
 #else
-        array arr{shape, data, false, data_capture_mode::capture};
+        array arr{shape, data};
         arr.memory_info_ = memory_info_;
         return arr;
 #endif
