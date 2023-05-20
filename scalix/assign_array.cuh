@@ -35,12 +35,9 @@
 
 namespace sclx {
 
-
 template<class T, class U, uint Rank>
-__host__ void assign_array(
-    const array<T, Rank>& source,
-    array<U, Rank>& result
-) {
+__host__ void
+assign_array(const array<T, Rank>& source, array<U, Rank>& result) {
     if (source.elements() != result.elements()) {
         throw_exception<std::runtime_error>(
             "Cannot assign array of different size",
@@ -58,4 +55,4 @@ __host__ void assign_array(
     }).get();
 }
 
-}
+}  // namespace sclx

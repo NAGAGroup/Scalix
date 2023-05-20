@@ -32,16 +32,21 @@
 
 #pragma once
 #include "../array.cuh"
+#include "../execute_kernel.cuh"
 #include "../throw_exception.hpp"
 #include "functional.cuh"
-#include "../execute_kernel.cuh"
 
 namespace sclx::algorithm {
 
 REGISTER_SCALIX_KERNEL_TAG(transform_kernel);
 
-template <class R, class T, uint Rank, class U, class BinaryOp>
-void transform(sclx::array<R, Rank> &result, const sclx::array<T, Rank> &arr, const U& scalar, BinaryOp&& op) {
+template<class R, class T, uint Rank, class U, class BinaryOp>
+void transform(
+    sclx::array<R, Rank>& result,
+    const sclx::array<T, Rank>& arr,
+    const U& scalar,
+    BinaryOp&& op
+) {
     if (result.shape() != arr.shape()) {
         throw_exception<std::invalid_argument>("input shapes must match"
                                                "sclx::algorithm::");
@@ -57,4 +62,4 @@ void transform(sclx::array<R, Rank> &result, const sclx::array<T, Rank> &arr, co
     }).get();
 }
 
-}
+}  // namespace sclx::algorithm
