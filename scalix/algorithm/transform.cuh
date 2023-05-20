@@ -34,6 +34,7 @@
 #include "../array.cuh"
 #include "../throw_exception.hpp"
 #include "functional.cuh"
+#include "../execute_kernel.cuh"
 
 namespace sclx::algorithm {
 
