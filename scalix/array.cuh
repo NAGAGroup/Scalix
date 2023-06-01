@@ -388,6 +388,22 @@ class array {
         return new_arr;
     }
 
+    __host__ void copy_range_from(
+        const md_index_t<Rank>& start,
+        const md_index_t<Rank>& end,
+        const T* data,
+        copy_policy policy = copy_policy::hostdevice
+    ) {
+        auto flat_start = start.as_linear(shape_);
+        auto flat_end   = end.as_linear(shape_);
+        cudaMemcpy(
+            data_.get() + flat_start,
+            data,
+            (flat_end - flat_start) * sizeof(T),
+            static_cast<cudaMemcpyKind>(policy)
+        );
+    }
+
     __host__ __device__ T& operator[](const md_index_t<Rank>& index) const {
         return data_.get()[index.as_linear(shape_)];
     }
