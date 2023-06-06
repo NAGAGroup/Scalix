@@ -104,7 +104,7 @@ class unified_ptr {
     unified_ptr() = default;
 
     template<class T_ = const T>
-    __host__ __device__ operator unified_ptr<T_>() const {
+    __host__ __device__ operator unified_ptr<T_>() const { // NOLINT(google-explicit-constructor)
         static_assert(std::is_same_v<const T, T_>, "Invalid cast");
         unified_ptr<T_> ptr;
         ptr.raw_ptr_ = raw_ptr_;
