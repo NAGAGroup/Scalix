@@ -56,6 +56,10 @@ class array_list {
         std::copy(arrays.begin(), arrays.end(), arrays_);
     }
 
+    __host__ explicit array_list(const array<T, Rank>* arrays) {
+        std::copy(arrays, arrays + N, arrays_);
+    }
+
     __host__ explicit array_list(const std::array<array<T, Rank>, N>& arrays) {
         std::copy(arrays.begin(), arrays.end(), arrays_);
     }
