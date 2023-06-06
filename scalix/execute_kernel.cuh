@@ -480,6 +480,11 @@ class local_array {
 
     __host__ __device__ const shape_t<Rank>& shape() const { return shape_; }
 
+    __device__ T* data() const { return data_; }
+
+    __device__ T* begin() const { return data_; }
+    __device__ T* end() const { return data_ + elements(); }
+
   private:
     size_t offset_;
     shape_t<Rank> shape_;
