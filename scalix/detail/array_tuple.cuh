@@ -36,7 +36,7 @@
 namespace sclx::detail {
 
 template<class T>
-__host__ __device__ bool is_last_dim_of_arrays_equal(T&& a) {
+__host__ __device__ bool is_last_dim_of_arrays_equal(const T &a) {
     static_assert(
         is_scalix_array_v<T>,
         "is_last_dim_of_arrays_equal must be called with scalix arrays"
@@ -46,7 +46,7 @@ __host__ __device__ bool is_last_dim_of_arrays_equal(T&& a) {
 
 template<class T1, class T2, class... Types>
 __host__ __device__ bool
-is_last_dim_of_arrays_equal(T1&& a1, T2&& a2, Types&&... arrays) {
+is_last_dim_of_arrays_equal(const T1& a1, const T2& a2, const Types&... arrays) {
     static_assert(
         is_scalix_arrays_v<T1, T2, Types...>,
         "is_last_dim_of_arrays_equal must be called with scalix arrays"
@@ -66,10 +66,7 @@ __host__ __device__ auto apply(F&& f, Tuple t, Types&&... args) {
     } else {
         return apply<
             F,
-            N - 1,
-            Tuple,
-            decltype(thrust::get<N - 1>(t)),
-            Types...>(
+            N - 1>(
             std::forward<F>(f),
             t,
             thrust::get<N - 1>(t),
