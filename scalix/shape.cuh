@@ -34,6 +34,7 @@
 #pragma once
 
 #include "throw_exception.hpp"
+#include "cexpr_memcpy.cuh"
 #include <initializer_list>
 
 namespace sclx {
@@ -49,15 +50,6 @@ __host__ __device__ constexpr bool arrays_equal(const T* a, const T* b) {
         return arrays_equal<N - 1>(a + 1, b + 1);
     }
     return true;
-}
-
-template<uint N>
-__host__ __device__ constexpr void
-cexpr_memcpy(size_t* dest, const size_t* src) {
-    dest[0] = src[0];
-    if constexpr (N > 1) {
-        cexpr_memcpy<N - 1>(dest + 1, src + 1);
-    }
 }
 
 }  // namespace detail
@@ -77,15 +69,15 @@ class shape_like_t {
             );
 #endif
         }
-        detail::cexpr_memcpy<Rank>(shape_, list.begin());
+        cexpr_memcpy<Rank>(shape_, list.begin());
     }
 
     __host__ __device__ constexpr shape_like_t(const shape_like_t& other) {
-        detail::cexpr_memcpy<Rank>(shape_, other.shape_);
+        cexpr_memcpy<Rank>(shape_, other.shape_);
     }
 
     __host__ __device__ constexpr shape_like_t(const size_t (&shape)[Rank]) {
-        detail::cexpr_memcpy<Rank>(shape_, shape);
+        cexpr_memcpy<Rank>(shape_, shape);
     }
 
     __host__ __device__ const size_t& operator[](size_t i) const {
