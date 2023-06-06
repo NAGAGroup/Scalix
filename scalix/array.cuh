@@ -772,6 +772,19 @@ class array {
     template<class T_, uint Rank_>
     friend class array;
 
+    friend void swap(array& lhs, array& rhs) noexcept {
+        auto tmp_data = std::move(lhs.data_);
+        lhs.data_     = std::move(rhs.data_);
+        rhs.data_     = std::move(tmp_data);
+
+        auto tmp_memory_info = std::move(lhs.memory_info_);
+        lhs.memory_info_     = std::move(rhs.memory_info_);
+        rhs.memory_info_     = std::move(tmp_memory_info);
+
+        using std::swap;
+        swap(lhs.shape_, rhs.shape_);
+    }
+
   private:
     detail::unified_ptr<T> data_{};
     shape_t<Rank> shape_{};
