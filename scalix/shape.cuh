@@ -33,8 +33,8 @@
 
 #pragma once
 
-#include "throw_exception.hpp"
 #include "cexpr_memcpy.cuh"
+#include "throw_exception.hpp"
 #include <initializer_list>
 
 namespace sclx {
