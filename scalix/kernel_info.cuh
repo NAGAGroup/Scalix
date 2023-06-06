@@ -81,12 +81,21 @@ class kernel_info {
         );
     }
 
+    __device__ index_t local_thread_linear_id() const {
+        return threadIdx.x;
+    }
+
     __device__ md_index_t<ProblemRank> global_thread_id() const {
         return md_index_t<>::create_from_linear(
             blockIdx.x * blockDim.x + threadIdx.x
                 + start_index_.as_linear(global_range_),
             global_range_
         );
+    }
+
+    __device__ index_t global_thread_linear_id() const {
+        return blockIdx.x * blockDim.x + threadIdx.x
+            + start_index_.as_linear(global_range_);
     }
 
     __host__ __device__ const int& device_id() const { return device_id_; }
