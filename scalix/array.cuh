@@ -420,6 +420,10 @@ class array {
 
     __host__ __device__ const shape_t<Rank>& shape() const { return shape_; }
 
+    __host__ __device__ const size_t& trailing_dimension() const {
+        return shape_[Rank - 1];
+    }
+
     __host__ __device__ detail::unified_ptr<T> data() const { return data_; }
 
     __host__ __device__ T* begin() const { return data_.get(); }
