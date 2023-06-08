@@ -410,7 +410,7 @@ class kernel_handler {
         using generator_t = std::remove_reference_t<IndexGenerator>;
         if (index_generator.index_range()[generator_t::index_rank - 1]
             != thrust::get<0>(static_cast<thrust::tuple<ArrayTypes...>>(result))
-                   .shape()[0]) {
+                   .trailing_dimension()) {
             throw_exception<std::invalid_argument>(
                 "Index generator indices and "
                 "result array must have the same "
