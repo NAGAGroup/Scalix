@@ -493,7 +493,7 @@ class local_array {
 
 template<class F>
 __host__ std::future<void> execute_kernel(F&& f) {
-    return std::async(std::launch::async, [=]() {
+    return std::async(std::launch::async, [=]() mutable {
         cuda::set_device(0);  // initialize cuda
         kernel_handler handler;
         f(handler);
