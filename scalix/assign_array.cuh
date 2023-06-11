@@ -36,7 +36,7 @@
 namespace sclx {
 
 template<class T, class U, uint Rank>
-__host__ void
+__host__ std::future<void>
 assign_array(const array<T, Rank>& source, array<U, Rank>& result) {
     if (source.elements() != result.elements()) {
         throw_exception<std::runtime_error>(
@@ -44,15 +44,16 @@ assign_array(const array<T, Rank>& source, array<U, Rank>& result) {
             "sclx::array::"
         );
     }
-    execute_kernel([&](kernel_handler& handler) {
+    return execute_kernel([=](kernel_handler& handler) {
         handler.launch(
             md_range_t<Rank>(result.shape()),
             result,
-            [=] __device__(const md_index_t<Rank>& index, const auto&) {
-                result[index] = static_cast<U>(source[index]);
+            [=] __device__(const md_index_t<Rank>& index, const auto& info) {
+                result[info.global_thread_linear_id()] =
+                    static_cast<U>(source[info.global_thread_linear_id()]);
             }
         );
-    }).get();
+    });
 }
 
 }  // namespace sclx
