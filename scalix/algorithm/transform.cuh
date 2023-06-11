@@ -55,8 +55,9 @@ void transform(
         handler.launch<transform_kernel>(
             md_range_t<Rank>(result.shape()),
             result,
-            [=] __device__(const md_index_t<Rank>& idx, const auto&) {
-                result[idx] = op(arr[idx], scalar);
+            [=] __device__(const md_index_t<Rank>& idx, const auto& info) {
+                const auto& thread = info.global_thread_linear_id();
+                result[thread] = op(arr[thread], scalar);
             }
         );
     }).get();

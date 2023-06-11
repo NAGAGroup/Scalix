@@ -69,7 +69,7 @@ struct reduce_along_index {
 
     template<class BinaryOp, uint I>
     __host__ __device__ R
-    compute_impl(const md_index_t<Rank>& idx, BinaryOp&& op, const thrust::integral_constant<uint, I>&)
+    compute_impl(const index_t& idx, BinaryOp&& op, const thrust::integral_constant<uint, I>&)
         const {
         if constexpr (I > 0) {
             return op(
@@ -83,7 +83,7 @@ struct reduce_along_index {
 
     template<class BinaryOp>
     __host__ __device__ R
-    compute(const md_index_t<Rank>& idx, BinaryOp&& op) const {
+    compute(const index_t& idx, BinaryOp&& op) const {
         return compute_impl(
             idx,
             op,
@@ -113,11 +113,12 @@ void elementwise_reduce(
         handler.launch<elementwise_reduce_kernel>(
             md_range_t<Rank>(result.shape()),
             result,
-            [=] __device__(const md_index_t<Rank>& idx, const auto&) {
-                result[idx] = functor.compute(idx, op);
+            [=] __device__(const md_index_t<Rank>& idx, const auto& info) {
+                const auto& thread = info.global_thread_linear_id();
+                result[thread] = functor.compute(thread, op);
             }
         );
-    }).get();
+    });
 }
 
 template<class BinaryOp, class R, class T, class U, uint Rank, class... Ts>
