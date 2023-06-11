@@ -595,6 +595,11 @@ class array {
     }
 
     __host__ array& set_read_mostly() {
+#ifndef SCALIX_DISABLE_SINGLE_DEVICE_OPTIMIZATION
+        if (cuda::traits::device_count() == 1) {
+            return *this;
+        }
+#endif
         cuda::mem_advise(
             data_.get(),
             elements() * sizeof(T),
@@ -605,6 +610,11 @@ class array {
     }
 
     __host__ array& unset_read_mostly() {
+#ifndef SCALIX_DISABLE_SINGLE_DEVICE_OPTIMIZATION
+        if (cuda::traits::device_count() == 1) {
+            return *this;
+        }
+#endif
         cuda::mem_advise(
             data_.get(),
             elements() * sizeof(T),
