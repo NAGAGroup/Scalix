@@ -480,10 +480,10 @@ class local_array {
 
     __host__ __device__ const shape_t<Rank>& shape() const { return shape_; }
 
-    __device__ T* data() const { return data_; }
+    __device__ T* data() { if (!data_) { data_ = reinterpret_cast<T*>(kernel_handler::get_local_mem(offset_)); } return data_; }
 
-    __device__ T* begin() const { return data_; }
-    __device__ T* end() const { return data_ + elements(); }
+    __device__ T* begin() { return data(); }
+    __device__ T* end() { return begin() + elements(); }
 
   private:
     size_t offset_;
