@@ -559,6 +559,12 @@ class array {
             );
         }
 
+#ifndef SCLX_DISABLE_SINGLE_DEVICE_OPTIMIZATION
+        if (cuda::traits::device_count() == 1) {
+            return *this;
+        }
+#endif
+
         size_t offset = 0;
         for (int d = 0; d < device_split_info.size(); ++d) {
             const auto& [device_id, slice_idx, slice_range]
