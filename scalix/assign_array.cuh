@@ -49,8 +49,8 @@ assign_array(const array<T, Rank>& source, array<U, Rank>& result) {
             md_range_t<Rank>(result.shape()),
             result,
             [=] __device__(const md_index_t<Rank>& index, const auto& info) {
-                result[info.global_thread_linear_id()] =
-                    static_cast<U>(source[info.global_thread_linear_id()]);
+                result[info.global_thread_linear_id()]
+                    = static_cast<U>(source[info.global_thread_linear_id()]);
             }
         );
     });

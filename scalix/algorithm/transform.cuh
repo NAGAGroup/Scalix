@@ -57,7 +57,7 @@ std::future<void> transform(
             result,
             [=] __device__(const md_index_t<Rank>& idx, const auto& info) {
                 const auto& thread = info.global_thread_linear_id();
-                result[thread] = op(arr[thread], scalar);
+                result[thread]     = op(arr[thread], scalar);
             }
         );
     });

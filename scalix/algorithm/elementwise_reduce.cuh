@@ -82,8 +82,7 @@ struct reduce_along_index {
     }
 
     template<class BinaryOp>
-    __host__ __device__ R
-    compute(const index_t& idx, BinaryOp&& op) const {
+    __host__ __device__ R compute(const index_t& idx, BinaryOp&& op) const {
         return compute_impl(
             idx,
             op,
@@ -115,7 +114,7 @@ void elementwise_reduce(
             result,
             [=] __device__(const md_index_t<Rank>& idx, const auto& info) {
                 const auto& thread = info.global_thread_linear_id();
-                result[thread] = functor.compute(thread, op);
+                result[thread]     = functor.compute(thread, op);
             }
         );
     });
