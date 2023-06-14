@@ -118,7 +118,7 @@ struct default_kernel_tag {
 
         int iter = 0;
         for (auto& [device_id, slice_idx, slice_size] : device_info) {
-            sclx::cuda::set_device(device_id);  // init context
+            sclx::cuda::set_device(device_id); /* init context */
 
             sclx::md_range_t<RangeRank> device_range{};
             if constexpr (RangeRank > 1) {
@@ -157,14 +157,24 @@ struct default_kernel_tag {
                           << std::endl;
             }
 
-            int max_shared_mem_bytes = 1024 * 48;
-            if (local_mem_size > max_shared_mem_bytes) {
-                sclx::throw_exception<std::runtime_error>(
-                    "Local memory size exceeds maximum allowed size",
-                    "sclx::cuda::detail::default_kernel_tag::"
-                );
-            }
-            sclx_kernel<<<
+            auto kernel
+                = &sclx_kernel<std::decay_t<F>, RangeRank, ThreadBlockRank>;
+
+            uint forty_eight_kb = 1024 * 48;
+            uint maxbytes
+                = std::max(forty_eight_kb, static_cast<uint>(local_mem_size));
+            auto raw_error = cudaFuncSetAttribute(
+                kernel,
+                cudaFuncAttributeMaxDynamicSharedMemorySize,
+                maxbytes
+            );
+            sclx::cuda::cuda_exception::raise_if_not_success(
+                raw_error,
+                std::experimental::source_location(),
+                "sclx::detail::"
+            );
+
+            kernel<<<
                 grid_size,
                 block_shape.elements(),
                 local_mem_size,
@@ -209,7 +219,7 @@ struct default_kernel_tag {
 
         int iter = 0;
         for (auto& [device_id, slice_idx, slice_size] : device_info) {
-            sclx::cuda::set_device(device_id);  // init context
+            sclx::cuda::set_device(device_id); /* init context */
 
             size_t total_threads = index_generator.range().elements();
             size_t max_grid_size = (total_threads + block_shape.elements() - 1)
@@ -239,14 +249,26 @@ struct default_kernel_tag {
                           << std::endl;
             }
 
-            int max_shared_mem_bytes = 1024 * 48;
-            if (local_mem_size > max_shared_mem_bytes) {
-                sclx::throw_exception<std::runtime_error>(
-                    "Local memory size exceeds maximum allowed size",
-                    "sclx::cuda::detail::default_kernel_tag::"
-                );
-            }
-            sclx_kernel<<<
+            auto kernel = &sclx_kernel<
+                std::decay_t<F>,
+                std::decay_t<IndexGenerator>,
+                ThreadBlockRank>;
+
+            uint forty_eight_kb = 1024 * 48;
+            uint maxbytes
+                = std::max(forty_eight_kb, static_cast<uint>(local_mem_size));
+            auto raw_error = cudaFuncSetAttribute(
+                kernel,
+                cudaFuncAttributeMaxDynamicSharedMemorySize,
+                maxbytes
+            );
+            sclx::cuda::cuda_exception::raise_if_not_success(
+                raw_error,
+                std::experimental::source_location(),
+                "sclx::detail::"
+            );
+
+            kernel<<<
                 grid_size,
                 block_shape.elements(),
                 local_mem_size,
@@ -343,7 +365,7 @@ struct default_kernel_tag {
                                                                                \
             int iter = 0;                                                      \
             for (auto& [device_id, slice_idx, slice_size] : device_info) {     \
-                sclx::cuda::set_device(device_id);                             \
+                sclx::cuda::set_device(device_id); /*init context*/            \
                                                                                \
                 sclx::md_range_t<RangeRank> device_range{};                    \
                 if constexpr (RangeRank > 1) {                                 \
@@ -384,14 +406,28 @@ struct default_kernel_tag {
                               << std::endl;                                    \
                 }                                                              \
                                                                                \
-                int max_shared_mem_bytes = 1024 * 48;                          \
-                if (local_mem_size > max_shared_mem_bytes) {                   \
-                    sclx::throw_exception<std::runtime_error>(                 \
-                        "Local memory size exceeds maximum allowed size",      \
-                        "sclx::cuda::detail::default_kernel_tag::"             \
-                    );                                                         \
-                }                                                              \
-                sclx_##Tag<<<                                                  \
+                auto kernel = &sclx_##Tag<                                     \
+                    std::decay_t<F>,                                           \
+                    RangeRank,                                                 \
+                    ThreadBlockRank>;                                          \
+                                                                               \
+                uint forty_eight_kb = 1024 * 48;                               \
+                uint maxbytes       = std::max(                                \
+                    forty_eight_kb,                                      \
+                    static_cast<uint>(local_mem_size)                    \
+                );                                                       \
+                auto raw_error = cudaFuncSetAttribute(                         \
+                    kernel,                                                    \
+                    cudaFuncAttributeMaxDynamicSharedMemorySize,               \
+                    maxbytes                                                   \
+                );                                                             \
+                sclx::cuda::cuda_exception::raise_if_not_success(              \
+                    raw_error,                                                 \
+                    std::experimental::source_location(),                      \
+                    "sclx::detail::"                                           \
+                );                                                             \
+                                                                               \
+                kernel<<<                                                      \
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
                     local_mem_size,                                            \
@@ -437,7 +473,7 @@ struct default_kernel_tag {
                                                                                \
             int iter = 0;                                                      \
             for (auto& [device_id, slice_idx, slice_size] : device_info) {     \
-                sclx::cuda::set_device(device_id);                             \
+                sclx::cuda::set_device(device_id); /* init context */          \
                                                                                \
                 size_t total_threads = index_generator.range().elements();     \
                 size_t max_grid_size                                           \
@@ -470,14 +506,28 @@ struct default_kernel_tag {
                         << std::endl;                                          \
                 }                                                              \
                                                                                \
-                int max_shared_mem_bytes = 1024 * 48;                          \
-                if (local_mem_size > max_shared_mem_bytes) {                   \
-                    sclx::throw_exception<std::runtime_error>(                 \
-                        "Local memory size exceeds maximum allowed size",      \
-                        "sclx::cuda::detail::default_kernel_tag::"             \
-                    );                                                         \
-                }                                                              \
-                sclx_##Tag<<<                                                  \
+                auto kernel = &sclx_##Tag<                                     \
+                    std::decay_t<F>,                                           \
+                    std::decay_t<IndexGenerator>,                              \
+                    ThreadBlockRank>;                                          \
+                                                                               \
+                uint forty_eight_kb = 1024 * 48;                               \
+                uint maxbytes       = std::max(                                \
+                    forty_eight_kb,                                      \
+                    static_cast<uint>(local_mem_size)                    \
+                );                                                       \
+                auto raw_error = cudaFuncSetAttribute(                         \
+                    kernel,                                                    \
+                    cudaFuncAttributeMaxDynamicSharedMemorySize,               \
+                    maxbytes                                                   \
+                );                                                             \
+                sclx::cuda::cuda_exception::raise_if_not_success(              \
+                    raw_error,                                                 \
+                    std::experimental::source_location(),                      \
+                    "sclx::detail::"                                           \
+                );                                                             \
+                                                                               \
+                kernel<<<                                                      \
                     grid_size,                                                 \
                     block_shape.elements(),                                    \
                     local_mem_size,                                            \
