@@ -1,3 +1,32 @@
+# Release 0.4.0
+
+## Features
+
+- Kernel launches now throw when requesting too much shared memory
+- More CUDA API error checks
+- Added transformation algorithm for `sclx::array` types
+- Added element-wise reduction algorithm for `sclx::array` types. Algorithm accepts arbitrary number of inputs greater than or equal to 2, allowing for reduction of many arrays in one kernel launch.
+- Can assign one array to another via `sclx::assign_from`
+- When emulating multiple devices, the memory query divides available and total memory by the number of emulated devices.
+- Improved array constructors
+- Can now copy raw pointer data to sub-ranges of arrays
+- Added custom `std::swap` specialization for `sclx::array` types for possible performance improvements
+- Can now construct `sclx::array_list` from pointer to arrays
+- CUDA Unified Memory hints are now disabled if only one device is detected, leading to large performance improvements. Note that this means problems will scale poorly from 1 to 2 devices, due to the performance hit induced by enabling Unified Memory hints. Scaling with >2 devices should be fine. Unified Memory hints can be re-enabled via `SCLX_DISABLE_SINGLE_DEVICE_OPTIMIZATION` preprocessor definition.
+- If a user requests more shared memory than the default `48KiB`, then the runtime will attempt to request more shared memory for the relevant kernel, and will throw if it can't.
+
+## API Changes
+
+- Added backwards-compatible default template parameters for `sclx::kernel_info` allowing the user to provide `const sclx::kernel_info<> &info` to kernels with a thread block rank of `1` and input range of rank `1`, the most common use case.
+
+## Bug Fixes
+
+- Fixed incorrect capture order in memory query APIs that caused `free` and `total` to be swapped
+- Fixed a bugs in macro used to define custom kernel tags
+- Fixed bug in `sclx::array::set_primary_devices` that didn't propagate the prefetch flag down the call stack
+- Fixed issue with kernel launches where the `sclx::kernel_handler` is not passed as a const reference causing compiler errors
+- Fixed a bug in `sclx::local_array` caused by incorrectly marked const methods
+
 # Release 0.3.1
 
 Forgot to run autoformat script before `0.3.0` release. This release is the
