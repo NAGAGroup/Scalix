@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(
   SCALIX
-  VERSION 0.1.0
+  VERSION 0.4.1
   LANGUAGES CXX CUDA)
 
 set(CMAKE_CUDA_STANDARD 17)
