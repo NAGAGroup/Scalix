@@ -1,3 +1,7 @@
+# Release 0.4.1
+
+Minor release, fixed version in `CMakelists.txt`
+
 # Release 0.4.0
 
 ## Features
