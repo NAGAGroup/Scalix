@@ -448,6 +448,8 @@ class kernel_handler {
 template<class T, uint Rank>
 class local_array {
   public:
+    local_array() = default;
+
     __host__ local_array(kernel_handler& handler, const shape_t<Rank>& shape)
         : shape_(shape) {
         offset_ = handler.local_mem_size_;

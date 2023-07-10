@@ -36,6 +36,8 @@ namespace sclx {
 template<class T, uint Rank, uint N>
 class array_list {
   public:
+    array_list() = default;
+
     template<class T_ = const T>
     __host__ operator array_list<T_, Rank, N>() const {
         static_assert(std::is_same_v<T_, const T>, "Can only cast to const");
