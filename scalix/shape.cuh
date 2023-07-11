@@ -33,7 +33,7 @@
 
 #pragma once
 
-#include "cexpr_memcpy.cuh"
+#include "constexpr_assign_array.cuh"
 #include "throw_exception.hpp"
 #include <initializer_list>
 
@@ -69,15 +69,15 @@ class shape_like_t {
             );
 #endif
         }
-        cexpr_memcpy<Rank>(shape_, list.begin());
+        constexpr_assign_array<Rank>(shape_, list.begin());
     }
 
     __host__ __device__ constexpr shape_like_t(const shape_like_t& other) {
-        cexpr_memcpy<Rank>(shape_, other.shape_);
+        constexpr_assign_array<Rank>(shape_, other.shape_);
     }
 
     __host__ __device__ constexpr shape_like_t(const size_t (&shape)[Rank]) {
-        cexpr_memcpy<Rank>(shape_, shape);
+        constexpr_assign_array<Rank>(shape_, shape);
     }
 
     __host__ __device__ const size_t& operator[](size_t i) const {

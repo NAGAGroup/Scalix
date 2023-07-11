@@ -35,10 +35,11 @@
 namespace sclx {
 
 template<uint N, class T>
-__host__ __device__ constexpr void cexpr_memcpy(T* dest, const T* src) {
+__host__ __device__ constexpr void
+constexpr_assign_array(T* dest, const T* src) {
     dest[0] = src[0];
     if constexpr (N > 1) {
-        cexpr_memcpy<N - 1>(dest + 1, src + 1);
+        constexpr_assign_array<N - 1>(dest + 1, src + 1);
     }
 }
 
