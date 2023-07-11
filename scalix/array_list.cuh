@@ -38,11 +38,11 @@ class array_list {
   public:
     array_list() = default;
 
-    __host__ __device__ array_list(const array_list &other) {
+    __host__ __device__ array_list(const array_list& other) {
         constexpr_assign_array<N>(arrays_, other.arrays_);
     }
 
-    __host__ __device__ array_list& operator=(const array_list &other) {
+    __host__ __device__ array_list& operator=(const array_list& other) {
         if (this == &other) {
             return *this;
         }
@@ -50,11 +50,11 @@ class array_list {
         return *this;
     }
 
-    __host__ __device__ array_list(array_list &&other) {
+    __host__ __device__ array_list(array_list&& other) {
         constexpr_assign_array<N>(arrays_, other.arrays_);
     }
 
-    __host__ __device__ array_list& operator=(array_list &&other) {
+    __host__ __device__ array_list& operator=(array_list&& other) {
         if (this == &other) {
             return *this;
         }

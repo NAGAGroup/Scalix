@@ -36,8 +36,8 @@
 #include "../execute_kernel.cuh"
 #include "functional.cuh"
 #include <mutex>
-#include <thrust/execution_policy.h>
 #include <thrust/count.h>
+#include <thrust/execution_policy.h>
 
 namespace sclx::algorithm {
 
