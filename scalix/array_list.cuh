@@ -38,6 +38,30 @@ class array_list {
   public:
     array_list() = default;
 
+    __host__ __device__ array_list(const array_list &other) {
+        constexpr_assign_array<N>(arrays_, other.arrays_);
+    }
+
+    __host__ __device__ array_list& operator=(const array_list &other) {
+        if (this == &other) {
+            return *this;
+        }
+        constexpr_assign_array<N>(arrays_, other.arrays_);
+        return *this;
+    }
+
+    __host__ __device__ array_list(array_list &&other) {
+        constexpr_assign_array<N>(arrays_, other.arrays_);
+    }
+
+    __host__ __device__ array_list& operator=(array_list &&other) {
+        if (this == &other) {
+            return *this;
+        }
+        constexpr_assign_array<N>(arrays_, other.arrays_);
+        return *this;
+    }
+
     template<class T_ = const T>
     __host__ operator array_list<T_, Rank, N>() const {
         static_assert(std::is_same_v<T_, const T>, "Can only cast to const");
@@ -52,7 +76,7 @@ class array_list {
                 "sclx::array_list::"
             );
         }
-        std::copy(arrays.begin(), arrays.end(), arrays_);
+        constexpr_assign_array<N>(arrays_, arrays.begin());
     }
 
     __host__ explicit array_list(const std::vector<array<T, Rank>>& arrays) {
@@ -62,15 +86,15 @@ class array_list {
                 "sclx::array_list::"
             );
         }
-        std::copy(arrays.begin(), arrays.end(), arrays_);
+        constexpr_assign_array<N>(arrays_, arrays.data());
     }
 
     __host__ explicit array_list(const array<T, Rank>* arrays) {
-        std::copy(arrays, arrays + N, arrays_);
+        constexpr_assign_array<N>(arrays_, arrays);
     }
 
     __host__ explicit array_list(const std::array<array<T, Rank>, N>& arrays) {
-        std::copy(arrays.begin(), arrays.end(), arrays_);
+        constexpr_assign_array<N>(arrays_, arrays.data());
     }
 
     __host__ __device__ array<T, Rank>& operator[](size_t i) {
@@ -92,7 +116,7 @@ class array_list {
     }
 
   private:
-    array<T, Rank> arrays_[N];
+    array<T, Rank> arrays_[N]{};
 };
 
 template<class T, uint Rank>
