@@ -245,11 +245,12 @@ __host__ unified_ptr<T> allocate_cuda_usm(size_t size) {
 }
 
 template<class T>
-__host__ unified_ptr<T> make_unified_ptr(T&& value = T{}) {
-    T* ptr;
-    cudaMallocManaged(&ptr, sizeof(T));
-    cudaMemcpy(ptr, &value, sizeof(T), cudaMemcpyHostToDevice);
-    return unified_ptr<T>{ptr};
+__host__ unified_ptr<std::decay_t<T>> make_unified_ptr(T&& value = T{}) {
+    using value_type = std::decay_t<T>;
+    value_type* ptr;
+    cudaMallocManaged(&ptr, sizeof(value_type));
+    cudaMemcpy(ptr, &value, sizeof(value_type), cudaMemcpyHostToDevice);
+    return unified_ptr<std::decay_t<T>>{ptr};
 }
 
 template<class T, class U>

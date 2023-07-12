@@ -38,29 +38,12 @@ class array_list {
   public:
     array_list() = default;
 
-    __host__ __device__ array_list(const array_list& other) {
-        constexpr_assign_array<N>(arrays_, other.arrays_);
-    }
+    array_list(const array_list& other) = default;
+    array_list& operator=(const array_list& other) = default;
 
-    __host__ __device__ array_list& operator=(const array_list& other) {
-        if (this == &other) {
-            return *this;
-        }
-        constexpr_assign_array<N>(arrays_, other.arrays_);
-        return *this;
-    }
+    array_list(array_list&& other)  noexcept = default;
+    array_list& operator=(array_list&& other)  noexcept = default;
 
-    __host__ __device__ array_list(array_list&& other) {
-        constexpr_assign_array<N>(arrays_, other.arrays_);
-    }
-
-    __host__ __device__ array_list& operator=(array_list&& other) {
-        if (this == &other) {
-            return *this;
-        }
-        constexpr_assign_array<N>(arrays_, other.arrays_);
-        return *this;
-    }
 
     template<class T_ = const T>
     __host__ operator array_list<T_, Rank, N>() const {
