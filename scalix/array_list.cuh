@@ -38,12 +38,11 @@ class array_list {
   public:
     array_list() = default;
 
-    array_list(const array_list& other) = default;
+    array_list(const array_list& other)            = default;
     array_list& operator=(const array_list& other) = default;
 
-    array_list(array_list&& other)  noexcept = default;
-    array_list& operator=(array_list&& other)  noexcept = default;
-
+    array_list(array_list&& other) noexcept            = default;
+    array_list& operator=(array_list&& other) noexcept = default;
 
     template<class T_ = const T>
     __host__ operator array_list<T_, Rank, N>() const {
