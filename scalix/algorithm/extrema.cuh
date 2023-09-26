@@ -60,7 +60,8 @@ __host__ T min_element(const array<T, Rank>& arr) {
 
     T result = std::numeric_limits<T>::max();
 
-//#ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust library
+    // #ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust
+    // library
     for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
 
         auto lambda = [&](int device_id, size_t slice_idx, size_t slice_size) {
@@ -94,7 +95,7 @@ __host__ T min_element(const array<T, Rank>& arr) {
     }
 
     cuda::set_device(current_device);
-//#endif
+    // #endif
     return result;
 }
 
@@ -116,9 +117,10 @@ __host__ T max_element(const array<T, Rank>& arr) {
     auto device_info = get_device_split_info(arr);
 
     T result = std::numeric_limits<T>::min();
-    result = thrust::min(result, std::numeric_limits<T>::lowest());
+    result   = thrust::min(result, std::numeric_limits<T>::lowest());
 
-//#ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust library
+    // #ifndef __CLION_IDE__  // CLion shows incorrect errors with thrust
+    // library
     for (auto& [_device_id, _slice_idx, _slice_size] : device_info) {
 
         auto lambda = [&](int device_id, size_t slice_idx, size_t slice_size) {
@@ -152,7 +154,7 @@ __host__ T max_element(const array<T, Rank>& arr) {
     }
 
     cuda::set_device(current_device);
-//#endif
+    // #endif
     return result;
 }
 
