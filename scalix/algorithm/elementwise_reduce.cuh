@@ -120,7 +120,4 @@ void elementwise_reduce(
     });
 }
 
-template<class BinaryOp, class R, class T, class U, uint Rank, class... Ts>
-using fun = decltype(elementwise_reduce<BinaryOp, R, T, U, Rank, Ts...>);
-
 }  // namespace sclx::algorithm
