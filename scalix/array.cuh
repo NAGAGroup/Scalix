@@ -56,6 +56,9 @@ static_assert(false, "This code requires compute capability 5.0 or above.");
 #include <iostream>
 #include <memory>
 #include <vector>
+#ifndef __CUDA_ARCH__
+#include <cereal/cereal.hpp>
+#endif
 
 namespace sclx {
 
@@ -869,18 +872,18 @@ class array {
 template<class T, uint RankOld, uint RankNew>
 array<T, RankNew> __host__ __device__
 reshape(const array<T, RankOld>& arr, const shape_t<RankNew>& shape) {
+#ifdef __CUDA_ARCH__
+    return array<T, RankNew>{shape, arr.data()};
+#else
     if (arr.shape().elements() != shape.elements()) {
         throw_exception<std::invalid_argument>(
             "Cannot reshape array with different number of elements"
         );
     }
-#ifdef __CUDA_ARCH__
-    return array<T, RankNew>{shape, arr.data()};
-#else
     return array<T, RankNew>{
-        {arr.shape().elements()},
-        arr.data(),
-        true,
+        shape,
+        arr.data().get(),
+        true,  // don't call prefetch
         data_capture_mode::copy,
         copy_policy::devicedevice};
 #endif
@@ -888,15 +891,51 @@ reshape(const array<T, RankOld>& arr, const shape_t<RankNew>& shape) {
 
 template<class T, uint Rank>
 __host__ __device__ array<T, 1> flatten(const array<T, Rank>& arr) {
-#ifdef __CUDA_ARCH__
-    return array<T, 1>{{arr.shape().elements()}, arr.data()};
-#else
-    return array<T, 1>{
-        {arr.shape().elements()},
-        arr.data(),
-        true,
-        data_capture_mode::copy,
-        copy_policy::devicedevice};
+    return reshape(arr, shape_t<1>{arr.elements()});
+}
+
+template<class Archive, class T, uint Rank>
+__host__ void
+serialize_array(Archive& archive, const sclx::array<T, Rank>& array) {
+#ifndef __CUDA_ARCH__
+    for (uint d = 0; d < Rank; ++d) {
+        archive(array.shape()[d]);
+    }
+
+    sclx::array<const T, Rank> const_array = array;
+
+    if constexpr (std::is_same_v<Archive, cereal::BinaryInputArchive>) {
+        archive(cereal::binary_data(
+            array.data().get(),
+            array.elements() * sizeof(T)
+        ));
+    } else {
+        std::for_each(array.begin(), array.end(), [&](auto& element) {
+            archive(element);
+        });
+    }
+#endif
+}
+
+template<class Archive, class T, uint Rank>
+__host__ void deserialize_array(Archive& archive, sclx::array<T, Rank>& array) {
+#ifndef __CUDA_ARCH__
+    sclx::shape_t<Rank> shape;
+    for (uint d = 0; d < Rank; ++d) {
+        archive(shape[d]);
+    }
+    array = sclx::array<T, Rank>{shape};
+
+    if constexpr (std::is_same_v<Archive, cereal::BinaryInputArchive>) {
+        archive(cereal::binary_data(
+            array.data().get(),
+            array.elements() * sizeof(T)
+        ));
+    } else {
+        std::for_each(array.begin(), array.end(), [&](auto& element) {
+            archive(element);
+        });
+    }
 #endif
 }
 
