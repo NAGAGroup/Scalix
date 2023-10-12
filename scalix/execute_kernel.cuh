@@ -452,6 +452,10 @@ class local_array {
 
     __host__ local_array(kernel_handler& handler, const shape_t<Rank>& shape)
         : shape_(shape) {
+        if (handler.local_mem_size_ % sizeof(T) != 0) {
+            handler.local_mem_size_
+                += sizeof(T) - handler.local_mem_size_ % sizeof(T);
+        }
         offset_ = handler.local_mem_size_;
         handler.local_mem_size_ += elements() * sizeof(T);
     }
@@ -494,7 +498,7 @@ class local_array {
     __device__ T* end() { return begin() + elements(); }
 
   private:
-    size_t offset_;
+    size_t offset_{};
     shape_t<Rank> shape_;
     T* data_{};  // will be set by the sclx_kernel
 };
