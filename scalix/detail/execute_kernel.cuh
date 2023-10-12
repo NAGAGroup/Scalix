@@ -59,10 +59,12 @@ sclx_kernel(F f, sclx::kernel_info<RangeRank, ThreadBlockRank> metadata) {
            < metadata.start_index().as_linear(global_range)
                  + metadata.device_range().elements()) {
         f(idx, metadata);
+
         idx = sclx::md_index_t<RangeRank>::create_from_linear(
-            idx.as_linear(global_range) + gridDim.x * blockDim.x,
+            idx.as_linear(global_range) + metadata.grid_stride(),
             global_range
         );
+        metadata.increment_stride_count();
     }
 }
 
@@ -88,9 +90,10 @@ __global__ void sclx_kernel(
         }
 
         global_thread_id = sclx::md_index_t<>::create_from_linear(
-            global_thread_id.as_linear(global_range) + gridDim.x * blockDim.x,
+            global_thread_id.as_linear(global_range) + metadata.grid_stride(),
             global_range
         );
+        metadata.increment_stride_count();
     }
 }
 
@@ -301,10 +304,12 @@ struct default_kernel_tag {
                < metadata.start_index().as_linear(global_range)                \
                      + metadata.device_range().elements()) {                   \
             f(idx, metadata);                                                  \
+                                                                               \
             idx = sclx::md_index_t<RangeRank>::create_from_linear(             \
-                idx.as_linear(global_range) + gridDim.x * blockDim.x,          \
+                idx.as_linear(global_range) + metadata.grid_stride(),          \
                 global_range                                                   \
             );                                                                 \
+            metadata.increment_stride_count();                                 \
         }                                                                      \
     }                                                                          \
                                                                                \
@@ -335,9 +340,10 @@ struct default_kernel_tag {
                                                                                \
             global_thread_id = sclx::md_index_t<>::create_from_linear(         \
                 global_thread_id.as_linear(global_range)                       \
-                    + gridDim.x * blockDim.x,                                  \
+                    + metadata.grid_stride(),                                  \
                 global_range                                                   \
             );                                                                 \
+            metadata.increment_stride_count();                                 \
         }                                                                      \
     }                                                                          \
                                                                                \

@@ -98,11 +98,18 @@ class kernel_info {
 
     __host__ __device__ const int& device_id() const { return device_id_; }
 
+    __device__ uint grid_stride() const { return gridDim.x * blockDim.x; }
+
+    __device__ const uint& stride_count() const { return stride_count_; }
+
+    __device__ void increment_stride_count() { ++stride_count_; }
+
   private:
     shape_t<ThreadBlockRank> thread_block_shape_;
     md_range_t<ProblemRank> global_range_;
     md_range_t<ProblemRank> device_range_;
     md_index_t<ProblemRank> start_index_;
+    uint stride_count_{};
     int device_id_;
 };
 }  // namespace sclx
