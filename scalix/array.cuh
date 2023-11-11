@@ -393,6 +393,13 @@ class array {
         return new_arr;
     }
 
+    template<class T_ = const T>
+    __host__ __device__
+    operator array<const T_, Rank>() const & {  // NOLINT(google-explicit-constructor)
+        static_assert(std::is_same_v<const T, T_> || std::is_same_v<T, std::decay_t<T_>>, "Invalid cast");
+        return reinterpret_cast<const array<const T, Rank>&>(*this);
+    }
+
     __host__ void copy_range_from(
         const md_index_t<Rank>& start,
         const md_index_t<Rank>& end,
