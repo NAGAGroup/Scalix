@@ -96,10 +96,10 @@ REGISTER_SCALIX_KERNEL_TAG(elementwise_reduce_kernel);
 template<class BinaryOp, class R, class T, class U, uint Rank, class... Ts>
 std::future<void> elementwise_reduce(
     BinaryOp&& op,
-    sclx::array<R, Rank>& result,
-    const sclx::array<T, Rank>& a,
-    const sclx::array<U, Rank>& b,
-    const sclx::array<Ts, Rank>&... args
+    sclx::array<R, Rank> result,
+    sclx::array<T, Rank> a,
+    sclx::array<U, Rank> b,
+    sclx::array<Ts, Rank>... args
 ) {
     if (!check_shapes(a, b, args...)) {
         throw_exception<std::invalid_argument>("input shapes must match"

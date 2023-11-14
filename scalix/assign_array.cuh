@@ -37,7 +37,7 @@ namespace sclx {
 
 template<class T, class U, uint Rank>
 __host__ std::future<void>
-assign_array(const array<T, Rank>& source, array<U, Rank>& result) {
+assign_array(array<T, Rank> source, array<U, Rank> result) {
     if (source.elements() != result.elements()) {
         throw_exception<std::runtime_error>(
             "Cannot assign array of different size",
