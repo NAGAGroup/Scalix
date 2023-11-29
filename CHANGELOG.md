@@ -1,3 +1,32 @@
+# Release 0.5.0
+
+This will likely be one of, if not the last release of pre-1.0 Scalix (see `Roadmap.md` for more information). Up to this point, I've been adding features and fixing bugs as I've needed them for my own research. However, that project is coming to a close so Scalix features will likely be paused until the paper is submitted for publication. 
+
+With the project I've been working, a highly parallel fluid simulation method for acoustics, the initial hope was to have a distributed implementation across many GPUs, hence Scalix was born. Unfortunately, the reliance of Scalix on CUDAs unified memory management ended up being a bottleneck for the project, so the distributed implementation was never used, despite having automatic support via Scalix's opaque distributed API, because one particular part of the method was not conducive to CUDAs managed memory heuristics.
+
+Using Scalix extensively for this project has been incredibly useful, but the pre-1.0 APIs are clunky, requiring complicated workarounds for use cases that weren't considered upon initial design. Rather than continuing pre-1.0 development, I will begin development of the 1.0 version, which will use SYCL as a base. Using what I've learned from my usage so far, I'm much more confident in the design of the 1.0 version, and I'm excited to get started. Some proof of concepts have already been explored and the performance is looking promising.
+
+Without further ado, I present tha changes for the final pre-1.0 release of Scalix, except for possible bug fixes. Next major entry in this log will be a beta release of 1.0!
+
+## Features
+- Serialization support for `sclx::array` types using `cereal`
+- STL-like methods:
+  - `sclx::algorithm::count_if`
+  - `sclx::algorithm::min_element`/`max_element`
+  - `sclx::algorithm::elementwise_reduce` now supports concurrent execution'
+  - `sclx::iota`
+- Kernel info now provides information about the grid stride loop, useful for prefetching
+- better `sclx::array` constructors, avoiding macro guards for host vs device implementations
+- Better implicit casting of `sclx::array` non-const types to const types
+
+## API Changes
+- Lots of changes of pass-by-reference to pass-by-value for `sclx::array` types. Not only is the cost of copying shared pointers minimal compared to the typical computational cost of various numerical algorithms, but passing by value improves thread safety.
+- `sclx::cexpr_memcpy` is now `sclx::constexpr_assign_array`, better aligning with what the function actually does
+
+## Bug Fixes
+- `sclx::local_array` now aligns allocations to its respective type's alignment, alleviating a rare bug that caused CUDA kernels to fail with a cryptic error message
+
+
 # Release 0.4.1
 
 Minor release, fixed version in `CMakelists.txt`
