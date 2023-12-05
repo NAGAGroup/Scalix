@@ -6,5 +6,8 @@
       <file path="$PROJECT_DIR$/include" />
       <file path="$PROJECT_DIR$/source" />
     </sourceRoots>
+    <excludeRoots>
+      <file path="$PROJECT_DIR$/node_modules" />
+    </excludeRoots>
   </component>
 </project>

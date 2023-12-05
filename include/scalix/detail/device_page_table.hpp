@@ -100,15 +100,9 @@ class device_page_table : public page_table_interface<PageSize> {
             cgh.host_task([=]() {
                 for (auto i = 0; i < pages_.size(); ++i) {
                     auto page_lock = pages_[i].lock();
-                    auto data_variant = page_lock.data();
-                    if (std::holds_alternative<sclx::byte*>(data_variant)) {
-                        auto data = std::get<sclx::byte*>(data_variant);
-                        host_staging_page_data_[i].data = data;
-                    } else if (std::holds_alternative<std::future<sclx::byte*>>(
-                                   data_variant
-                               )) {
+                    if (!page_lock.is_mpi_local()) {
                         throw std::runtime_error(
-                            "Device page handles should not return futures. "
+                            "Device page handles should not exist on other MPI nodes. "
                             "Assuming "
                             "bad page. This error indicates a bug in Scalix, "
                             "please "
@@ -116,25 +110,14 @@ class device_page_table : public page_table_interface<PageSize> {
                         );
                     }
 
+
+                    auto data_variant = page_lock.data();
+                    auto data = std::get<sclx::byte*>(data_variant);
+                    host_staging_page_data_[i].data = data;
                     auto write_bit_variant = page_lock.write_bit();
-                    if (std::holds_alternative<sclx::write_bit_t>(
-                            write_bit_variant
-                        )) {
-                        auto write_bit
-                            = std::get<sclx::write_bit_t>(write_bit_variant);
-                        host_staging_page_data_[i].write_bit = write_bit;
-                    } else if (std::holds_alternative<
-                                   std::future<sclx::write_bit_t>>(
-                                   write_bit_variant
-                               )) {
-                        throw std::runtime_error(
-                            "Device page handles should not return futures. "
-                            "Assuming "
-                            "bad page. This error indicates a bug in Scalix, "
-                            "please "
-                            "report it."
-                        );
-                    }
+                    auto write_bit
+                        = std::get<sclx::write_bit_t>(write_bit_variant);
+                    host_staging_page_data_[i].write_bit = write_bit;
                 }
             });
         });

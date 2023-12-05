@@ -64,6 +64,8 @@ class page_interface {
     copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
         = 0;
 
+    virtual bool is_mpi_local() { return true; }
+
     virtual ~page_interface() = default;
 };
 
@@ -79,14 +81,10 @@ enum class page_handle_type { strong, weak };
 template<page_size_t PageSize>
 class allocation;
 
-template<
-    page_handle_type HandleType,
-    page_size_t PageSize>
+template<page_handle_type HandleType, page_size_t PageSize>
 class page_handle;
 
-template<
-    page_handle_type HandleType,
-    page_size_t PageSize>
+template<page_handle_type HandleType, page_size_t PageSize>
 struct page_handle_traits {
     using alloc_pointer = std::conditional_t<
         HandleType == page_handle_type::strong,
@@ -98,19 +96,21 @@ struct page_handle_traits {
     using allocation     = allocation<PageSize>;
 };
 
-template<
-    page_handle_type HandleType,
-    page_size_t PageSize>
+template<page_handle_type HandleType, page_size_t PageSize>
 struct page_handle_creator_struct;
 
 template<page_size_t PageSize>
 class page_handle<page_handle_type::weak, PageSize> {
   public:
     static constexpr auto handle_type = page_handle_type::weak;
-    using alloc_pointer = typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
-    using page_pointer  = typename page_handle_traits<handle_type, PageSize>::page_pointer;
-    using page_interface = typename page_handle_traits<handle_type, PageSize>::page_interface;
-    using allocation     = typename page_handle_traits<handle_type, PageSize>::allocation;
+    using alloc_pointer =
+        typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
+    using page_pointer =
+        typename page_handle_traits<handle_type, PageSize>::page_pointer;
+    using page_interface =
+        typename page_handle_traits<handle_type, PageSize>::page_interface;
+    using allocation =
+        typename page_handle_traits<handle_type, PageSize>::allocation;
 
     page_handle() = default;
 
@@ -131,48 +131,7 @@ class page_handle<page_handle_type::weak, PageSize> {
     page_handle<page_handle_type::strong, PageSize> lock() const {
         return page_handle<page_handle_type::strong, PageSize>{
             impl_,
-            alloc_.lock()
-        };
-    }
-
-    sclx::event replace_with(
-        sycl::queue q,
-        page_handle<page_handle_type::strong, PageSize> new_page
-    ) {
-        auto old_page   = this->lock();
-        auto copy_event = new_page.copy_from(
-            q,
-            old_page,
-            page_copy_rules{
-                .expect_valid_src = false,
-                .expect_valid_dst = false}
-        );
-        auto shared_write_bit          = std::make_shared<write_bit_t>();
-        auto write_bit_retrieval_event = q.submit([&](sycl::handler& cgh) {
-            cgh.host_task([=]() {
-                auto write_bit_variant = old_page.write_bit();
-                if (std::holds_alternative<write_bit_t>(write_bit_variant)) {
-                    *shared_write_bit
-                        = std::get<write_bit_t>(write_bit_variant);
-                } else {
-                    auto& write_bit_future
-                        = std::get<std::future<write_bit_t>>(write_bit_variant);
-                    *shared_write_bit = write_bit_future.get();
-                }
-            });
-        });
-        auto write_bit_event           = q.submit([&](sycl::handler& cgh) {
-            cgh.depends_on(write_bit_retrieval_event);
-            cgh.host_task([=]() mutable {
-                new_page.set_write_bit(*shared_write_bit);
-            });
-        });
-        impl_                          = std::move(new_page.impl_);
-        alloc_                         = std::move(new_page.alloc_);
-        return q.submit([&](sycl::handler& cgh) {
-            cgh.depends_on(copy_event);
-            cgh.depends_on(write_bit_event);
-        });
+            alloc_.lock()};
     }
 
     ~page_handle() = default;
@@ -180,12 +139,12 @@ class page_handle<page_handle_type::weak, PageSize> {
     friend class page_handle<page_handle_type::weak, PageSize>;
     friend class page_handle<page_handle_type::strong, PageSize>;
 
-
     friend struct page_handle_creator_struct<handle_type, PageSize>;
 
   private:
     page_handle(page_pointer impl, alloc_pointer alloc)
-        : impl_(std::move(impl)), alloc_(std::move(alloc)) {}
+        : impl_(std::move(impl)),
+          alloc_(std::move(alloc)) {}
 
     page_pointer impl_;
 
@@ -199,10 +158,14 @@ template<page_size_t PageSize>
 class page_handle<page_handle_type::strong, PageSize> {
   public:
     static constexpr auto handle_type = page_handle_type::strong;
-    using alloc_pointer = typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
-    using page_pointer  = typename page_handle_traits<handle_type, PageSize>::page_pointer;
-    using page_interface = typename page_handle_traits<handle_type, PageSize>::page_interface;
-    using allocation     = typename page_handle_traits<handle_type, PageSize>::allocation;
+    using alloc_pointer =
+        typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
+    using page_pointer =
+        typename page_handle_traits<handle_type, PageSize>::page_pointer;
+    using page_interface =
+        typename page_handle_traits<handle_type, PageSize>::page_interface;
+    using allocation =
+        typename page_handle_traits<handle_type, PageSize>::allocation;
 
     page_handle() = default;
 
@@ -246,22 +209,17 @@ class page_handle<page_handle_type::strong, PageSize> {
         return impl_->index();
     }
 
-    bool is_valid() const {
-        return impl_ != nullptr && alloc_ != nullptr;
-    }
+    bool is_valid() const { return impl_ != nullptr && alloc_ != nullptr; }
 
     void release() {
         impl_.reset();
         alloc_.reset();
     }
 
-    sclx::event copy_from(
-        sycl::queue q,
-        page_handle src,
-        page_copy_rules rules = {}
-    ) {
+    sclx::event
+    copy_from(sycl::queue q, page_handle src, page_copy_rules rules = {}) {
         auto skip_copy_variant = should_skip_copy(*this, src, rules);
-        if (std::holds_alternative<bool>(skip_copy_variant)) {
+        if (src.is_mpi_local()) {
             if (std::get<bool>(skip_copy_variant)) {
                 return {};
             }
@@ -270,9 +228,8 @@ class page_handle<page_handle_type::strong, PageSize> {
                 = std::get<std::future<bool>>(skip_copy_variant).share();
             auto skip_copy_ptr   = std::make_shared<bool>();
             auto skip_copy_event = q.submit([&](sycl::handler& cgh) {
-                cgh.host_task([=]() {
-                    *skip_copy_ptr = skip_copy_future.get();
-                });
+                cgh.host_task([=]() { *skip_copy_ptr = skip_copy_future.get(); }
+                );
             });
             return q.submit([=](sycl::handler& cgh) {
                 cgh.depends_on(skip_copy_event);
@@ -280,8 +237,7 @@ class page_handle<page_handle_type::strong, PageSize> {
                     if (*skip_copy_ptr) {
                         return;
                     }
-                    this->impl_->copy_from(q, src.impl_)
-                        .wait_and_throw();
+                    this->impl_->copy_from(q, src.impl_).wait_and_throw();
                 });
             });
         }
@@ -289,11 +245,15 @@ class page_handle<page_handle_type::strong, PageSize> {
         return impl_->copy_from(q, src.impl_);
     }
 
-    sclx::event replace_with(
-        sycl::queue q,
-        page_handle new_page
-    ) {
-        if (!this->is_valid()){
+    bool is_mpi_local() const {
+        if (!is_valid()) {
+            return true;
+        }
+        return impl_->is_mpi_local();
+    }
+
+    sclx::event replace_with(sycl::queue q, page_handle new_page) {
+        if (!this->is_valid()) {
             *this = std::move(new_page);
             return {};
         }
@@ -302,7 +262,7 @@ class page_handle<page_handle_type::strong, PageSize> {
                 "Cannot replace a page with an invalid page"
             );
         }
-        auto &old_page = *this;
+        auto& old_page  = *this;
         auto copy_event = new_page.copy_from(
             q,
             old_page,
@@ -310,27 +270,31 @@ class page_handle<page_handle_type::strong, PageSize> {
                 .expect_valid_src = false,
                 .expect_valid_dst = false}
         );
+        if (old_page.is_mpi_local()) {
+            auto write_bit_variant = old_page.write_bit();
+            auto write_bit         = std::get<write_bit_t>(write_bit_variant);
+            new_page.set_write_bit(write_bit);
+            *this = std::move(new_page);
+            return copy_event;
+        }
+
         auto shared_write_bit          = std::make_shared<write_bit_t>();
         auto write_bit_retrieval_event = q.submit([&](sycl::handler& cgh) {
             cgh.host_task([=]() {
                 auto write_bit_variant = old_page.write_bit();
-                if (std::holds_alternative<write_bit_t>(write_bit_variant)) {
-                    *shared_write_bit
-                        = std::get<write_bit_t>(write_bit_variant);
-                } else {
-                    auto& write_bit_future
-                        = std::get<std::future<write_bit_t>>(write_bit_variant);
-                    *shared_write_bit = write_bit_future.get();
-                }
+                auto& write_bit_future
+                    = std::get<std::future<write_bit_t>>(write_bit_variant);
+                *shared_write_bit = write_bit_future.get();
             });
         });
-        auto write_bit_event           = q.submit([&](sycl::handler& cgh) {
-            cgh.depends_on(write_bit_retrieval_event);
-            cgh.host_task([=]() mutable {
-                new_page.set_write_bit(*shared_write_bit);
-            });
-        });
-        *this                         = std::move(new_page);
+        auto write_bit_event
+            = q.submit([&, write_bit_retrieval_event](sycl::handler& cgh) {
+                  cgh.depends_on(write_bit_retrieval_event);
+                  cgh.host_task([=]() mutable {
+                      new_page.set_write_bit(*shared_write_bit);
+                  });
+              });
+        *this = std::move(new_page);
         return q.submit([copy_event, write_bit_event](sycl::handler& cgh) {
             cgh.depends_on(std::move(copy_event));
             cgh.depends_on(std::move(write_bit_event));
@@ -342,43 +306,43 @@ class page_handle<page_handle_type::strong, PageSize> {
     friend class page_handle<page_handle_type::weak, PageSize>;
     friend class page_handle<page_handle_type::strong, PageSize>;
 
-
     friend struct page_handle_creator_struct<handle_type, PageSize>;
 
-    private:
-      page_handle(page_pointer impl, alloc_pointer alloc)
-          : impl_(std::move(impl)), alloc_(std::move(alloc)) {}
+  private:
+    page_handle(page_pointer impl, alloc_pointer alloc)
+        : impl_(std::move(impl)),
+          alloc_(std::move(alloc)) {}
 
     static std::variant<bool, std::future<bool>> should_skip_copy(
-        const page_handle& dst_lock,
-        const page_handle& src_lock,
+        const page_handle& dst,
+        const page_handle& src,
         page_copy_rules rules
     ) {
         if (rules.expect_valid_dst) {
-            if (!dst_lock.is_valid()) {
+            if (!dst.is_valid()) {
                 throw std::runtime_error(
                     "Destination page is invalid in copy_from"
                 );
             }
         } else {
-            if (dst_lock.is_valid()) {
+            if (dst.is_valid()) {
                 return true;
             }
         }
 
         if (rules.expect_valid_src) {
-            if (!src_lock.is_valid()) {
+            if (!src.is_valid()) {
                 throw std::runtime_error("Source page is invalid in copy_from");
             }
         } else {
-            if (!src_lock.is_valid()) {
+            if (!src.is_valid()) {
                 return true;
             }
         }
 
         if (rules.ignore_unwritten) {
-            auto write_bit_variant = src_lock.write_bit();
-            if (std::holds_alternative<write_bit_t>(write_bit_variant)) {
+            auto write_bit_variant = src.write_bit();
+            if (src.is_mpi_local()) {
                 auto write_bit = std::get<write_bit_t>(write_bit_variant);
                 if (write_bit == 0) {
                     return true;
@@ -396,7 +360,7 @@ class page_handle<page_handle_type::strong, PageSize> {
         }
 
         if (!rules.ignore_page_index) {
-            if (dst_lock.index() != src_lock.index()) {
+            if (dst.index() != src.index()) {
                 throw std::runtime_error(
                     "Page indices do not match in copy_from"
                 );
@@ -414,9 +378,7 @@ class page_handle<page_handle_type::strong, PageSize> {
     alloc_pointer alloc_;
 };
 
-template<
-    page_handle_type HandleType,
-    page_size_t PageSize>
+template<page_handle_type HandleType, page_size_t PageSize>
 struct page_handle_creator_struct {
     static page_handle<HandleType, PageSize> create(
         typename page_handle_traits<HandleType, PageSize>::page_pointer impl,
@@ -426,14 +388,15 @@ struct page_handle_creator_struct {
     }
 };
 
-template<
-    page_handle_type HandleType,
-    page_size_t PageSize>
+template<page_handle_type HandleType, page_size_t PageSize>
 page_handle<HandleType, PageSize> make_page_handle(
     typename page_handle_traits<HandleType, PageSize>::page_pointer impl,
     typename page_handle_traits<HandleType, PageSize>::alloc_pointer alloc
 ) {
-    return page_handle_creator_struct<HandleType, PageSize>::create(impl, alloc);
+    return page_handle_creator_struct<HandleType, PageSize>::create(
+        impl,
+        alloc
+    );
 }
 
 template<class T, page_size_t PageSize = default_page_size>

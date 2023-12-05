@@ -81,8 +81,9 @@ class device_page : public page_interface<PageSize> {
     sclx::event
     copy_from(sycl::queue q, std::shared_ptr<page_interface> src) override {
         auto src_device_id_variant = src->device_id();
-        if (std::holds_alternative<device_id_t>(src_device_id_variant)) {
-            auto src_device_id = std::get<device_id_t>(src_device_id_variant);
+        device_id_t src_device_id;
+        if (src->is_mpi_local()) {
+            src_device_id = std::get<device_id_t>(src_device_id_variant);
             if (src_device_id == no_device) {
                 throw std::runtime_error(
                     "Source page has no device associated with it, cannot "
@@ -90,8 +91,7 @@ class device_page : public page_interface<PageSize> {
                     "report it."
                 );
             }
-        } else if (std::holds_alternative<sclx::mpi_device>(
-                       src_device_id_variant)) {
+        }  else {
             throw std::runtime_error(
                 "Device pages cannot copy from MPI devices yet."
             );
@@ -106,28 +106,13 @@ class device_page : public page_interface<PageSize> {
         }
 
         auto src_data_variant = src->data();
-        if (std::holds_alternative<sclx::byte*>(src_data_variant)) {
-            auto src_data = std::get<sclx::byte*>(src_data_variant);
-            if (src_data == data_) {
-                return {};
-            }
-            return q.submit([&](sycl::handler& cgh) {
-                cgh.memcpy(data_, src_data, allocated_bytes_per_page_);
-            });
-        } else {
-            auto src_data_future
-                = std::get<std::future<sclx::byte*>>(src_data_variant).share();
-            auto shared_src_ptr = std::make_shared<sclx::byte*>();
-            auto src_data_event = q.submit([&](sycl::handler& cgh) {
-                cgh.host_task([=, src_data_future = std::move(src_data_future)](
-                              ) { *shared_src_ptr = src_data_future.get(); });
-            });
-            return q.submit([&, shared_src_ptr](sycl::handler& cgh) {
-                cgh.depends_on(src_data_event);
-                auto src_data = *shared_src_ptr;
-                cgh.memcpy(data_, src_data, allocated_bytes_per_page_);
-            });
+        auto src_data = std::get<sclx::byte*>(src_data_variant);
+        if (src_data == data_) {
+            return {};
         }
+        return q.submit([&](sycl::handler& cgh) {
+            cgh.memcpy(data_, src_data, allocated_bytes_per_page_);
+        });
     }
 
     friend class device_page_table<PageSize>;

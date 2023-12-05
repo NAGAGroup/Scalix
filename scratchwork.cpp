@@ -4,7 +4,7 @@
 
 int main() {
     using value_type = float;
-    auto page_count = sclx::detail::required_pages_for_elements<value_type>(1'000'000'0);
+    auto page_count = sclx::detail::required_pages_for_elements<value_type>(1'000'000'000);
     std::cout << "page_count: " << page_count << std::endl;
     sclx::device device;
     // get a cuda device
