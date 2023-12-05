@@ -3,3 +3,9 @@ cmake-build-*/
 .idea/deployment.xml
 
 .idea/other.xml
+
+node_modules/
+
+package-lock.json
+
+package.json

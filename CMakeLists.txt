@@ -1,57 +1,29 @@
 cmake_minimum_required(VERSION 3.20)
 project(
   SCALIX
-  VERSION 0.4.1
-  LANGUAGES CXX CUDA)
+  VERSION 1.0.0
+  LANGUAGES CXX)
 
 set(CMAKE_CUDA_STANDARD 17)
-set(CMAKE_CXX_STANDARD 17)
 
-# require CUDA 12.0 or higher
-find_package(CUDAToolkit 12.0 REQUIRED)
+add_library(
+  scalix SHARED
+        source/detail/page_handle.cpp
+        include/scalix/detail/page_handle.hpp
+        include/scalix/detail/allocation.hpp
+        source/detail/allocation.cpp
+        include/scalix/detail/page_table.hpp
+        source/detail/page_table.cpp
+        include/scalix/detail/device_allocation.hpp
+        source/detail/device_allocation.cpp
+        include/scalix/find_device.hpp
+        source/find_device.cpp
+        include/scalix/detail/device_page.hpp
+        source/detail/device_page.cpp
+        include/scalix/detail/device_page_table.hpp
+        source/detail/device_page_table.cpp)
 
-# scalix is a header-only library
-add_library(scalix INTERFACE)
-target_include_directories(
-  scalix INTERFACE ${PROJECT_SOURCE_DIR}/.
-                   ${PROJECT_SOURCE_DIR}/extern/cereal/include)
-target_compile_options(
-  scalix INTERFACE $<$<COMPILE_LANGUAGE:CUDA>: --extended-lambda
-                   --expt-relaxed-constexpr >)
+target_include_directories(scalix PUBLIC include)
 
-# if SCALIX_DEBUG_KERNEL_LAUNCH is on, then useful diagnostic information is
-# printed to stdout when a kernel is launched.
-option(SCALIX_DEBUG_KERNEL_LAUNCH "Enable debug output for kernel launches" OFF)
-if(SCALIX_DEBUG_KERNEL_LAUNCH)
-  target_compile_definitions(scalix INTERFACE SCALIX_DEBUG_KERNEL_LAUNCH)
-endif()
-
-# if SCALIX_EMULATE_MULTIDEVICE is set to a value other than 0, then
-# SCALIX_EMULATE_MULTIDEVICE is defined to that value which will emulate the
-# provided number of devices.  This is useful for testing on a single device
-# system.
-if(DEFINED SCALIX_EMULATE_MULTIDEVICE)
-  if(NOT (SCALIX_EMULATE_MULTIDEVICE EQUAL 0))
-    message(
-      STATUS
-        "SCALIX_EMULATE_MULTIDEVICE is set to ${SCALIX_EMULATE_MULTIDEVICE}")
-    target_compile_definitions(
-      scalix INTERFACE SCALIX_EMULATE_MULTIDEVICE=${SCALIX_EMULATE_MULTIDEVICE})
-  endif()
-endif()
-
-# examples
-add_executable(distributed_indexing examples/distributed_indexing.cu)
-target_link_libraries(distributed_indexing scalix)
-
-add_executable(inclusive_scan examples/inclusive_scan.cu)
-target_link_libraries(inclusive_scan scalix)
-
-add_executable(index_generator examples/index_generator.cu)
-target_link_libraries(index_generator scalix)
-
-add_executable(reduce_last_dim examples/reduce_last_dim.cu)
-target_link_libraries(reduce_last_dim scalix)
-
-add_executable(scaling_performance examples/scaling_performance.cu)
-target_link_libraries(scaling_performance scalix)
+add_executable(scratchwork scratchwork.cpp)
+target_link_libraries(scratchwork scalix)

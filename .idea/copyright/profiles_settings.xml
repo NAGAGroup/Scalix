@@ -1,5 +1,8 @@
 <component name="CopyrightManager">
   <settings default="BSD-3-Clause">
+    <module2copyright>
+      <element module="Project Source Files" copyright="BSD-3-Clause" />
+    </module2copyright>
     <LanguageOptions name="ObjectiveC">
       <option name="fileTypeOverride" value="3" />
       <option name="block" value="false" />
