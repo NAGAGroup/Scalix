@@ -1,0 +1,190 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+    - sycl
+
+  pull_request:
+    branches:
+    - sycl
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/nagagroup/sycl-docker-dev:latest
+      options: --user=root
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Clang Format
+      shell: bash
+      run: source /home/sycl/.bashrc; cmake -D CLANG_FORMAT_COMMAND=clang-format -P cmake/clang-format.cmake
+
+    - name: CMake Format
+      shell: bash
+      if: always()
+      run: source /home/sycl/.bashrc; cmake -D CMAKEFORMAT_COMMAND=cmake-format -P cmake/cmake-format.cmake
+
+    - name: Prettier
+      shell: bash
+      if: always()
+      run: source /home/sycl/.bashrc; cmake -P cmake/prettier.cmake
+
+#    - name: Spell check
+#      if: always()
+#      run: cmake -P cmake/spell.cmake
+
+#  coverage:
+#    needs: [lint]
+#
+#    runs-on: ubuntu-latest
+#    container:
+#    image: ghcr.io/nagagroup/sycl-docker-dev:latest
+#    options: --user=root
+#
+#    # To enable coverage, delete the last line from the conditional below and
+#    # edit the "<name>" placeholder to your GitHub name.
+#    # If you do not wish to use codecov, then simply delete this job from the
+#    # workflow.
+#    if: github.repository_owner == '<name>'
+#      && false
+#
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Configure
+#      run: cmake --preset=ci-coverage
+#
+#    - name: Build
+#      run: cmake --build build/coverage -j 2
+#
+#    - name: Test
+#      working-directory: build/coverage
+#      run: ctest --output-on-failure --no-tests=error -j 2
+#
+#    - name: Process coverage info
+#      run: cmake --build build/coverage -t coverage
+#
+#    - name: Submit to codecov.io
+#      uses: codecov/codecov-action@v3
+#      with:
+#        file: build/coverage/coverage.info
+#
+#  sanitize:
+#    needs: [lint]
+#
+#    runs-on: ubuntu-latest
+#    container:
+#    image: ghcr.io/nagagroup/sycl-docker-dev:latest
+#    options: --user=root
+#	  env: { CXX: clang++ }
+#
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - name: Configure
+#      run: cmake --preset=ci-sanitize
+#
+#    - name: Build
+#      run: cmake --build build/sanitize -j 2
+#
+#    - name: Test
+#      working-directory: build/sanitize
+#      env:
+#        ASAN_OPTIONS: "strict_string_checks=1:\
+#          detect_stack_use_after_return=1:\
+#          check_initialization_order=1:\
+#          strict_init_order=1:\
+#          detect_leaks=1"
+#        UBSAN_OPTIONS: print_stacktrace=1
+#      run: ctest --output-on-failure --no-tests=error -j 2
+
+  test:
+    needs: [lint]
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+        type: [shared, static]
+
+        include:
+        - { type: shared, shared: YES }
+        - { type: static, shared: NO }
+
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/nagagroup/sycl-docker-dev:latest
+      options: --user=root
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure
+      shell: bash
+      run: source /home/sycl/.bashrc; cmake --preset=ci-test
+        -D BUILD_SHARED_LIBS=${{ matrix.shared }}
+
+    - name: Build
+      shell: bash
+      run: source /home/sycl/.bashrc; cmake --build build --config Release -j 2
+
+    - name: Install
+      shell: bash
+      run: source /home/sycl/.bashrc; cmake --install build --config Release --prefix prefix
+
+    - name: Test
+      shell: bash
+      working-directory: build
+      run: source /home/sycl/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
+
+#  docs:
+#    # Deploy docs only when builds succeed
+#    needs: [test]
+#
+#    runs-on: ubuntu-latest
+#    container:
+#    image: ghcr.io/nagagroup/sycl-docker-dev:latest
+#  options: --user=root
+#
+#    # To enable, first you have to create an orphaned gh-pages branch:
+#    #
+#    #    git switch --orphan gh-pages
+#    #    git commit --allow-empty -m "Initial commit"
+#    #    git push -u origin gh-pages
+#    #
+#    # Edit the <name> placeholder below to your GitHub name, so this action
+#    # runs only in your repository and no one else's fork. After these, delete
+#    # this comment and the last line in the conditional below.
+#    # If you do not wish to use GitHub Pages for deploying documentation, then
+#    # simply delete this job similarly to the coverage one.
+#    if: github.ref == 'refs/heads/master'
+#      && github.event_name == 'push'
+#      && github.repository_owner == '<name>'
+#      && false
+#
+#    steps:
+#    - uses: actions/checkout@v3
+#
+#    - uses: actions/setup-python@v4
+#      with: { python-version: "3.8" }
+#
+#    - name: Install m.css dependencies
+#      run: pip3 install jinja2 Pygments
+#
+#    - name: Install Doxygen
+#      run: sudo apt-get update -q
+#        && sudo apt-get install doxygen -q -y
+#
+#    - name: Build docs
+#      run: cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
+#        -P cmake/docs-ci.cmake
+#
+#    - name: Deploy docs
+#      uses: peaceiris/actions-gh-pages@v3
+#      with:
+#        github_token: ${{ secrets.GITHUB_TOKEN }}
+#        publish_dir: build/docs/html

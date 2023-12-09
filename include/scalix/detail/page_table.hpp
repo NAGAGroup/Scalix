@@ -46,11 +46,11 @@ class page_table_interface {
         = sclx::detail::page_handle<page_handle_type::weak, PageSize>;
     using iterator = typename std::vector<page_handle>::iterator;
 
-    virtual sclx::event map_page(page_handle page)               = 0;
+    virtual sclx::event map_page(page_handle page)                  = 0;
     virtual std::variant<device_id_t, sclx::mpi_device> device_id() = 0;
-    virtual sclx::event unmap_invalid_pages()                    = 0;
-    virtual iterator begin()                                     = 0;
-    virtual iterator end()                                       = 0;
+    virtual sclx::event unmap_invalid_pages()                       = 0;
+    virtual iterator begin()                                        = 0;
+    virtual iterator end()                                          = 0;
 
     virtual sclx::event make_table_host_accessible()   = 0;
     virtual sclx::event make_table_device_accessible() = 0;

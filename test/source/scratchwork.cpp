@@ -4,7 +4,8 @@
 
 int main() {
     using value_type = float;
-    auto page_count = sclx::detail::required_pages_for_elements<value_type>(1'000'000'000);
+    auto page_count
+        = sclx::detail::required_pages_for_elements<value_type>(1'000'000'000);
     std::cout << "page_count: " << page_count << std::endl;
     sclx::device device;
     // get a cuda device
@@ -18,7 +19,8 @@ int main() {
     sclx::detail::device_page_table page_table{device, page_count};
 
     sclx::detail::allocation_factory<float> factory;
-    factory.allocate_pages_and_reuse_if_possible<sclx::detail::continguous_device_allocation>(
+    factory.allocate_pages_and_reuse_if_possible<
+        sclx::detail::continguous_device_allocation>(
         sclx::find_device(device),
         sclx::page_index_t{0},
         static_cast<sclx::page_index_t>(page_count),
@@ -27,7 +29,8 @@ int main() {
 
     std::vector<sclx::page_index_t> indices(page_count);
     std::iota(indices.begin(), indices.end(), 0);
-    factory.allocate_pages_and_reuse_if_possible<sclx::detail::continguous_device_allocation>(
+    factory.allocate_pages_and_reuse_if_possible<
+        sclx::detail::continguous_device_allocation>(
         sclx::find_device(device),
         indices,
         {}

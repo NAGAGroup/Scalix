@@ -2,7 +2,7 @@
 
 namespace sclx {
 
-device_id_t find_device(const sclx::device& device) {
+SCALIX_EXPORT device_id_t find_device(const sclx::device& device) {
 
     auto device_list = sclx::device::get_devices();
     for (auto& d : device_list) {
@@ -14,4 +14,4 @@ device_id_t find_device(const sclx::device& device) {
     return no_device;
 }
 
-}
+}  // namespace sclx

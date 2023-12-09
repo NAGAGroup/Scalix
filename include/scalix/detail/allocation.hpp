@@ -48,23 +48,26 @@ struct allocation_methods {
     template<class T, class... Args>
     static std::vector<page_handle<page_handle_type::strong, PageSize>>
     allocate_pages_and_reuse_if_possible(
-        device_id_t device_id,
-        const std::vector<page_index_t>& indices,
+        device_id_t /*device_id*/,
+        const std::vector<page_index_t>& /*indices*/,
         const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-            weak_handles,
-        Args&&... args
-    ) {}
+        /*weak_handles*/,
+        Args&&... /*args*/
+    ) {
+        return {};
+    }
 
     template<class T, class... Args>
-    static std::vector<page_handle<page_handle_type::strong, PageSize>>
-    allocate_pages_and_reuse_if_possible(
-        device_id_t device_id,
-        page_index_t first,
-        page_index_t last,
+    static auto allocate_pages_and_reuse_if_possible(
+        device_id_t /*device_id*/,
+        page_index_t /*first*/,
+        page_index_t /*last*/,
         const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-            weak_handles,
-        Args&&... args
-    ) {}
+        /*weak_handles*/,
+        Args&&... /*args*/
+    ) -> std::vector<page_handle<page_handle_type::strong, PageSize>> {
+        return {};
+    }
 };
 
 template<page_size_t PageSize>
@@ -84,9 +87,8 @@ class allocation_factory {
             weak_handles,
         Args&&... args
     ) {
-        auto pages
-            = allocation_methods<AllocationType, PageSize>::
-                template allocate_pages_and_reuse_if_possible<T>(
+        auto pages = allocation_methods<AllocationType, PageSize>::
+            template allocate_pages_and_reuse_if_possible<T>(
                 device_id,
                 indices,
                 weak_handles,

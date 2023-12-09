@@ -50,10 +50,11 @@ class device_page_table : public page_table_interface<PageSize> {
           device_id_(find_device(device)),
           pages_(page_count),
           host_staging_page_data_(page_count),
-          device_accessible_page_data_(
-              sclx::make_unique<page_data<PageSize>[]>(q_, sclx::usm::alloc::device,
-                                                       page_count)
-          ) {}
+          device_accessible_page_data_(sclx::make_unique<page_data<PageSize>[]>(
+              q_,
+              sclx::usm::alloc::device,
+              page_count
+          )) {}
 
     sclx::event map_page(page_handle page) override {
         auto page_lock = page.lock();
@@ -88,7 +89,8 @@ class device_page_table : public page_table_interface<PageSize> {
             cgh.depends_on(copy_queue);
             cgh.host_task([&]() {
                 for (auto i = 0; i < pages_.size(); ++i) {
-                    pages_[i].lock().set_write_bit(host_staging_page_data_[i].write_bit
+                    pages_[i].lock().set_write_bit(
+                        host_staging_page_data_[i].write_bit
                     );
                 }
             });
@@ -102,7 +104,8 @@ class device_page_table : public page_table_interface<PageSize> {
                     auto page_lock = pages_[i].lock();
                     if (!page_lock.is_mpi_local()) {
                         throw std::runtime_error(
-                            "Device page handles should not exist on other MPI nodes. "
+                            "Device page handles should not exist on other MPI "
+                            "nodes. "
                             "Assuming "
                             "bad page. This error indicates a bug in Scalix, "
                             "please "
@@ -110,11 +113,10 @@ class device_page_table : public page_table_interface<PageSize> {
                         );
                     }
 
-
                     auto data_variant = page_lock.data();
-                    auto data = std::get<sclx::byte*>(data_variant);
+                    auto data         = std::get<sclx::byte*>(data_variant);
                     host_staging_page_data_[i].data = data;
-                    auto write_bit_variant = page_lock.write_bit();
+                    auto write_bit_variant          = page_lock.write_bit();
                     auto write_bit
                         = std::get<sclx::write_bit_t>(write_bit_variant);
                     host_staging_page_data_[i].write_bit = write_bit;

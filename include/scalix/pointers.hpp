@@ -54,7 +54,7 @@ constexpr bool is_bounded_array_v<T[N]> = true;
 template<class T>
 class default_delete {
   public:
-    default_delete()                       = default;
+    default_delete()                      = default;
     default_delete(const default_delete&) = default;
     default_delete(default_delete&&)      = default;
     explicit default_delete(sycl::queue q) : q(std::move(q)) {}
@@ -62,9 +62,7 @@ class default_delete {
     default_delete& operator=(const default_delete&) = default;
     default_delete& operator=(default_delete&&)      = default;
 
-    void operator()(std::remove_extent_t<T>* ptr) const {
-        sycl::free(ptr, q);
-    }
+    void operator()(std::remove_extent_t<T>* ptr) const { sycl::free(ptr, q); }
 
   private:
     sycl::queue q;

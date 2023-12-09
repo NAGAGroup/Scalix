@@ -1,0 +1,88 @@
+{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 14,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev-common",
+      "hidden": true,
+      "generator": "Ninja",
+      "inherits": [
+        "clang-tidy",
+        "dev-mode",
+        "cppcheck"
+      ],
+      "cacheVariables": {
+        "BUILD_MCSS_DOCS": "ON"
+      },
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "SYCLDockerDevLocal"
+        }
+      }
+    },
+    {
+      "name": "dev",
+      "binaryDir": "${sourceDir}/build/dev",
+      "inherits": [
+        "dev-common",
+        "ci-linux"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "dev-release",
+      "binaryDir": "${sourceDir}/build/dev-release",
+      "inherits": [
+        "dev"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "dev-shared-lib",
+      "binaryDir": "${sourceDir}/build/dev-shared-lib",
+      "inherits": [
+        "dev-release"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+    {
+      "name": "dev-coverage",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "inherits": [
+        "dev",
+        "coverage-linux"
+      ]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "configuration": "Debug",
+      "jobs": 16
+    },
+    {
+      "name": "dev-release",
+      "configurePreset": "dev-release",
+      "configuration": "Release",
+      "jobs": 16
+    },
+    {
+      "name": "dev-shared-lib",
+      "configurePreset": "dev-shared-lib",
+      "configuration": "Release",
+      "jobs": 16
+    }
+  ]
+}

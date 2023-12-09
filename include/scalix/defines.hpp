@@ -32,6 +32,7 @@
 //------------------------------------------------------------------------------
 
 #pragma once
+#include <scalix/scalix_export.hpp>
 #include <sycl.hpp>
 
 namespace sclx {
@@ -40,13 +41,13 @@ namespace sclx {
 constexpr std::uint32_t default_page_size = 4096;
 
 // types
-using byte      = std::byte;
+using byte        = std::byte;
 using write_bit_t = char;
-using size_t    = std::size_t;
-using index32_t = std::int32_t;
-using index64_t = std::int64_t;
-using uint64_t  = std::uint64_t;
-using uint32_t  = std::uint32_t;
+using size_t      = std::size_t;
+using index32_t   = std::int32_t;
+using index64_t   = std::int64_t;
+using uint64_t    = std::uint64_t;
+using uint32_t    = std::uint32_t;
 
 using page_size_t = std::uint32_t;
 using page_ptr_t  = byte*;
@@ -77,10 +78,10 @@ using sycl::event;
 using sycl::id;
 
 // additional sycl-like types
-using device_id_t = int;
+using device_id_t                    = int;
 constexpr device_id_t host_device_id = 0;
-constexpr device_id_t no_device = -1;
-using rank_id_t   = int;
+constexpr device_id_t no_device      = -1;
+using rank_id_t                      = int;
 struct mpi_device {
     rank_id_t rank;
     device_id_t device_id;

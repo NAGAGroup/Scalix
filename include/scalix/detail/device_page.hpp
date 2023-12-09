@@ -87,11 +87,12 @@ class device_page : public page_interface<PageSize> {
             if (src_device_id == no_device) {
                 throw std::runtime_error(
                     "Source page has no device associated with it, cannot "
-                    "copy from it. This error indicates a bug in Scalix, please "
+                    "copy from it. This error indicates a bug in Scalix, "
+                    "please "
                     "report it."
                 );
             }
-        }  else {
+        } else {
             throw std::runtime_error(
                 "Device pages cannot copy from MPI devices yet."
             );
@@ -106,7 +107,7 @@ class device_page : public page_interface<PageSize> {
         }
 
         auto src_data_variant = src->data();
-        auto src_data = std::get<sclx::byte*>(src_data_variant);
+        auto src_data         = std::get<sclx::byte*>(src_data_variant);
         if (src_data == data_) {
             return {};
         }

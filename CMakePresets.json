@@ -1,0 +1,117 @@
+{
+  "version": 2,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 14,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "cmake-pedantic",
+      "hidden": true,
+      "warnings": {
+        "dev": true,
+        "deprecated": true,
+        "uninitialized": true,
+        "unusedCli": true,
+        "systemVars": false
+      },
+      "errors": {
+        "dev": true,
+        "deprecated": true
+      }
+    },
+    {
+      "name": "dev-mode",
+      "hidden": true,
+      "inherits": "cmake-pedantic",
+      "cacheVariables": {
+        "Scalix_DEVELOPER_MODE": "ON"
+      }
+    },
+    {
+      "name": "cppcheck",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr"
+      }
+    },
+    {
+      "name": "clang-tidy",
+      "hidden": true,
+      "cacheVariables": {
+        "SCALIX_CXX_CLANG_TIDY": "clang-tidy;--header-filter=^${sourceDir}/;--config-file=${sourceDir}/.clang-tidy",
+        "SCALIX_CLANG_TIDY_CXX_FLAGS": "-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=3;-D_GLIBCXX_ASSERTIONS=1;-fstack-protector-strong;-fstack-clash-protection;-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion;-Wcast-qual;-Wformat=2;-Wundef;-Werror=float-equal;-Wshadow;-Wcast-align;-Wunused;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough;-Wextra-semi;-Woverloaded-virtual;-Wnon-virtual-dtor;-Wold-style-cast"
+      }
+    },
+    {
+      "name": "ci-std",
+      "description": "This preset makes sure the project actually builds with at least the specified standard",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_EXTENSIONS": "OFF",
+        "CMAKE_CXX_STANDARD": "20",
+        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
+      }
+    },
+    {
+      "name": "flags-llvm-sycl",
+      "description": "These flags are supported by both GCC and Clang",
+      "hidden": true,
+      "cacheVariables": {
+        "SCALIX_CXX_FLAGS": "-fsycl;-fsycl-targets=nvptx64-nvidia-cuda,spir64_x86_64,spir64_fpga;-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=3;-D_GLIBCXX_ASSERTIONS=1;-fstack-protector-strong;-fstack-clash-protection;-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion;-Wcast-qual;-Wformat=2;-Wundef;-Werror=float-equal;-Wshadow;-Wcast-align;-Wunused;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough;-Wextra-semi;-Woverloaded-virtual;-Wnon-virtual-dtor;-Wold-style-cast",
+        "CMAKE_EXE_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen",
+        "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen"
+      }
+    },
+    {
+      "name": "ci-linux",
+      "generator": "Unix Makefiles",
+      "hidden": true,
+      "inherits": ["flags-llvm-sycl", "ci-std"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SCALIX_SYCL_INCLUDE_ARGS": "-isystem/home/sycl/.local/share/sycl/include/sycl;-isystem/home/sycl/.local/share/sycl/include",
+        "CMAKE_CXX_COMPILER": "/home/sycl/.local/share/sycl/bin/clang++"
+      }
+    },
+    {
+      "name": "coverage-linux",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "inherits": "ci-linux",
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_COVERAGE": "ON",
+        "CMAKE_BUILD_TYPE": "Coverage",
+        "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-inline-functions -fkeep-static-functions",
+        "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "--coverage",
+        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage"
+      }
+    },
+    {
+      "name": "ci-coverage",
+      "inherits": ["coverage-linux", "dev-mode"],
+      "cacheVariables": {
+        "COVERAGE_HTML_COMMAND": ""
+      }
+    },
+    {
+      "name": "ci-sanitize",
+      "binaryDir": "${sourceDir}/build/sanitize",
+      "inherits": ["ci-linux", "dev-mode"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Sanitize",
+        "CMAKE_CXX_FLAGS_SANITIZE": "-U_FORTIFY_SOURCE -O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common"
+      }
+    },
+    {
+      "name": "ci-build",
+      "binaryDir": "${sourceDir}/build",
+      "hidden": true
+    },
+    {
+      "name": "ci-test",
+      "inherits": ["ci-build", "ci-linux", "clang-tidy", "cppcheck", "dev-mode"]
+    }
+  ]
+}
