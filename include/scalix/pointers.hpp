@@ -59,8 +59,8 @@ class default_delete {
     default_delete(default_delete&&)      = default;
     explicit default_delete(sycl::queue q) : q(std::move(q)) {}
 
-    default_delete& operator=(const default_delete&) = default;
-    default_delete& operator=(default_delete&&)      = default;
+    auto operator=(const default_delete&) -> default_delete& = default;
+    auto operator=(default_delete&&) -> default_delete&      = default;
 
     void operator()(std::remove_extent_t<T>* ptr) const { sycl::free(ptr, q); }
 
@@ -78,8 +78,8 @@ template<class T>
 using weak_ptr = std::weak_ptr<T>;
 
 template<class T, class... Args>
-std::enable_if_t<!std::is_array<T>::value, sclx::unique_ptr<T>>
-make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args) {
+auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args)
+    -> std::enable_if_t<!std::is_array_v<T>, sclx::unique_ptr<T>> {
     auto ptr = unique_ptr<T>(
         sycl::malloc<T>(1, q, alloc),
         ::sclx::default_delete<T>{q}
@@ -90,8 +90,8 @@ make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args) {
 }
 
 template<class T>
-std::enable_if_t<detail::is_unbounded_array_v<T>, sclx::unique_ptr<T>>
-make_unique(sycl::queue q, ::sclx::usm::alloc alloc, std::size_t size) {
+auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, std::size_t size)
+    -> std::enable_if_t<detail::is_unbounded_array_v<T>, sclx::unique_ptr<T>> {
     return unique_ptr<T>(
         sycl::malloc<std::remove_extent_t<T>>(size, q, alloc),
         ::sclx::default_delete<T>{q}
@@ -99,12 +99,13 @@ make_unique(sycl::queue q, ::sclx::usm::alloc alloc, std::size_t size) {
 }
 
 template<class T, class... Args>
-std::enable_if_t<detail::is_bounded_array_v<T>>
-make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&...) = delete;
+auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&...)
+    -> std::enable_if_t<detail::is_bounded_array_v<T>>
+    = delete;
 
 template<class T, class... Args>
-shared_ptr<T>
-make_shared(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args) {
+auto make_shared(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args)
+    -> shared_ptr<T> {
     return shared_ptr<T>(
         make_unique<T>(q, alloc, std::forward<Args>(args)...).release(),
         ::sclx::default_delete<T>{q}

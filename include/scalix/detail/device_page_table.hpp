@@ -56,16 +56,22 @@ class device_page_table : public page_table_interface<PageSize> {
               page_count
           )) {}
 
-    sclx::event map_page(page_handle page) override {
+    auto map_page(page_handle page) -> sclx::event override {
         auto page_lock = page.lock();
+        if (page_lock.index() == sclx::invalid_page) {
+            throw std::runtime_error(
+                "Cannot map an invalid page. This error indicates a bug in "
+                "Scalix, please report it."
+            );
+        }
         return pages_[page_lock.index()].lock().replace_with(q_, page_lock);
     }
 
-    std::variant<device_id_t, sclx::mpi_device> device_id() override {
+    auto device_id() -> std::variant<device_id_t, sclx::mpi_device> override {
         return device_id_;
     }
 
-    sclx::event unmap_invalid_pages() override {
+    auto unmap_invalid_pages() -> sclx::event override {
         for (auto& page : pages_) {
             if (page.lock().is_valid()) {
                 page.release();
@@ -75,11 +81,11 @@ class device_page_table : public page_table_interface<PageSize> {
         return {};
     }
 
-    iterator begin() override { return pages_.begin(); }
+    auto begin() -> iterator override { return pages_.begin(); }
 
-    iterator end() override { return pages_.end(); }
+    auto end() -> iterator override { return pages_.end(); }
 
-    sclx::event make_table_host_accessible() override {
+    auto make_table_host_accessible() -> sclx::event override {
         auto copy_queue = q_.memcpy(
             host_staging_page_data_.data(),
             device_accessible_page_data_.get(),
@@ -88,7 +94,7 @@ class device_page_table : public page_table_interface<PageSize> {
         return q_.submit([&](sycl::handler& cgh) {
             cgh.depends_on(copy_queue);
             cgh.host_task([&]() {
-                for (auto i = 0; i < pages_.size(); ++i) {
+                for (std::size_t i = 0; i < pages_.size(); ++i) {
                     pages_[i].lock().set_write_bit(
                         host_staging_page_data_[i].write_bit
                     );
@@ -97,10 +103,10 @@ class device_page_table : public page_table_interface<PageSize> {
         });
     }
 
-    sclx::event make_table_device_accessible() override {
+    auto make_table_device_accessible() -> sclx::event override {
         auto staging_event = q_.submit([&](sycl::handler& cgh) {
-            cgh.host_task([=]() {
-                for (auto i = 0; i < pages_.size(); ++i) {
+            cgh.host_task([=, this]() {
+                for (std::size_t i = 0; i < pages_.size(); ++i) {
                     auto page_lock = pages_[i].lock();
                     if (!page_lock.is_mpi_local()) {
                         throw std::runtime_error(

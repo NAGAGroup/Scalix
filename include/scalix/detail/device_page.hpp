@@ -58,30 +58,31 @@ class device_page : public page_interface<PageSize> {
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
 
-    std::variant<sclx::byte*, std::future<sclx::byte*>> data() override {
+    auto data()
+        -> std::variant<sclx::byte*, std::future<sclx::byte*>> override {
         return data_;
     }
 
-    std::variant<device_id_t, sclx::mpi_device> device_id() override {
+    auto device_id() -> std::variant<device_id_t, sclx::mpi_device> override {
         return device_id_;
     }
 
-    std::variant<sclx::write_bit_t, std::future<write_bit_t>>
-    write_bit() override {
+    auto write_bit()
+        -> std::variant<sclx::write_bit_t, std::future<write_bit_t>> override {
         return write_bit_;
     }
 
-    sclx::event set_write_bit(sclx::write_bit_t bit) override {
+    auto set_write_bit(sclx::write_bit_t bit) -> sclx::event override {
         write_bit_ = bit;
         return {};
     }
 
-    page_index_t index() override { return index_; }
+    auto index() -> page_index_t override { return index_; }
 
-    sclx::event
-    copy_from(sycl::queue q, std::shared_ptr<page_interface> src) override {
+    auto copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
+        -> sclx::event override {
         auto src_device_id_variant = src->device_id();
-        device_id_t src_device_id;
+        device_id_t src_device_id  = 0;
         if (src->is_mpi_local()) {
             src_device_id = std::get<device_id_t>(src_device_id_variant);
             if (src_device_id == no_device) {
@@ -121,7 +122,7 @@ class device_page : public page_interface<PageSize> {
   private:
     sclx::byte* data_{nullptr};
     write_bit_t write_bit_{0};
-    device_id_t device_id_{-1};
+    device_id_t device_id_{no_device};
     page_index_t index_{0};
     page_size_t allocated_bytes_per_page_{0};
 };

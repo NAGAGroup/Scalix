@@ -19,24 +19,30 @@ int main() {
     sclx::detail::device_page_table page_table{device, page_count};
 
     sclx::detail::allocation_factory<float> factory;
-    factory.allocate_pages_and_reuse_if_possible<
-        sclx::detail::continguous_device_allocation>(
+    factory.allocate_pages<
+        sclx::detail::device_pagination_traits<
+            sclx::detail::pagination_type::contiguous>::
+            template allocation_type,
+        sclx::detail::reuse_pages::if_possible>(
         sclx::find_device(device),
-        sclx::page_index_t{0},
-        static_cast<sclx::page_index_t>(page_count),
+        0,
+        page_count,
         {}
     );
 
     std::vector<sclx::page_index_t> indices(page_count);
     std::iota(indices.begin(), indices.end(), 0);
-    factory.allocate_pages_and_reuse_if_possible<
-        sclx::detail::continguous_device_allocation>(
+    factory.allocate_pages<
+        sclx::detail::device_pagination_traits<
+            sclx::detail::pagination_type::contiguous>::
+            template allocation_type,
+        sclx::detail::reuse_pages::if_possible>(
         sclx::find_device(device),
         indices,
         {}
     );
 
-    auto page_handles = factory.pages();
+    auto page_handles = factory.pages(sclx::find_device(device));
     std::vector<sclx::event> events(page_handles.size());
     std::transform(
         page_handles.begin(),

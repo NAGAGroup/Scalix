@@ -54,17 +54,19 @@ class page_table_interface;
 template<page_size_t PageSize = default_page_size>
 class page_interface {
   public:
-    virtual std::variant<sclx::byte*, std::future<sclx::byte*>> data() = 0;
-    virtual std::variant<device_id_t, sclx::mpi_device> device_id()    = 0;
-    virtual std::variant<sclx::write_bit_t, std::future<write_bit_t>>
-    write_bit()                                              = 0;
-    virtual sclx::event set_write_bit(sclx::write_bit_t bit) = 0;
-    virtual page_index_t index()                             = 0;
-    virtual sclx::event
-    copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
+    virtual auto data() -> std::variant<sclx::byte*, std::future<sclx::byte*>>
+        = 0;
+    virtual auto device_id() -> std::variant<device_id_t, sclx::mpi_device> = 0;
+    virtual auto write_bit()
+        -> std::variant<sclx::write_bit_t, std::future<write_bit_t>>
+        = 0;
+    virtual auto set_write_bit(sclx::write_bit_t bit) -> sclx::event = 0;
+    virtual auto index() -> page_index_t                             = 0;
+    virtual auto copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
+        -> sclx::event
         = 0;
 
-    virtual bool is_mpi_local() { return true; }
+    virtual auto is_mpi_local() -> bool { return true; }
 
     virtual ~page_interface() = default;
 };
@@ -86,14 +88,10 @@ class page_handle;
 
 template<page_handle_type HandleType, page_size_t PageSize>
 struct page_handle_traits {
-    using alloc_pointer = std::conditional_t<
+    using page_pointer = std::conditional_t<
         HandleType == page_handle_type::strong,
-        std::shared_ptr<sclx::detail::allocation<PageSize>>,
-        std::weak_ptr<sclx::detail::allocation<PageSize>>>;
-    using page_pointer
-        = std::shared_ptr<sclx::detail::page_interface<PageSize>>;
-    using page_interface = page_interface<PageSize>;
-    using allocation     = allocation<PageSize>;
+        std::shared_ptr<page_interface<PageSize>>,
+        std::weak_ptr<page_interface<PageSize>>>;
 };
 
 template<page_handle_type HandleType, page_size_t PageSize>
@@ -103,36 +101,23 @@ template<page_size_t PageSize>
 class page_handle<page_handle_type::weak, PageSize> {
   public:
     static constexpr auto handle_type = page_handle_type::weak;
-    using alloc_pointer =
-        typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
     using page_pointer =
         typename page_handle_traits<handle_type, PageSize>::page_pointer;
-    using page_interface =
-        typename page_handle_traits<handle_type, PageSize>::page_interface;
-    using allocation =
-        typename page_handle_traits<handle_type, PageSize>::allocation;
 
     page_handle() = default;
 
-    page_handle(const page_handle&)            = default;
-    page_handle(page_handle&&)                 = default;
-    page_handle& operator=(const page_handle&) = default;
-    page_handle& operator=(page_handle&&)      = default;
+    page_handle(const page_handle&)                    = default;
+    page_handle(page_handle&&)                         = default;
+    auto operator=(const page_handle&) -> page_handle& = default;
+    auto operator=(page_handle&&) -> page_handle&      = default;
 
-    page_handle(page_handle<page_handle_type::strong, PageSize> other)
-        : impl_(std::move(other.impl_)),
-          alloc_(std::move(other.alloc_)) {}
+    explicit page_handle(page_handle<page_handle_type::strong, PageSize> other)
+        : impl_(std::move(other.impl_)) {}
 
-    void release() {
-        impl_.reset();
-        alloc_.reset();
-    }
+    void release() { impl_.reset(); }
 
-    page_handle<page_handle_type::strong, PageSize> lock() const {
-        return page_handle<page_handle_type::strong, PageSize>{
-            impl_,
-            alloc_.lock()
-        };
+    auto lock() const -> page_handle<page_handle_type::strong, PageSize> {
+        return page_handle<page_handle_type::strong, PageSize>{impl_.lock()};
     }
 
     ~page_handle() = default;
@@ -143,53 +128,43 @@ class page_handle<page_handle_type::weak, PageSize> {
     friend struct page_handle_creator_struct<handle_type, PageSize>;
 
   private:
-    page_handle(page_pointer impl, alloc_pointer alloc)
-        : impl_(std::move(impl)),
-          alloc_(std::move(alloc)) {}
+    explicit page_handle(page_pointer impl) : impl_(std::move(impl)) {}
 
     page_pointer impl_;
-
-    // this pointer keeps any allocation that still has a strong page in
-    // use alive, allowing automatic deallocation when the last strong page
-    // associated with the allocation is destroyed
-    alloc_pointer alloc_;
 };
 
 template<page_size_t PageSize>
 class page_handle<page_handle_type::strong, PageSize> {
   public:
     static constexpr auto handle_type = page_handle_type::strong;
-    using alloc_pointer =
-        typename page_handle_traits<handle_type, PageSize>::alloc_pointer;
     using page_pointer =
         typename page_handle_traits<handle_type, PageSize>::page_pointer;
-    using page_interface =
-        typename page_handle_traits<handle_type, PageSize>::page_interface;
-    using allocation =
-        typename page_handle_traits<handle_type, PageSize>::allocation;
 
     page_handle() = default;
 
-    page_handle(const page_handle&)            = default;
-    page_handle(page_handle&&)                 = default;
-    page_handle& operator=(const page_handle&) = default;
-    page_handle& operator=(page_handle&&)      = default;
+    page_handle(const page_handle&)                    = default;
+    page_handle(page_handle&&)                         = default;
+    auto operator=(const page_handle&) -> page_handle& = default;
+    auto operator=(page_handle&&) -> page_handle&      = default;
 
-    std::variant<sclx::byte*, std::future<sclx::byte*>> data() const {
+    [[nodiscard]] auto data() const
+        -> std::variant<sclx::byte*, std::future<sclx::byte*>> {
         if (!is_valid()) {
             return nullptr;
         }
         return impl_->data();
     }
 
-    std::variant<device_id_t, sclx::mpi_device> device_id() const {
+    [[nodiscard]] auto device_id() const
+        -> std::variant<device_id_t, sclx::mpi_device> {
         if (!is_valid()) {
             return no_device;
         }
         return impl_->device_id();
     }
 
-    std::variant<write_bit_t, std::future<write_bit_t>> write_bit() const {
+    [[nodiscard]] auto write_bit() const
+        -> std::variant<write_bit_t, std::future<write_bit_t>> {
         if (!is_valid()) {
             return write_bit_t{0};
         }
@@ -203,22 +178,19 @@ class page_handle<page_handle_type::strong, PageSize> {
         impl_->set_write_bit(bit);
     }
 
-    page_index_t index() const {
+    [[nodiscard]] auto index() const -> page_index_t {
         if (!is_valid()) {
             return invalid_page;
         }
         return impl_->index();
     }
 
-    bool is_valid() const { return impl_ != nullptr && alloc_ != nullptr; }
+    [[nodiscard]] auto is_valid() const -> bool { return impl_ != nullptr; }
 
-    void release() {
-        impl_.reset();
-        alloc_.reset();
-    }
+    void release() { impl_.reset(); }
 
-    sclx::event
-    copy_from(sycl::queue q, page_handle src, page_copy_rules rules = {}) {
+    auto copy_from(sycl::queue q, page_handle src, page_copy_rules rules = {})
+        -> sclx::event {
         auto skip_copy_variant = should_skip_copy(*this, src, rules);
         if (src.is_mpi_local()) {
             if (std::get<bool>(skip_copy_variant)) {
@@ -232,9 +204,9 @@ class page_handle<page_handle_type::strong, PageSize> {
                 cgh.host_task([=]() { *skip_copy_ptr = skip_copy_future.get(); }
                 );
             });
-            return q.submit([=](sycl::handler& cgh) {
+            return q.submit([&](sycl::handler& cgh) {
                 cgh.depends_on(skip_copy_event);
-                cgh.host_task([&, src]() {
+                cgh.host_task([src, skip_copy_ptr, q, this]() {
                     if (*skip_copy_ptr) {
                         return;
                     }
@@ -246,14 +218,14 @@ class page_handle<page_handle_type::strong, PageSize> {
         return impl_->copy_from(q, src.impl_);
     }
 
-    bool is_mpi_local() const {
+    [[nodiscard]] auto is_mpi_local() const -> bool {
         if (!is_valid()) {
             return true;
         }
         return impl_->is_mpi_local();
     }
 
-    sclx::event replace_with(sycl::queue q, page_handle new_page) {
+    auto replace_with(sycl::queue q, page_handle new_page) -> sclx::event {
         if (!this->is_valid()) {
             *this = std::move(new_page);
             return {};
@@ -306,20 +278,16 @@ class page_handle<page_handle_type::strong, PageSize> {
     ~page_handle() = default;
 
     friend class page_handle<page_handle_type::weak, PageSize>;
-    friend class page_handle<page_handle_type::strong, PageSize>;
-
     friend struct page_handle_creator_struct<handle_type, PageSize>;
 
   private:
-    page_handle(page_pointer impl, alloc_pointer alloc)
-        : impl_(std::move(impl)),
-          alloc_(std::move(alloc)) {}
+    explicit page_handle(page_pointer impl) : impl_(std::move(impl)) {}
 
-    static std::variant<bool, std::future<bool>> should_skip_copy(
+    static auto should_skip_copy(
         const page_handle& dst,
         const page_handle& src,
         page_copy_rules rules
-    ) {
+    ) -> std::variant<bool, std::future<bool>> {
         if (rules.expect_valid_dst) {
             if (!dst.is_valid()) {
                 throw std::runtime_error(
@@ -373,32 +341,22 @@ class page_handle<page_handle_type::strong, PageSize> {
     }
 
     page_pointer impl_;
-
-    // this pointer keeps any allocation that still has a strong page in
-    // use alive, allowing automatic deallocation when the last strong page
-    // associated with the allocation is destroyed
-    alloc_pointer alloc_;
 };
 
 template<page_handle_type HandleType, page_size_t PageSize>
 struct page_handle_creator_struct {
-    static page_handle<HandleType, PageSize> create(
-        typename page_handle_traits<HandleType, PageSize>::page_pointer impl,
-        typename page_handle_traits<HandleType, PageSize>::alloc_pointer alloc
-    ) {
-        return page_handle<HandleType, PageSize>(impl, alloc);
+    static auto
+    create(typename page_handle_traits<HandleType, PageSize>::page_pointer impl)
+        -> page_handle<HandleType, PageSize> {
+        return page_handle<HandleType, PageSize>(impl);
     }
 };
 
 template<page_handle_type HandleType, page_size_t PageSize>
-page_handle<HandleType, PageSize> make_page_handle(
-    typename page_handle_traits<HandleType, PageSize>::page_pointer impl,
-    typename page_handle_traits<HandleType, PageSize>::alloc_pointer alloc
-) {
-    return page_handle_creator_struct<HandleType, PageSize>::create(
-        impl,
-        alloc
-    );
+auto make_page_handle(
+    typename page_handle_traits<HandleType, PageSize>::page_pointer impl
+) -> page_handle<HandleType, PageSize> {
+    return page_handle_creator_struct<HandleType, PageSize>::create(impl);
 }
 
 template<class T, page_size_t PageSize = default_page_size>
@@ -411,7 +369,8 @@ struct page_traits {
 };
 
 template<class T, page_size_t PageSize = default_page_size>
-constexpr page_count_t required_pages_for_elements(page_count_t elements) {
+constexpr auto required_pages_for_elements(page_count_t elements)
+    -> page_count_t {
     return (elements + page_traits<T, PageSize>::elements_per_page - 1)
          / page_traits<T, PageSize>::elements_per_page;
 }
@@ -422,13 +381,13 @@ template<
     class PageEndIterator,
     class PageDstIterator,
     page_size_t PageSize = default_page_size>
-sclx::event copy_pages(
+auto copy_pages(
     const sycl::queue& q,
     PageBeginIterator begin,
     PageEndIterator end,
     PageDstIterator dst,
     page_copy_rules rules = {}
-) {
+) -> sclx::event {
     std::vector<sclx::event> copy_events(std::distance(begin, end));
     std::transform(
         begin,

@@ -41,97 +41,182 @@
 
 namespace sclx::detail {
 
-template<template<page_size_t> class AllocationType, page_size_t PageSize>
-struct allocation_methods {
-    static_assert(false, "No allocation methods defined for this type");
+enum class reuse_pages { if_possible, no };
 
-    template<class T, class... Args>
-    static std::vector<page_handle<page_handle_type::strong, PageSize>>
-    allocate_pages_and_reuse_if_possible(
-        device_id_t /*device_id*/,
-        const std::vector<page_index_t>& /*indices*/,
-        const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-        /*weak_handles*/,
-        Args&&... /*args*/
-    ) {
-        return {};
-    }
-
-    template<class T, class... Args>
-    static auto allocate_pages_and_reuse_if_possible(
-        device_id_t /*device_id*/,
-        page_index_t /*first*/,
-        page_index_t /*last*/,
-        const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-        /*weak_handles*/,
-        Args&&... /*args*/
-    ) -> std::vector<page_handle<page_handle_type::strong, PageSize>> {
-        return {};
-    }
+class generic_allocation_handle {
+  public:
+    virtual ~generic_allocation_handle() = default;
 };
 
 template<page_size_t PageSize>
-class allocation {
+class allocation_handle : public generic_allocation_handle {
   public:
-    virtual ~allocation() = default;
+    using page_handle = page_handle<page_handle_type::strong, PageSize>;
+    virtual auto pages() const -> const std::vector<page_handle>& = 0;
+};
+
+class single_device_allocation_anchor;
+
+template<class AllocationHandle>
+auto make_access_anchor(device_id_t device_id, AllocationHandle&& handle)
+    -> single_device_allocation_anchor;
+
+class single_device_allocation_anchor {
+  public:
+    template<class AllocationHandle>
+    friend auto
+    make_access_anchor(device_id_t device_id, AllocationHandle&& handle)
+        -> single_device_allocation_anchor {
+        return single_device_allocation_anchor(
+            device_id,
+            std::forward<AllocationHandle>(handle)
+        );
+    }
+
+    template<page_size_t PageSize>
+    [[nodiscard]] auto handle() const -> const allocation_handle<PageSize>& {
+        return *std::static_pointer_cast<allocation_handle<PageSize>>(handle_);
+    }
+
+    [[nodiscard]] auto device_id() const -> device_id_t { return device_id_; }
+
+    single_device_allocation_anchor() = default;
+    single_device_allocation_anchor(const single_device_allocation_anchor&)
+        = default;
+    single_device_allocation_anchor(single_device_allocation_anchor&&)
+        = default;
+    auto operator=(const single_device_allocation_anchor&)
+        -> single_device_allocation_anchor& = default;
+    auto operator=(single_device_allocation_anchor&&)
+        -> single_device_allocation_anchor& = default;
+
+    ~single_device_allocation_anchor() = default;
+
+  private:
+    template<class AllocationHandle>
+    single_device_allocation_anchor(
+        device_id_t device_id,
+        AllocationHandle&& handle
+    )
+        : device_id_(device_id),
+          handle_(std::make_shared<AllocationHandle>(
+              std::forward<AllocationHandle>(handle)
+          )) {}
+
+    device_id_t device_id_{};
+    std::shared_ptr<generic_allocation_handle> handle_;
+};
+
+template<
+    class T,
+    template<class, reuse_pages, page_size_t>
+    class AllocationType,
+    reuse_pages ReusePagesFlag,
+    page_size_t PageSize,
+    class... Args>
+concept AllocationConcept = requires(
+    AllocationType<T, ReusePagesFlag, PageSize> alloc,
+    Args&&... args
+) {
+    {
+        AllocationType<T, ReusePagesFlag, PageSize>(
+            device_id_t(),
+            std::declval<const std::vector<page_index_t>&>(),
+            std::declval<const std::vector<
+                page_handle<page_handle_type::weak, PageSize>>&>(),
+            std::forward<Args>(args)...
+        )
+    };
+    {
+        AllocationType<T, ReusePagesFlag, PageSize>(
+            device_id_t(),
+            page_index_t(),
+            page_index_t(),
+            std::declval<const std::vector<
+                page_handle<page_handle_type::weak, PageSize>>&>(),
+            std::forward<Args>(args)...
+        )
+    };
+    {
+        static_cast<const AllocationType<T, ReusePagesFlag, PageSize>&>(alloc)
+            .anchor()
+    } -> std::same_as<const single_device_allocation_anchor&>;
 };
 
 template<class T, page_size_t PageSize = default_page_size>
 class allocation_factory {
   public:
-    template<template<page_size_t> class AllocationType, class... Args>
-    void allocate_pages_and_reuse_if_possible(
+    using page_handle = page_handle<page_handle_type::weak, PageSize>;
+    using page_vector = std::vector<page_handle>;
+
+    template<
+        template<class, reuse_pages, page_size_t>
+        class AllocationType,
+        reuse_pages ReusePagesFlag,
+        class... Args>
+        requires AllocationConcept<
+            T,
+            AllocationType,
+            ReusePagesFlag,
+            PageSize,
+            Args...>
+    auto allocate_pages(
         device_id_t device_id,
         const std::vector<page_index_t>& indices,
-        const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-            weak_handles,
+        const page_vector& weak_pages,
         Args&&... args
-    ) {
-        auto pages = allocation_methods<AllocationType, PageSize>::
-            template allocate_pages_and_reuse_if_possible<T>(
-                device_id,
-                indices,
-                weak_handles,
-                std::forward<Args>(args)...
-            );
-        pages_.insert(
-            pages_.end(),
-            std::make_move_iterator(pages.begin()),
-            std::make_move_iterator(pages.end())
-        );
+    ) -> single_device_allocation_anchor {
+        using allocation = AllocationType<T, ReusePagesFlag, PageSize>;
+        allocation
+        alloc(device_id, indices, weak_pages, std::forward<Args>(args)...);
+        add_pages_from_anchor(alloc.anchor());
+        return alloc.anchor();
     }
 
-    template<template<page_size_t> class AllocationType, class... Args>
-    void allocate_pages_and_reuse_if_possible(
+    template<
+        template<class, reuse_pages, page_size_t>
+        class AllocationType,
+        reuse_pages ReusePagesFlag,
+        class... Args>
+        requires AllocationConcept<
+            T,
+            AllocationType,
+            ReusePagesFlag,
+            PageSize,
+            Args...>
+    auto allocate_pages(
         device_id_t device_id,
         page_index_t first,
         page_index_t last,
-        const std::vector<page_handle<page_handle_type::weak, PageSize>>&
-            weak_handles,
+        const page_vector& weak_pages,
         Args&&... args
-    ) {
-        auto pages = allocation_methods<AllocationType, PageSize>::
-            template allocate_pages_and_reuse_if_possible<T>(
-                device_id,
-                first,
-                last,
-                weak_handles,
-                std::forward<Args>(args)...
-            );
-        pages_.insert(
-            pages_.end(),
-            std::make_move_iterator(pages.begin()),
-            std::make_move_iterator(pages.end())
-        );
+    ) -> single_device_allocation_anchor {
+        using allocation = AllocationType<T, ReusePagesFlag, PageSize>;
+        allocation
+        alloc(device_id, first, last, weak_pages, std::forward<Args>(args)...);
+        add_pages_from_anchor(alloc.anchor());
+        return alloc.anchor();
     }
 
-    const std::vector<page_handle<page_handle_type::strong, PageSize>>&
-    pages() const {
-        return pages_;
+    void add_pages_from_anchor(const single_device_allocation_anchor& anchor) {
+        const auto& handle = anchor.handle<PageSize>();
+        auto& device_pages = pages_[anchor.device_id()];
+        std::transform(
+            handle.pages().begin(),
+            handle.pages().end(),
+            std::back_inserter(device_pages),
+            [](auto& page) { return page_handle(page); }
+        );
+        anchors_.push_back(anchor);
+    }
+
+    auto pages(device_id_t device_id) -> page_vector& {
+        return pages_[device_id];
     }
 
   private:
-    std::vector<page_handle<page_handle_type::strong, PageSize>> pages_;
+    std::unordered_map<device_id_t, page_vector> pages_;
+    std::vector<single_device_allocation_anchor> anchors_;
 };
 
 }  // namespace sclx::detail

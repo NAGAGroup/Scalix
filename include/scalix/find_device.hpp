@@ -36,5 +36,5 @@
 #include "defines.hpp"
 
 namespace sclx {
-device_id_t find_device(const sclx::device& device);
+auto find_device(const sclx::device& device) -> device_id_t;
 }

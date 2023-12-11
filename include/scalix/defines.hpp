@@ -33,7 +33,7 @@
 
 #pragma once
 #include <scalix/scalix_export.hpp>
-#include <sycl.hpp>
+#include <sycl/sycl.hpp>
 
 namespace sclx {
 
@@ -42,6 +42,7 @@ constexpr std::uint32_t default_page_size = 4096;
 
 // types
 using byte        = std::byte;
+using byte_array  = byte[];  // NOLINT(*-avoid-c-arrays)
 using write_bit_t = char;
 using size_t      = std::size_t;
 using index32_t   = std::int32_t;
@@ -58,16 +59,16 @@ using valid_bit_t = std::atomic<bool>;
 // of memory, you may need to define SCLX_PAGE_INDEX_TYPE to a 64-bit
 // unsigned integer type.
 #ifndef SCLX_USE_LONG_PAGE_INDEX
-using page_index_t = std::int32_t;
+using page_index_t = std::uint32_t;
 using page_diff_t  = std::int32_t;
 using page_count_t = std::uint32_t;
 #else
-using page_index_t = std::int64_t;
+using page_index_t = std::uint64_t;
 using page_diff_t  = std::int64_t;
 using page_count_t = std::uint64_t;
 #endif
 
-constexpr page_index_t invalid_page = -1;
+constexpr page_index_t invalid_page = std::numeric_limits<page_index_t>::max();
 
 using sycl::half;
 
@@ -78,9 +79,9 @@ using sycl::event;
 using sycl::id;
 
 // additional sycl-like types
-using device_id_t                    = int;
+using device_id_t                    = std::uint32_t;
 constexpr device_id_t host_device_id = 0;
-constexpr device_id_t no_device      = -1;
+constexpr device_id_t no_device      = std::numeric_limits<device_id_t>::max();
 using rank_id_t                      = int;
 struct mpi_device {
     rank_id_t rank;
