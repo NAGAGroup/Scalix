@@ -31,4 +31,4 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //------------------------------------------------------------------------------
 
-#include <scalix/detail/page_handle.hpp>
+#include <scalix/detail/page_handle.hpp>  // NOLINT(misc-include-cleaner)

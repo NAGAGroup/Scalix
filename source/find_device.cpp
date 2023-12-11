@@ -1,13 +1,18 @@
+#include <iterator>
+#include <scalix/defines.hpp>
 #include <scalix/find_device.hpp>
+#include <scalix/scalix_export.hpp>
 
 namespace sclx {
 
-SCALIX_EXPORT device_id_t find_device(const sclx::device& device) {
+SCALIX_EXPORT auto find_device(const sclx::device& device) -> device_id_t {
 
     auto device_list = sclx::device::get_devices();
-    for (auto& d : device_list) {
-        if (d == device) {
-            return static_cast<int>(std::distance(&device_list[0], &d) + 1);
+    for (auto& dev : device_list) {
+        if (dev == device) {
+            return static_cast<device_id_t>(
+                std::distance(device_list.data(), &dev)
+            );
         }
     }
 
