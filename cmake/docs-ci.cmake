@@ -25,9 +25,9 @@ if(index EQUAL "-1")
 endif()
 string(SUBSTRING "${content}" "${index}" -1 content)
 
-string(FIND "${content}" "\n)\n" index)
+string(FIND "${content}" "CXX)\n" index)
 if(index EQUAL "-1")
-  message(FATAL_ERROR "Could not find \"\\n)\\n\"")
+  message(FATAL_ERROR "Could not find \"CXX)\\n\"")
 endif()
 string(SUBSTRING "${content}" 0 "${index}" content)
 
@@ -80,7 +80,7 @@ if(NOT DEFINED DOXYGEN_OUTPUT_DIRECTORY)
 endif()
 set(out "${DOXYGEN_OUTPUT_DIRECTORY}")
 
-foreach(file IN ITEMS Doxyfile )
+foreach(file IN ITEMS Doxyfile)
   configure_file("${src}/docs/${file}.in" "${bin}/docs/${file}" @ONLY)
 endforeach()
 
