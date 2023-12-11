@@ -13,8 +13,9 @@ project(
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
-# if (NOT DEFINED "SCALIX_SYCL_INCLUDE_PATH") set(SCALIX_SYCL_INCLUDE_PATH "")
-# endif()
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 # ---- Declare library ----
 
@@ -31,10 +32,6 @@ add_library(Scalix::Scalix ALIAS scalix)
 
 if(DEFINED "SCALIX_CXX_FLAGS")
   target_link_options(scalix BEFORE PUBLIC ${SCALIX_CXX_FLAGS})
-endif()
-
-if(DEFINED "SCALIX_SYCL_INCLUDE_ARGS")
-  set(SCALIX_CXX_FLAGS ${SCALIX_SYCL_INCLUDE_ARGS} ${SCALIX_CXX_FLAGS})
 endif()
 
 if(DEFINED "SCALIX_CXX_FLAGS")

@@ -71,8 +71,8 @@
       "inherits": ["flags-llvm-sycl", "ci-std"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "SCALIX_SYCL_INCLUDE_ARGS": "-isystem/home/sycl/.local/share/sycl/include/sycl;-isystem/home/sycl/.local/share/sycl/include",
-        "CMAKE_CXX_COMPILER": "/home/sycl/.local/share/sycl/bin/clang++"
+        "SCALIX_TIDY_INCLUDE_ARGS": "-isystem/home/sycl/.local/share/sycl/include/sycl;-isystem/home/sycl/.local/share/sycl/include",
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {

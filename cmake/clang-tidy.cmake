@@ -7,8 +7,8 @@ add_library(scalix-dont-compile ${SCALIX_SOURCES})
 target_link_options(scalix-dont-compile BEFORE PRIVATE
                     ${SCALIX_CLANG_TIDY_CXX_FLAGS})
 
-if(DEFINED "SCALIX_SYCL_INCLUDE_ARGS")
-  set(SCALIX_CLANG_TIDY_CXX_FLAGS ${SCALIX_SYCL_INCLUDE_ARGS}
+if(DEFINED "SCALIX_TIDY_INCLUDE_ARGS")
+  set(SCALIX_CLANG_TIDY_CXX_FLAGS ${SCALIX_TIDY_INCLUDE_ARGS}
                                   ${SCALIX_CLANG_TIDY_CXX_FLAGS})
 endif()
 
@@ -54,4 +54,10 @@ add_custom_target(
   clang-tidy-checks
   ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR}/compile_commands.json
   ${SCALIX_SOURCES}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+add_custom_target(
+  clang-tidy-fixes
+  ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR}/compile_commands.json -fix
+  -fix-errors ${SCALIX_SOURCES}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
