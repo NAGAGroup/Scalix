@@ -46,15 +46,17 @@ class device_page_table : public page_table_interface<PageSize> {
     using iterator    = typename interface::iterator;
 
     device_page_table(const device& device, page_count_t page_count)
-        : q_(device),
+        : queue_(device),
           device_id_(find_device(device)),
           pages_(page_count),
           host_staging_page_data_(page_count),
-          device_accessible_page_data_(sclx::make_unique<page_data<PageSize>[]>(
-              q_,
-              sclx::usm::alloc::device,
-              page_count
-          )) {}
+          device_accessible_page_data_(
+              sclx::make_unique<sclx::array_type<page_data<PageSize>>>(
+                  queue_,
+                  sclx::usm::alloc::device,
+                  page_count
+              )
+          ) {}
 
     auto map_page(page_handle page) -> sclx::event override {
         auto page_lock = page.lock();
@@ -64,7 +66,7 @@ class device_page_table : public page_table_interface<PageSize> {
                 "Scalix, please report it."
             );
         }
-        return pages_[page_lock.index()].lock().replace_with(q_, page_lock);
+        return pages_[page_lock.index()].lock().replace_with(queue_, page_lock);
     }
 
     auto device_id() -> std::variant<device_id_t, sclx::mpi_device> override {
@@ -86,12 +88,12 @@ class device_page_table : public page_table_interface<PageSize> {
     auto end() -> iterator override { return pages_.end(); }
 
     auto make_table_host_accessible() -> sclx::event override {
-        auto copy_queue = q_.memcpy(
+        auto copy_queue = queue_.memcpy(
             host_staging_page_data_.data(),
             device_accessible_page_data_.get(),
             pages_.size() * sizeof(page_data<PageSize>)
         );
-        return q_.submit([&](sycl::handler& cgh) {
+        return queue_.submit([&](sycl::handler& cgh) {
             cgh.depends_on(copy_queue);
             cgh.host_task([&]() {
                 for (std::size_t i = 0; i < pages_.size(); ++i) {
@@ -104,7 +106,7 @@ class device_page_table : public page_table_interface<PageSize> {
     }
 
     auto make_table_device_accessible() -> sclx::event override {
-        auto staging_event = q_.submit([&](sycl::handler& cgh) {
+        auto staging_event = queue_.submit([&](sycl::handler& cgh) {
             cgh.host_task([=, this]() {
                 for (std::size_t i = 0; i < pages_.size(); ++i) {
                     auto page_lock = pages_[i].lock();
@@ -130,7 +132,7 @@ class device_page_table : public page_table_interface<PageSize> {
             });
         });
 
-        return q_.submit([&](sycl::handler& cgh) {
+        return queue_.submit([&](sycl::handler& cgh) {
             cgh.depends_on(staging_event);
             cgh.memcpy(
                 device_accessible_page_data_.get(),
@@ -141,11 +143,12 @@ class device_page_table : public page_table_interface<PageSize> {
     }
 
   private:
-    sycl::queue q_;
+    sycl::queue queue_;
     device_id_t device_id_;
     std::vector<page_handle> pages_;
     std::vector<page_data<PageSize>> host_staging_page_data_;
-    sclx::unique_ptr<page_data<PageSize>[]> device_accessible_page_data_;
+    sclx::unique_ptr<sclx::array_type<page_data<PageSize>>>
+        device_accessible_page_data_;
 };
 
 }  // namespace sclx::detail

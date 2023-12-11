@@ -45,6 +45,13 @@ enum class reuse_pages { if_possible, no };
 
 class generic_allocation_handle {
   public:
+    generic_allocation_handle()                                 = default;
+    generic_allocation_handle(const generic_allocation_handle&) = default;
+    generic_allocation_handle(generic_allocation_handle&&)      = default;
+    auto operator=(const generic_allocation_handle&)
+        -> generic_allocation_handle& = default;
+    auto operator=(generic_allocation_handle&&)
+        -> generic_allocation_handle&    = default;
     virtual ~generic_allocation_handle() = default;
 };
 

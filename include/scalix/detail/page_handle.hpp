@@ -54,6 +54,12 @@ class page_table_interface;
 template<page_size_t PageSize = default_page_size>
 class page_interface {
   public:
+    page_interface()                                         = default;
+    page_interface(const page_interface&)                    = default;
+    page_interface(page_interface&&)                         = default;
+    auto operator=(const page_interface&) -> page_interface& = default;
+    auto operator=(page_interface&&) -> page_interface&      = default;
+
     virtual auto data() -> std::variant<sclx::byte*, std::future<sclx::byte*>>
         = 0;
     virtual auto device_id() -> std::variant<device_id_t, sclx::mpi_device> = 0;
@@ -62,7 +68,8 @@ class page_interface {
         = 0;
     virtual auto set_write_bit(sclx::write_bit_t bit) -> sclx::event = 0;
     virtual auto index() -> page_index_t                             = 0;
-    virtual auto copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
+    virtual auto
+    copy_from(sycl::queue queue, std::shared_ptr<page_interface> src)
         -> sclx::event
         = 0;
 
@@ -189,7 +196,8 @@ class page_handle<page_handle_type::strong, PageSize> {
 
     void release() { impl_.reset(); }
 
-    auto copy_from(sycl::queue q, page_handle src, page_copy_rules rules = {})
+    auto
+    copy_from(sycl::queue queue, page_handle src, page_copy_rules rules = {})
         -> sclx::event {
         auto skip_copy_variant = should_skip_copy(*this, src, rules);
         if (src.is_mpi_local()) {
@@ -200,22 +208,22 @@ class page_handle<page_handle_type::strong, PageSize> {
             auto skip_copy_future
                 = std::get<std::future<bool>>(skip_copy_variant).share();
             auto skip_copy_ptr   = std::make_shared<bool>();
-            auto skip_copy_event = q.submit([&](sycl::handler& cgh) {
+            auto skip_copy_event = queue.submit([&](sycl::handler& cgh) {
                 cgh.host_task([=]() { *skip_copy_ptr = skip_copy_future.get(); }
                 );
             });
-            return q.submit([&](sycl::handler& cgh) {
+            return queue.submit([&](sycl::handler& cgh) {
                 cgh.depends_on(skip_copy_event);
-                cgh.host_task([src, skip_copy_ptr, q, this]() {
+                cgh.host_task([src, skip_copy_ptr, queue, this]() {
                     if (*skip_copy_ptr) {
                         return;
                     }
-                    this->impl_->copy_from(q, src.impl_).wait_and_throw();
+                    this->impl_->copy_from(queue, src.impl_).wait_and_throw();
                 });
             });
         }
 
-        return impl_->copy_from(q, src.impl_);
+        return impl_->copy_from(queue, src.impl_);
     }
 
     [[nodiscard]] auto is_mpi_local() const -> bool {
@@ -225,7 +233,7 @@ class page_handle<page_handle_type::strong, PageSize> {
         return impl_->is_mpi_local();
     }
 
-    auto replace_with(sycl::queue q, page_handle new_page) -> sclx::event {
+    auto replace_with(sycl::queue queue, page_handle new_page) -> sclx::event {
         if (!this->is_valid()) {
             *this = std::move(new_page);
             return {};
@@ -237,7 +245,7 @@ class page_handle<page_handle_type::strong, PageSize> {
         }
         auto& old_page  = *this;
         auto copy_event = new_page.copy_from(
-            q,
+            queue,
             old_page,
             page_copy_rules{
                 .expect_valid_src = false,
@@ -253,7 +261,7 @@ class page_handle<page_handle_type::strong, PageSize> {
         }
 
         auto shared_write_bit          = std::make_shared<write_bit_t>();
-        auto write_bit_retrieval_event = q.submit([&](sycl::handler& cgh) {
+        auto write_bit_retrieval_event = queue.submit([&](sycl::handler& cgh) {
             cgh.host_task([=]() {
                 auto write_bit_variant = old_page.write_bit();
                 auto& write_bit_future
@@ -262,14 +270,14 @@ class page_handle<page_handle_type::strong, PageSize> {
             });
         });
         auto write_bit_event
-            = q.submit([&, write_bit_retrieval_event](sycl::handler& cgh) {
+            = queue.submit([&, write_bit_retrieval_event](sycl::handler& cgh) {
                   cgh.depends_on(write_bit_retrieval_event);
                   cgh.host_task([=]() mutable {
                       new_page.set_write_bit(*shared_write_bit);
                   });
               });
         *this = std::move(new_page);
-        return q.submit([copy_event, write_bit_event](sycl::handler& cgh) {
+        return queue.submit([copy_event, write_bit_event](sycl::handler& cgh) {
             cgh.depends_on(std::move(copy_event));
             cgh.depends_on(std::move(write_bit_event));
         });
@@ -382,7 +390,7 @@ template<
     class PageDstIterator,
     page_size_t PageSize = default_page_size>
 auto copy_pages(
-    const sycl::queue& q,
+    const sycl::queue& queue,
     PageBeginIterator begin,
     PageEndIterator end,
     PageDstIterator dst,
@@ -393,10 +401,13 @@ auto copy_pages(
         begin,
         end,
         copy_events.begin(),
-        [q, dst, rules](auto& page) { return page.copy_from(*dst++, rules); }
+        [queue, dst, rules](auto& page) {
+            return page.copy_from(*dst++, rules);
+        }
     );
 
-    return q.submit([copy_events = std::move(copy_events)](sycl::handler& cgh) {
+    return queue.submit([copy_events
+                         = std::move(copy_events)](sycl::handler& cgh) {
         cgh.depends_on(copy_events);
     });
 }

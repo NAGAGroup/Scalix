@@ -39,16 +39,22 @@
 
 namespace sclx {
 
+template<class T>
+using array_type = T[];  // NOLINT(*-avoid-c-arrays)
+
+template<class T, std::size_t N>
+using bounded_array_type = T[N];  // NOLINT(*-avoid-c-arrays)
+
 namespace detail {
 template<class>
 constexpr bool is_unbounded_array_v = false;
 template<class T>
-constexpr bool is_unbounded_array_v<T[]> = true;
+constexpr bool is_unbounded_array_v<array_type<T>> = true;
 
 template<class>
 constexpr bool is_bounded_array_v = false;
 template<class T, std::size_t N>
-constexpr bool is_bounded_array_v<T[N]> = true;
+constexpr bool is_bounded_array_v<bounded_array_type<T, N>> = true;
 }  // namespace detail
 
 template<class T>
@@ -57,15 +63,19 @@ class default_delete {
     default_delete()                      = default;
     default_delete(const default_delete&) = default;
     default_delete(default_delete&&)      = default;
-    explicit default_delete(sycl::queue q) : q(std::move(q)) {}
+    explicit default_delete(sycl::queue queue) : queue_(std::move(queue)) {}
 
     auto operator=(const default_delete&) -> default_delete& = default;
     auto operator=(default_delete&&) -> default_delete&      = default;
 
-    void operator()(std::remove_extent_t<T>* ptr) const { sycl::free(ptr, q); }
+    void operator()(std::remove_extent_t<T>* ptr) const {
+        sycl::free(ptr, queue_);
+    }
+
+    ~default_delete() = default;
 
   private:
-    sycl::queue q;
+    sycl::queue queue_;
 };
 
 template<class T, class Deleter = default_delete<T>>
@@ -78,37 +88,41 @@ template<class T>
 using weak_ptr = std::weak_ptr<T>;
 
 template<class T, class... Args>
-auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args)
+auto make_unique(sycl::queue queue, ::sclx::usm::alloc alloc, Args&&... args)
     -> std::enable_if_t<!std::is_array_v<T>, sclx::unique_ptr<T>> {
     auto ptr = unique_ptr<T>(
-        sycl::malloc<T>(1, q, alloc),
-        ::sclx::default_delete<T>{q}
+        sycl::malloc<T>(1, queue, alloc),
+        ::sclx::default_delete<T>{queue}
     );
     auto host_val = std::make_unique<T>(std::forward<Args>(args)...);
-    q.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait_and_throw();
+    queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait_and_throw();
     return ptr;
 }
 
 template<class T>
-auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, std::size_t size)
+auto make_unique(sycl::queue queue, ::sclx::usm::alloc alloc, std::size_t size)
     -> std::enable_if_t<detail::is_unbounded_array_v<T>, sclx::unique_ptr<T>> {
     return unique_ptr<T>(
-        sycl::malloc<std::remove_extent_t<T>>(size, q, alloc),
-        ::sclx::default_delete<T>{q}
+        sycl::malloc<std::remove_extent_t<T>>(size, queue, alloc),
+        ::sclx::default_delete<T>{queue}
     );
 }
 
 template<class T, class... Args>
-auto make_unique(sycl::queue q, ::sclx::usm::alloc alloc, Args&&...)
+auto make_unique(
+    sycl::queue queue,
+    ::sclx::usm::alloc alloc,
+    Args&&...
+)  // NOLINT(*-missing-std-forward)
     -> std::enable_if_t<detail::is_bounded_array_v<T>>
     = delete;
 
 template<class T, class... Args>
-auto make_shared(sycl::queue q, ::sclx::usm::alloc alloc, Args&&... args)
+auto make_shared(sycl::queue queue, ::sclx::usm::alloc alloc, Args&&... args)
     -> shared_ptr<T> {
     return shared_ptr<T>(
-        make_unique<T>(q, alloc, std::forward<Args>(args)...).release(),
-        ::sclx::default_delete<T>{q}
+        make_unique<T>(queue, alloc, std::forward<Args>(args)...).release(),
+        ::sclx::default_delete<T>{queue}
     );
 }
 

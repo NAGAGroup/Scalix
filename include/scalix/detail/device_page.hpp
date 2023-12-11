@@ -79,7 +79,7 @@ class device_page : public page_interface<PageSize> {
 
     auto index() -> page_index_t override { return index_; }
 
-    auto copy_from(sycl::queue q, std::shared_ptr<page_interface> src)
+    auto copy_from(sycl::queue queue, std::shared_ptr<page_interface> src)
         -> sclx::event override {
         auto src_device_id_variant = src->device_id();
         device_id_t src_device_id  = 0;
@@ -112,7 +112,7 @@ class device_page : public page_interface<PageSize> {
         if (src_data == data_) {
             return {};
         }
-        return q.submit([&](sycl::handler& cgh) {
+        return queue.submit([&](sycl::handler& cgh) {
             cgh.memcpy(data_, src_data, allocated_bytes_per_page_);
         });
     }
