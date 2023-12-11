@@ -107,7 +107,13 @@ auto make_unique(sycl::queue queue, ::sclx::usm::alloc alloc, std::size_t size)
         ::sclx::default_delete<T>{queue}
     );
     auto host_val = std::make_unique<T>(size);
-    queue.memcpy(ptr.get(), host_val.get(), sizeof(T) * size).wait_and_throw();
+    queue
+        .memcpy(
+            ptr.get(),
+            host_val.get(),
+            sizeof(std::remove_extent_t<T>) * size
+        )
+        .wait_and_throw();
     return ptr;
 }
 

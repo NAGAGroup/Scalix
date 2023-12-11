@@ -75,7 +75,7 @@ class device_allocation<
         alloc_handle.data_ = sclx::make_unique<sclx::byte_array>(
             queue,
             sclx::usm::alloc::device,
-            page_count * bytes_per_page
+            static_cast<std::size_t>(page_count * bytes_per_page)
         );
         auto& pages = alloc_handle.pages_;
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
