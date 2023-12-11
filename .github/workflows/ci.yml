@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
 
     - name: Clang Format
       shell: bash
@@ -32,75 +34,6 @@ jobs:
       shell: bash
       if: always()
       run: source /home/sycl/.bashrc; cmake -P cmake/prettier.cmake
-
-#    - name: Spell check
-#      if: always()
-#      run: cmake -P cmake/spell.cmake
-
-#  coverage:
-#    needs: [lint]
-#
-#    runs-on: ubuntu-latest
-#    container:
-#    image: ghcr.io/nagagroup/sycl-docker-dev:latest
-#    options: --user=root
-#
-#    # To enable coverage, delete the last line from the conditional below and
-#    # edit the "<name>" placeholder to your GitHub name.
-#    # If you do not wish to use codecov, then simply delete this job from the
-#    # workflow.
-#    if: github.repository_owner == '<name>'
-#      && false
-#
-#    steps:
-#    - uses: actions/checkout@v3
-#
-#    - name: Configure
-#      run: cmake --preset=ci-coverage
-#
-#    - name: Build
-#      run: cmake --build build/coverage -j 2
-#
-#    - name: Test
-#      working-directory: build/coverage
-#      run: ctest --output-on-failure --no-tests=error -j 2
-#
-#    - name: Process coverage info
-#      run: cmake --build build/coverage -t coverage
-#
-#    - name: Submit to codecov.io
-#      uses: codecov/codecov-action@v3
-#      with:
-#        file: build/coverage/coverage.info
-#
-#  sanitize:
-#    needs: [lint]
-#
-#    runs-on: ubuntu-latest
-#    container:
-#    image: ghcr.io/nagagroup/sycl-docker-dev:latest
-#    options: --user=root
-#	  env: { CXX: clang++ }
-#
-#    steps:
-#    - uses: actions/checkout@v3
-#
-#    - name: Configure
-#      run: cmake --preset=ci-sanitize
-#
-#    - name: Build
-#      run: cmake --build build/sanitize -j 2
-#
-#    - name: Test
-#      working-directory: build/sanitize
-#      env:
-#        ASAN_OPTIONS: "strict_string_checks=1:\
-#          detect_stack_use_after_return=1:\
-#          check_initialization_order=1:\
-#          strict_init_order=1:\
-#          detect_leaks=1"
-#        UBSAN_OPTIONS: print_stacktrace=1
-#      run: ctest --output-on-failure --no-tests=error -j 2
 
   test:
     needs: [lint]
@@ -122,6 +55,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
 
     - name: Configure
       shell: bash
@@ -167,6 +102,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+      with:
+        submodules: 'true'
 
     - name: Build docs
       run: source /home/sycl/.bashrc; cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
