@@ -1,0 +1,7 @@
+var structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6 =
+[
+    [ "page_handle", "structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a18c2ce437bbef0e08e8985bbbb902501", null ],
+    [ "pages", "structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a541db9c6288b49ca5e4d14e688b6af22", null ],
+    [ "data_", "structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a88bf6449adc48e6ff8c595eb5b156f9f", null ],
+    [ "pages_", "structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#af88901445b701e4304c0cc2d97f8e614", null ]
+];
