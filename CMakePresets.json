@@ -40,7 +40,7 @@
       "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "SCALIX_CXX_CLANG_TIDY": "clang-tidy;--header-filter=^${sourceDir}/;--config-file=${sourceDir}/.clang-tidy",
+        "SCALIX_CXX_CLANG_TIDY": "run-clang-tidy;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy",
         "SCALIX_CLANG_TIDY_CXX_FLAGS": "-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=3;-D_GLIBCXX_ASSERTIONS=1;-fstack-protector-strong;-fstack-clash-protection;-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion;-Wcast-qual;-Wformat=2;-Wundef;-Werror=float-equal;-Wshadow;-Wcast-align;-Wunused;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough;-Wextra-semi;-Woverloaded-virtual;-Wnon-virtual-dtor;-Wold-style-cast"
       }
     },

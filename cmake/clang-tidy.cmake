@@ -52,12 +52,10 @@ target_compile_features(scalix-dont-compile PUBLIC cxx_std_20)
 
 add_custom_target(
   clang-tidy-checks
-  ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR}/compile_commands.json
-  ${SCALIX_SOURCES}
+  ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} ${SCALIX_SOURCES}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 add_custom_target(
   clang-tidy-fixes
-  ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR}/compile_commands.json -fix
-  -fix-errors ${SCALIX_SOURCES}
+  ${SCALIX_CXX_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} -fix ${SCALIX_SOURCES}
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
