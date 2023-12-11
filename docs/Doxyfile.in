@@ -20,12 +20,12 @@ FULL_PATH_NAMES = YES
 STRIP_FROM_PATH = "@PROJECT_SOURCE_DIR@/include" "@PROJECT_SOURCE_DIR@"
 STRIP_FROM_INC_PATH =
 
-# We use m.css to generate the html documentation, so we only need XML output
-GENERATE_XML = YES
-GENERATE_HTML = NO
-GENERATE_LATEX = NO
-XML_PROGRAMLISTING = NO
-CREATE_SUBDIRS = NO
+# awesome-doxygen theme
+GENERATE_TREEVIEW      = YES # optional. Also works without treeview
+DISABLE_INDEX = NO
+FULL_SIDEBAR = NO
+HTML_EXTRA_STYLESHEET  = "@PROJECT_SOURCE_DIR@/extern/doxygen-awesome-css/doxygen-awesome.css"
+HTML_COLORSTYLE        = LIGHT # required with Doxygen >= 1.9.5
 
 # Include all directories, files and namespaces in the documentation
 # Disable to include only explicitly documented objects
