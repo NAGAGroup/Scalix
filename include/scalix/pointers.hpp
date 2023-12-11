@@ -112,10 +112,7 @@ auto make_unique(sycl::queue queue, ::sclx::usm::alloc alloc, std::size_t size)
 }
 
 template<class T>
-auto make_unique(
-    sycl::queue queue,
-    ::sclx::usm::alloc alloc
-)
+auto make_unique(sycl::queue queue, ::sclx::usm::alloc alloc)
     -> std::enable_if_t<detail::is_bounded_array_v<T>> {
     auto ptr = unique_ptr<T>(
         sycl::malloc<T>(1, queue, alloc),
