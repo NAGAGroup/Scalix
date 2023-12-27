@@ -71,7 +71,7 @@ class device_allocation<
         auto bytes_per_page = page_traits<T>::allocated_bytes_per_page;
         allocation_handle alloc_handle;
         auto device = sclx::device::get_devices()[device_id];
-        sycl::queue queue{device};
+        const sycl::queue queue{device};
         alloc_handle.data_ = sclx::make_unique<sclx::byte_array>(
             queue,
             sclx::usm::alloc::device,

@@ -69,7 +69,6 @@ template<page_size_t PageSize>
 class device_allocation_anchor {
   public:
     using page_handle       = page_handle<page_handle_type::strong, PageSize>;
-    using allocation_handle = allocation_handle<PageSize>;
 
     device_allocation_anchor()                                = default;
     device_allocation_anchor(const device_allocation_anchor&) = default;
@@ -97,7 +96,7 @@ class device_allocation_anchor {
         : device_id_(device_id),
           pages_(std::move(pages)) {}
 
-    device_id_t device_id_;
+    device_id_t device_id_{};
     std::vector<page_handle> pages_;
 };
 
