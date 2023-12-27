@@ -38,7 +38,7 @@
 
 namespace sclx::detail {
 
-enum class pagination_type { contiguous, paginated };
+enum class pagination_type : std::uint8_t { contiguous, paginated };
 
 template<
     pagination_type PaginationType,
@@ -77,23 +77,22 @@ class device_allocation<
             sclx::usm::alloc::device,
             static_cast<std::size_t>(page_count * bytes_per_page)
         );
-        auto& pages = alloc_handle.pages_;
+        std::vector<page_handle<page_handle_type::strong, PageSize>> pages;
+        auto alloc_handle_ptr = std::make_shared<allocation_handle>(std::move(alloc_handle));
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
             auto page_index = indices[pidx];
             auto page_ptr   = alloc_handle.data_.get() + pidx * bytes_per_page;
-            auto device_page_ptr = std::make_shared<device_page<PageSize>>(
-                page_ptr,
-                device_id,
-                page_index,
-                bytes_per_page
-            );
             pages.emplace_back(
-                make_page_handle<page_handle_type::strong, PageSize>(
-                    device_page_ptr
+                make_page_handle<sclx::detail::device_page<PageSize>>(
+                    page_ptr,
+                    device_id,
+                    page_index,
+                    bytes_per_page,
+                    alloc_handle_ptr
                 )
             );
         }
-        anchor_ = make_access_anchor(device_id, std::move(alloc_handle));
+        anchor_ = make_access_anchor(device_id, pages);
     }
 
     device_allocation(
@@ -113,43 +112,40 @@ class device_allocation<
             sclx::usm::alloc::device,
             page_count * bytes_per_page
         );
-        auto& pages = alloc_handle.pages_;
+        std::vector<page_handle<page_handle_type::strong, PageSize>> pages;
+        auto alloc_handle_ptr = std::make_shared<allocation_handle>(std::move(alloc_handle));
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
             auto page_index = first + pidx;
             auto page_ptr   = alloc_handle.data_.get() + pidx * bytes_per_page;
-            auto device_page_ptr = std::make_shared<device_page<PageSize>>(
-                page_ptr,
-                device_id,
-                page_index,
-                bytes_per_page
-            );
             pages.emplace_back(
-                make_page_handle<page_handle_type::strong, PageSize>(
-                    device_page_ptr
+                make_page_handle<sclx::detail::device_page<PageSize>>(
+                    page_ptr,
+                    device_id,
+                    page_index,
+                    bytes_per_page,
+                    alloc_handle_ptr
                 )
             );
         }
-        anchor_ = make_access_anchor(device_id, std::move(alloc_handle));
+        anchor_ = make_access_anchor(device_id, pages);
     }
 
     [[nodiscard]] auto anchor() const
-        -> const single_device_allocation_anchor& {
+        -> const device_allocation_anchor<PageSize>& {
         return this->anchor_;
     }
 
     struct allocation_handle : sclx::detail::allocation_handle<PageSize> {
-        using page_handle
-            = sclx::detail::page_handle<page_handle_type::strong, PageSize>;
         sclx::unique_ptr<sclx::byte_array> data_;
-        std::vector<page_handle> pages_;
+        device_id_t device_id_{};
 
-        auto pages() const -> const std::vector<page_handle>& override {
-            return pages_;
+        [[nodiscard]] auto device_id() const -> device_id_t override {
+            return device_id_;
         }
     };
 
   private:
-    single_device_allocation_anchor anchor_;
+    device_allocation_anchor<PageSize> anchor_;
 };
 
 }  // namespace sclx::detail

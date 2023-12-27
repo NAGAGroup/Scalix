@@ -44,6 +44,8 @@ template<page_size_t PageSize>
 class device_page : public page_interface<PageSize> {
   public:
     using page_interface = sclx::detail::page_interface<PageSize>;
+    using allocation_handle
+        = page_interface::allocation_handle;
 
     device_page() = default;
 
@@ -51,9 +53,12 @@ class device_page : public page_interface<PageSize> {
         sclx::byte* data,
         device_id_t device_id,
         page_index_t index,
-        page_size_t allocated_bytes_per_page
+        page_size_t allocated_bytes_per_page,
+        std::shared_ptr<allocation_handle> allocation_handle
     )
-        : data_(data),
+        :
+          page_interface::page_interface(std::move(allocation_handle)),
+          data_(data),
           device_id_(device_id),
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
