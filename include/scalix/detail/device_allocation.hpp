@@ -78,7 +78,8 @@ class device_allocation<
             static_cast<std::size_t>(page_count * bytes_per_page)
         );
         std::vector<page_handle<page_handle_type::strong, PageSize>> pages;
-        auto alloc_handle_ptr = std::make_shared<allocation_handle>(std::move(alloc_handle));
+        auto alloc_handle_ptr
+            = std::make_shared<allocation_handle>(std::move(alloc_handle));
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
             auto page_index = indices[pidx];
             auto page_ptr   = alloc_handle.data_.get() + pidx * bytes_per_page;
@@ -113,7 +114,8 @@ class device_allocation<
             page_count * bytes_per_page
         );
         std::vector<page_handle<page_handle_type::strong, PageSize>> pages;
-        auto alloc_handle_ptr = std::make_shared<allocation_handle>(std::move(alloc_handle));
+        auto alloc_handle_ptr
+            = std::make_shared<allocation_handle>(std::move(alloc_handle));
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
             auto page_index = first + pidx;
             auto page_ptr   = alloc_handle.data_.get() + pidx * bytes_per_page;

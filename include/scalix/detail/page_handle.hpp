@@ -54,7 +54,7 @@ class page_table_interface;
 template<page_size_t PageSize = default_page_size>
 class page_interface {
   public:
-    using allocation_handle = sclx::detail::allocation_handle<PageSize>;
+    using allocation_handle         = sclx::detail::allocation_handle<PageSize>;
     static constexpr auto page_size = PageSize;
 
     explicit page_interface(std::shared_ptr<allocation_handle> alloc_handle)
@@ -240,9 +240,9 @@ class page_handle<page_handle_type::strong, PageSize> {
         return impl_->is_mpi_local();
     }
 
-
     /**
-     * @brief Replaces the current page with the new page, copying the data from the old page to the new page.
+     * @brief Replaces the current page with the new page, copying the data from
+     * the old page to the new page.
      * @param queue The SYCL queue to use for the copy
      * @param new_page The new page to replace the current page with
      * @return An event that depends on the copy and write bit setting events
@@ -367,27 +367,23 @@ class page_handle<page_handle_type::strong, PageSize> {
 
 template<page_size_t PageSize>
 struct page_handle_creator_struct {
-    using page_pointer = typename page_handle_traits<
-        page_handle_type::strong,
-        PageSize>::page_pointer;
+    using page_pointer =
+        typename page_handle_traits<page_handle_type::strong, PageSize>::
+            page_pointer;
     using page_handle = page_handle<page_handle_type::strong, PageSize>;
 
-    template <class PageImpl, class ...Args>
-    static auto
-    create(Args&& ...args) -> page_handle {
-        return page_handle(
-            std::make_shared<PageImpl>(std::forward<Args>(args)...)
-        );
+    template<class PageImpl, class... Args>
+    static auto create(Args&&... args) -> page_handle {
+        return page_handle(std::make_shared<PageImpl>(std::forward<Args>(args
+        )...));
     }
 };
 
-template<class PageImpl, class ...Args>
-auto make_page_handle(
-    Args&&... args
-) -> page_handle_creator_struct<PageImpl::page_size>::page_handle {
-    return page_handle_creator_struct<PageImpl::page_size>::template create<PageImpl>(
-        std::forward<Args>(args)...
-    );
+template<class PageImpl, class... Args>
+auto make_page_handle(Args&&... args)
+    -> page_handle_creator_struct<PageImpl::page_size>::page_handle {
+    return page_handle_creator_struct<PageImpl::page_size>::template create<
+        PageImpl>(std::forward<Args>(args)...);
 }
 
 template<class T, page_size_t PageSize = default_page_size>

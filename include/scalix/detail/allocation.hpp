@@ -54,7 +54,7 @@ class allocation_handle {
     auto operator=(const allocation_handle&) -> allocation_handle& = default;
     auto operator=(allocation_handle&&) -> allocation_handle&      = default;
 
-    [[nodiscard]] virtual auto device_id() const -> device_id_t   = 0;
+    [[nodiscard]] virtual auto device_id() const -> device_id_t = 0;
 
     virtual ~allocation_handle() = default;
 };
@@ -71,7 +71,7 @@ class device_allocation_anchor {
     using page_handle       = page_handle<page_handle_type::strong, PageSize>;
     using allocation_handle = allocation_handle<PageSize>;
 
-    device_allocation_anchor()                               = default;
+    device_allocation_anchor()                                = default;
     device_allocation_anchor(const device_allocation_anchor&) = default;
     device_allocation_anchor(device_allocation_anchor&&)      = default;
     auto operator=(const device_allocation_anchor&)
@@ -90,18 +90,23 @@ class device_allocation_anchor {
     ~device_allocation_anchor() = default;
 
   private:
-    explicit device_allocation_anchor(device_id_t device_id, std::vector<page_handle> pages)
-        : device_id_(device_id), pages_(std::move(pages)) {}
+    explicit device_allocation_anchor(
+        device_id_t device_id,
+        std::vector<page_handle> pages
+    )
+        : device_id_(device_id),
+          pages_(std::move(pages)) {}
 
     device_id_t device_id_;
     std::vector<page_handle> pages_;
 };
 
-template <page_size_t PageSize>
+template<page_size_t PageSize>
 struct access_anchor_creator_struct {
     static auto create(
         device_id_t device_id,
-        const std::vector<page_handle<page_handle_type::strong, PageSize>>& pages
+        const std::vector<page_handle<page_handle_type::strong, PageSize>>&
+            pages
     ) -> device_allocation_anchor<PageSize> {
         return device_allocation_anchor<PageSize>(device_id, pages);
     }
@@ -155,9 +160,9 @@ template<class T, page_size_t PageSize = default_page_size>
 class allocation_factory {
   public:
     using strong_page_handle = page_handle<page_handle_type::strong, PageSize>;
-    using weak_page_handle = page_handle<page_handle_type::weak, PageSize>;
+    using weak_page_handle   = page_handle<page_handle_type::weak, PageSize>;
     using strong_page_vector = std::vector<strong_page_handle>;
-    using weak_page_vector = std::vector<weak_page_handle>;
+    using weak_page_vector   = std::vector<weak_page_handle>;
 
     template<
         template<class, reuse_pages, page_size_t>
@@ -206,7 +211,8 @@ class allocation_factory {
         add_pages_from_anchor(alloc.anchor());
     }
 
-    void add_pages_from_anchor(const device_allocation_anchor<PageSize>& anchor) {
+    void add_pages_from_anchor(const device_allocation_anchor<PageSize>& anchor
+    ) {
         auto& device_pages = pages_[anchor.device_id()];
         std::transform(
             anchor.pages().begin(),
@@ -217,7 +223,7 @@ class allocation_factory {
         anchors_.push_back(anchor);
     }
 
-    auto pages(device_id_t device_id) -> weak_page_vector & {
+    auto pages(device_id_t device_id) -> weak_page_vector& {
         return pages_[device_id];
     }
 
