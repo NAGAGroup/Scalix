@@ -80,8 +80,8 @@ using sycl::id;
 
 // additional sycl-like types
 using device_id_t                    = std::uint32_t;
-constexpr device_id_t host_device_id = 0;
 constexpr device_id_t no_device      = std::numeric_limits<device_id_t>::max();
+constexpr device_id_t host_device_id = no_device - 1;
 using rank_id_t                      = int;
 struct mpi_device {
     rank_id_t rank;

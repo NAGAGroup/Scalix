@@ -1,4 +1,3 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
 // Copyright (c) 2023 Jack Myers
@@ -29,15 +28,5 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
-#pragma once
-
-#include "local_page.hpp"
-
-namespace sclx::detail {
-
-template<page_size_t PageSize>
-using device_page = local_page<PageSize>;
-
-}  // namespace sclx::detail
+#include <scalix/detail/local_page.hpp>  // NOLINT(misc-include-cleaner)

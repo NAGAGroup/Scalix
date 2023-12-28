@@ -27,7 +27,11 @@ add_library(
   source/detail/device_allocation.cpp
   source/find_device.cpp
   source/detail/device_page.cpp
-  source/detail/device_page_table.cpp)
+  source/detail/device_page_table.cpp
+  source/detail/host_page_table.cpp
+  source/detail/local_page.cpp
+  source/detail/host_page.cpp
+  source/detail/host_allocation.cpp)
 add_library(Scalix::Scalix ALIAS scalix)
 
 if(DEFINED "SCALIX_CXX_FLAGS")

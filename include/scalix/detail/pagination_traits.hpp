@@ -32,40 +32,20 @@
 //------------------------------------------------------------------------------
 
 #pragma once
-
-#include <scalix/defines.hpp>
-#include <scalix/detail/page_handle.hpp>
-#include <scalix/pointers.hpp>
+#include "allocation.hpp"
 
 namespace sclx::detail {
 
-template<page_size_t PageSize = default_page_size>
-class page_table_interface {
-  public:
-    using weak_page_handle
-        = sclx::detail::page_handle<page_handle_type::weak, PageSize>;
-    using strong_page_handle
-        = sclx::detail::page_handle<page_handle_type::strong, PageSize>;
-    using iterator = typename std::vector<weak_page_handle>::iterator;
+enum class pagination_type : std::uint8_t { contiguous, paginated };
 
-    page_table_interface()                            = default;
-    page_table_interface(const page_table_interface&) = default;
-    page_table_interface(page_table_interface&&)      = default;
-    auto operator=(const page_table_interface&)
-        -> page_table_interface&                                    = default;
-    auto operator=(page_table_interface&&) -> page_table_interface& = default;
-
-    virtual auto map_page(strong_page_handle page) -> sclx::event           = 0;
-    virtual auto device_id() -> std::variant<device_id_t, sclx::mpi_device> = 0;
-    virtual auto unmap_invalid_pages() -> sclx::event                       = 0;
-    virtual auto begin() -> iterator                                        = 0;
-    virtual auto end() -> iterator                                          = 0;
-    virtual auto pages() const -> const std::vector<weak_page_handle>&      = 0;
-
-    virtual auto make_table_host_accessible() -> sclx::event   = 0;
-    virtual auto make_table_device_accessible() -> sclx::event = 0;
-
-    virtual ~page_table_interface() = default;
+template<
+    pagination_type PaginationType,
+    template<pagination_type, class, reuse_pages, page_size_t>
+    class AllocationType>
+struct pagination_traits {
+    template<class T, reuse_pages ReusePagesFlag, page_size_t PageSize>
+    using allocation_type
+        = AllocationType<PaginationType, T, ReusePagesFlag, PageSize>;
 };
 
 }  // namespace sclx::detail

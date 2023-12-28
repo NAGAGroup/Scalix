@@ -68,7 +68,7 @@ struct access_anchor_creator_struct;
 template<page_size_t PageSize>
 class device_allocation_anchor {
   public:
-    using page_handle       = page_handle<page_handle_type::strong, PageSize>;
+    using page_handle = page_handle<page_handle_type::strong, PageSize>;
 
     device_allocation_anchor()                                = default;
     device_allocation_anchor(const device_allocation_anchor&) = default;
@@ -217,18 +217,16 @@ class allocation_factory {
             anchor.pages().begin(),
             anchor.pages().end(),
             std::back_inserter(device_pages),
-            [](auto& page) { return weak_page_handle(page); }
+            [](auto& page) { return page; }
         );
-        anchors_.push_back(anchor);
     }
 
-    auto pages(device_id_t device_id) -> weak_page_vector& {
+    auto pages(device_id_t device_id) -> strong_page_vector& {
         return pages_[device_id];
     }
 
   private:
-    std::unordered_map<device_id_t, weak_page_vector> pages_;
-    std::vector<device_allocation_anchor<PageSize>> anchors_;
+    std::unordered_map<device_id_t, strong_page_vector> pages_;
 };
 
 }  // namespace sclx::detail
