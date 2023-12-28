@@ -1,0 +1,5 @@
+var structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePage31010a1b322554cf0e0ae1a7fe845836 =
+[
+    [ "device_id", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePage31010a1b322554cf0e0ae1a7fe845836.html#a9c327ab139c0d953f047a37fd4c1795f", null ],
+    [ "raw_page_data_", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePage31010a1b322554cf0e0ae1a7fe845836.html#a7ca51c50aa78793f1e7c1830b2f9c1bf", null ]
+];

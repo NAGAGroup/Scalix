@@ -1,6 +1,7 @@
 var classsclx_1_1detail_1_1page__interface =
 [
-    [ "page_interface", "classsclx_1_1detail_1_1page__interface.html#a2f6a22357e25e23f80a5e78cd7060bf5", null ],
+    [ "allocation_handle", "classsclx_1_1detail_1_1page__interface.html#a36c306da086d0a1430198b80ae6689f0", null ],
+    [ "page_interface", "classsclx_1_1detail_1_1page__interface.html#a7b7f98f14c8cf7f996285f58cadef2e2", null ],
     [ "page_interface", "classsclx_1_1detail_1_1page__interface.html#adce397d1805850672775f94a62e4d833", null ],
     [ "page_interface", "classsclx_1_1detail_1_1page__interface.html#a3aed5ae7afa2b458900c46699166d0e5", null ],
     [ "~page_interface", "classsclx_1_1detail_1_1page__interface.html#aa03826576d72070e29dc8516ae85c4d4", null ],

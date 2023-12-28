@@ -109,11 +109,11 @@ $(document).ready(function(){initNavTree('allocation_8hpp.html',''); initResizab
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1generic__allocation__handle.html">sclx::detail::generic_allocation_handle</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1allocation__handle.html">sclx::detail::allocation_handle&lt; PageSize &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1single__device__allocation__anchor.html">sclx::detail::single_device_allocation_anchor</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">sclx::detail::device_allocation_anchor&lt; PageSize &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsclx_1_1detail_1_1access__anchor__creator__struct.html">sclx::detail::access_anchor_creator_struct&lt; PageSize &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1allocation__factory.html">sclx::detail::allocation_factory&lt; T, PageSize &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -132,16 +132,16 @@ Concepts</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a94cd8f9212f165fea37413166e7a7a97" id="r_a94cd8f9212f165fea37413166e7a7a97"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesclx_1_1detail.html#a94cd8f9212f165fea37413166e7a7a97">sclx::detail::reuse_pages</a> { <a class="el" href="namespacesclx_1_1detail.html#a94cd8f9212f165fea37413166e7a7a97a78d1ceb1e27c3d31b437ba09c33bb9d3">sclx::detail::if_possible</a>
-, <a class="el" href="namespacesclx_1_1detail.html#a94cd8f9212f165fea37413166e7a7a97a7fa3b767c460b54a2be4d49030b349c7">sclx::detail::no</a>
+<tr class="memitem:ae6d79195e9f7da285dd3e6e72dba7111" id="r_ae6d79195e9f7da285dd3e6e72dba7111"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacesclx_1_1detail.html#ae6d79195e9f7da285dd3e6e72dba7111">sclx::detail::reuse_pages</a> : std::uint8_t { <a class="el" href="namespacesclx_1_1detail.html#ae6d79195e9f7da285dd3e6e72dba7111a78d1ceb1e27c3d31b437ba09c33bb9d3">sclx::detail::if_possible</a>
+, <a class="el" href="namespacesclx_1_1detail.html#ae6d79195e9f7da285dd3e6e72dba7111a7fa3b767c460b54a2be4d49030b349c7">sclx::detail::no</a>
  }</td></tr>
-<tr class="separator:a94cd8f9212f165fea37413166e7a7a97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:ae6d79195e9f7da285dd3e6e72dba7111"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ac64d03dec450444659391d455afd3986" id="r_ac64d03dec450444659391d455afd3986"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">class</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">AllocationHandle</a> &gt; </td></tr>
-<tr class="memitem:ac64d03dec450444659391d455afd3986"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesclx_1_1detail.html#ac64d03dec450444659391d455afd3986">sclx::detail::make_access_anchor</a> (<a class="el" href="namespacesclx.html#abd0df30b10976bf27ada2c46c0ffd760">device_id_t</a> device_id, <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">AllocationHandle</a> &amp;&amp;handle) -&gt; <a class="el" href="classsclx_1_1detail_1_1single__device__allocation__anchor.html">single_device_allocation_anchor</a></td></tr>
-<tr class="separator:ac64d03dec450444659391d455afd3986"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a81a1b5a00f8a76bfc4e39f44878f2bd6" id="r_a81a1b5a00f8a76bfc4e39f44878f2bd6"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a2372">page_size_t</a> PageSize&gt; </td></tr>
+<tr class="memitem:a81a1b5a00f8a76bfc4e39f44878f2bd6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacesclx_1_1detail.html#a81a1b5a00f8a76bfc4e39f44878f2bd6">sclx::detail::make_access_anchor</a> (<a class="el" href="namespacesclx.html#abd0df30b10976bf27ada2c46c0ffd760">device_id_t</a> device_id, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> std::vector&lt; <a class="el" href="classsclx_1_1detail_1_1page__handle.html">page_handle</a>&lt; <a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a6f7f9432d35dea629c8384dab312259a">page_handle_type::strong</a>, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt; &gt; &amp;pages) -&gt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">device_allocation_anchor</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;</td></tr>
+<tr class="separator:a81a1b5a00f8a76bfc4e39f44878f2bd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

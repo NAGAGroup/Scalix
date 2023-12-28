@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['mpi_5fdevice_0',['mpi_device',['../structsclx_1_1mpi__device.html',1,'sclx']]]
+  ['local_5fpage_0',['local_page',['../classsclx_1_1detail_1_1local__page.html',1,'sclx::detail']]]
 ];

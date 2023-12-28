@@ -18,5 +18,5 @@ var classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01Pa
     [ "set_write_bit", "classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#aa441dede0f850ca7f1417a755b5324e5", null ],
     [ "write_bit", "classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#aedf08d36c697d50b5c2bab3cc8c2ee88", null ],
     [ "page_handle< page_handle_type::weak, PageSize >", "classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#af91afb9e369b9ac1d8a50d129708a246", null ],
-    [ "page_handle_creator_struct< handle_type, PageSize >", "classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#a9393a044f8e76eceac59b49fc6c47944", null ]
+    [ "page_handle_creator_struct< PageSize >", "classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#a67dd1fdbd2b40078b7036c7c7a03080c", null ]
 ];

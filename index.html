@@ -113,18 +113,18 @@ Writing a Scalix Program</h2>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// the unified memory hints for the array are set such as to maximize</span></div>
 <div class="line">    <span class="comment">// performance for equally distributed access across all devices</span></div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::array&lt;int, 2&gt;</a> arr({1000, 1000});</div>
+<div class="line">    sclx::array&lt;int, 2&gt; arr({1000, 1000});</div>
 <div class="line"> </div>
 <div class="line">    <span class="comment">// initialize the array to 0</span></div>
 <div class="line">    <span class="comment">//</span></div>
 <div class="line">    <span class="comment">// kernels automatically distribute the work across all devices</span></div>
 <div class="line">    <span class="comment">// for the result array</span></div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::execute_kernel</a>([&amp;](<a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::kernel_handler</a>&amp; handler) {</div>
+<div class="line">    sclx::execute_kernel([&amp;](sclx::kernel_handler&amp; handler) {</div>
 <div class="line">        handler.launch(</div>
-<div class="line">            <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_range_t&lt;2&gt;</a>(arr.shape()),</div>
+<div class="line">            sclx::md_range_t&lt;2&gt;(arr.shape()),</div>
 <div class="line">            arr,  <span class="comment">// need to provide a result array to guide the distribution of</span></div>
 <div class="line">                  <span class="comment">// work</span></div>
-<div class="line">            [=] __device__(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_index_t&lt;2&gt;</a>&amp; idx,</div>
+<div class="line">            [=] __device__(<span class="keyword">const</span> sclx::md_index_t&lt;2&gt;&amp; idx,</div>
 <div class="line">                           <span class="comment">/*see below for what this is*/</span> <span class="keyword">const</span> <span class="keyword">auto</span>&amp;) {</div>
 <div class="line">                arr[idx] = 0;</div>
 <div class="line">            }</div>
@@ -134,13 +134,13 @@ Writing a Scalix Program</h2>
 <div class="line">    <span class="comment">// we also provide a kernel info object (sclx::kernel_info&lt;RangeRank,</span></div>
 <div class="line">    <span class="comment">// ThreadBlockRank&gt;) add one to all elements and print out the block thread</span></div>
 <div class="line">    <span class="comment">// id</span></div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::execute_kernel</a>([&amp;](<a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::kernel_handler</a>&amp; handler) {</div>
+<div class="line">    sclx::execute_kernel([&amp;](sclx::kernel_handler&amp; handler) {</div>
 <div class="line">        handler.launch(</div>
-<div class="line">            <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_range_t&lt;2&gt;</a>(arr.shape()),</div>
+<div class="line">            sclx::md_range_t&lt;2&gt;(arr.shape()),</div>
 <div class="line">            arr,</div>
 <div class="line">            [=] __device__(</div>
-<div class="line">                <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_index_t&lt;2&gt;</a>&amp; idx,</div>
-<div class="line">                <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::kernel_info</a>&lt;</div>
+<div class="line">                <span class="keyword">const</span> sclx::md_index_t&lt;2&gt;&amp; idx,</div>
+<div class="line">                <span class="keyword">const</span> sclx::kernel_info&lt;</div>
 <div class="line">                    2,</div>
 <div class="line">                    sclx::cuda::traits::kernel::default_block_shape.rank()&gt;&amp;</div>
 <div class="line">                    info</div>
@@ -154,7 +154,6 @@ Writing a Scalix Program</h2>
 <div class="line">        );</div>
 <div class="line">    });</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespacesclx_html_ac2d21ed31e26499c814588aae7a7bcf5"><div class="ttname"><a href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::shared_ptr</a></div><div class="ttdeci">std::shared_ptr&lt; T &gt; shared_ptr</div><div class="ttdef"><b>Definition</b> pointers.hpp:85</div></div>
 </div><!-- fragment --><p>A special type of problem one may face is one where the write pattern cannot fit into a neat range. For example, suppose we want to generate a histogram for some values in an array. Sequentially, we would do something like iterate over each value, determine the bin it belongs to, and increment the value of that bin.</p>
 <p>To do this in Scalix, we instead would use the "index generator"-based kernel API. The index generator in this case would take an index from the range associated with the values and return the bin index. Our kernel implementation replicates the entire range over each device, but only calls the provided functor if the write index is local to the device. So, unfortunately, this means scaling will not be ideal, and in many cases worse than a single device implementation. However, what this does allow is the prevention of expensive memory transfers for a problem that mostly scales well using the range-based API.</p>
 <div class="fragment"><div class="line"> ++</div>
@@ -166,28 +165,28 @@ Writing a Scalix Program</h2>
 <div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> uint range_rank = 1;</div>
 <div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> uint index_rank = 1;</div>
 <div class="line"> </div>
-<div class="line">    __host__ __device__ <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_range_t&lt;range_rank&gt;</a>&amp; range() <span class="keyword">const</span>;</div>
+<div class="line">    __host__ __device__ <span class="keyword">const</span> sclx::md_range_t&lt;range_rank&gt;&amp; range() <span class="keyword">const</span>;</div>
 <div class="line"> </div>
-<div class="line">    __host__ __device__ <span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_range_t&lt;index_rank&gt;</a>&amp; index_range() <span class="keyword">const</span>;</div>
+<div class="line">    __host__ __device__ <span class="keyword">const</span> sclx::md_range_t&lt;index_rank&gt;&amp; index_range() <span class="keyword">const</span>;</div>
 <div class="line"> </div>
-<div class="line">    __host__ __device__ <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_index_t&lt;index_rank&gt;</a></div>
-<div class="line">    operator()(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_index_t&lt;range_rank&gt;</a>&amp;) <span class="keyword">const</span>;</div>
+<div class="line">    __host__ __device__ sclx::md_index_t&lt;index_rank&gt;</div>
+<div class="line">    operator()(<span class="keyword">const</span> sclx::md_index_t&lt;range_rank&gt;&amp;) <span class="keyword">const</span>;</div>
 <div class="line"> </div>
 <div class="line">    ...</div>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line"> </div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::array&lt;int, 1&gt;</a> values({1000});</div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::array&lt;int, 1&gt;</a> histogram({100});</div>
+<div class="line">    sclx::array&lt;int, 1&gt; values({1000});</div>
+<div class="line">    sclx::array&lt;int, 1&gt; histogram({100});</div>
 <div class="line"> </div>
 <div class="line">    histogram_index_generator index_generator(...);</div>
 <div class="line"> </div>
-<div class="line">    <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::execute_kernel</a>([&amp;](<a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::kernel_handler</a>&amp; handler) {</div>
+<div class="line">    sclx::execute_kernel([&amp;](sclx::kernel_handler&amp; handler) {</div>
 <div class="line">        handler.launch(</div>
 <div class="line">            index_generator,</div>
 <div class="line">            histogram,</div>
-<div class="line">            [=] __device__(<span class="keyword">const</span> <a class="code hl_typedef" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">sclx::md_index_t&lt;1&gt;</a>&amp; histogram_idx, <span class="keyword">const</span> <span class="keyword">auto</span>&amp;) {</div>
+<div class="line">            [=] __device__(<span class="keyword">const</span> sclx::md_index_t&lt;1&gt;&amp; histogram_idx, <span class="keyword">const</span> <span class="keyword">auto</span>&amp;) {</div>
 <div class="line">                atomicAdd(&amp;histogram[histogram_idx], 1);</div>
 <div class="line">            }</div>
 <div class="line">        );</div>

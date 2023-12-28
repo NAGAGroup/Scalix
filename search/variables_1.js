@@ -1,7 +1,8 @@
 var searchData=
 [
   ['data_0',['data',['../structsclx_1_1detail_1_1page__data.html#ae6abdec13e2bb91c21be5100cfb1ff18',1,'sclx::detail::page_data']]],
-  ['data_5f_1',['data_',['../structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a88bf6449adc48e6ff8c595eb5b156f9f',1,'sclx::detail::device_allocation&lt; pagination_type::contiguous, T, ReusePagesFlag, PageSize &gt;::allocation_handle']]],
+  ['data_5f_1',['data_',['../structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a88bf6449adc48e6ff8c595eb5b156f9f',1,'sclx::detail::device_allocation&lt; pagination_type::contiguous, T, ReusePagesFlag, PageSize &gt;::allocation_handle::data_'],['../structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#a1698bc409a3e85ef65b49d9d168eb61e',1,'sclx::detail::host_allocation&lt; pagination_type::contiguous, T, ReusePagesFlag, PageSize &gt;::allocation_handle::data_']]],
   ['default_5fpage_5fsize_2',['default_page_size',['../namespacesclx.html#a1a5d2f8c1bce0c3f9297330ae80a4889',1,'sclx']]],
-  ['device_5fid_3',['device_id',['../structsclx_1_1mpi__device.html#a780d13576ee8dafcc2a35ef852794541',1,'sclx::mpi_device']]]
+  ['device_5fid_3',['device_id',['../structsclx_1_1mpi__device.html#a780d13576ee8dafcc2a35ef852794541',1,'sclx::mpi_device']]],
+  ['device_5fid_5f_4',['device_id_',['../structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReuseP26e237ac12736439af9bf6367ff487d6.html#a7f5c18fb9be1fe1e49a6c8c4c8686fa3',1,'sclx::detail::device_allocation&lt; pagination_type::contiguous, T, ReusePagesFlag, PageSize &gt;::allocation_handle::device_id_'],['../structsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePa1e538ae1268e8e469519ebe2100a1ede.html#a4d67c8d5ffaa6839460a2f7100ebff6b',1,'sclx::detail::device_allocation&lt; pagination_type::paginated, T, ReusePagesFlag, PageSize &gt;::allocation_handle::device_id_']]]
 ];

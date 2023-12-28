@@ -106,48 +106,53 @@ Inheritance diagram for sclx::detail::page_table_interface&lt; PageSize &gt;:</d
   <img src="classsclx_1_1detail_1_1page__table__interface.png" usemap="#sclx::detail::page_5Ftable_5Finterface_3C_20PageSize_20_3E_map" alt=""/>
   <map id="sclx::detail::page_5Ftable_5Finterface_3C_20PageSize_20_3E_map" name="sclx::detail::page_5Ftable_5Finterface_3C_20PageSize_20_3E_map">
 <area href="classsclx_1_1detail_1_1device__page__table.html" alt="sclx::detail::device_page_table&lt; PageSize &gt;" shape="rect" coords="0,56,272,80"/>
+<area href="classsclx_1_1detail_1_1host__page__table.html" alt="sclx::detail::host_page_table&lt; PageSize &gt;" shape="rect" coords="282,56,554,80"/>
   </map>
 </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a987ea4a122e7c63fd2be12c3e9c79a30" id="r_a987ea4a122e7c63fd2be12c3e9c79a30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a987ea4a122e7c63fd2be12c3e9c79a30">page_handle</a> = <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt; <a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a7ecc19e1a0be36ba2c6f05d06b5d3058">page_handle_type::weak</a>, <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;</td></tr>
-<tr class="separator:a987ea4a122e7c63fd2be12c3e9c79a30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a319e21238c1d69f9bd05e26c13b858e7" id="r_a319e21238c1d69f9bd05e26c13b858e7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a319e21238c1d69f9bd05e26c13b858e7">iterator</a> = <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">typename</a> std::vector&lt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a987ea4a122e7c63fd2be12c3e9c79a30">page_handle</a> &gt;::iterator</td></tr>
-<tr class="separator:a319e21238c1d69f9bd05e26c13b858e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06d83e6ce87d0eb6736d770ebc1cb6f2" id="r_a06d83e6ce87d0eb6736d770ebc1cb6f2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a06d83e6ce87d0eb6736d770ebc1cb6f2">weak_page_handle</a> = <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt; <a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a7ecc19e1a0be36ba2c6f05d06b5d3058">page_handle_type::weak</a>, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;</td></tr>
+<tr class="separator:a06d83e6ce87d0eb6736d770ebc1cb6f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d86c0a0cac262cca028acf05dd8c94c" id="r_a9d86c0a0cac262cca028acf05dd8c94c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a9d86c0a0cac262cca028acf05dd8c94c">strong_page_handle</a> = <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt; <a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a6f7f9432d35dea629c8384dab312259a">page_handle_type::strong</a>, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;</td></tr>
+<tr class="separator:a9d86c0a0cac262cca028acf05dd8c94c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1622cb64ac09c39b9858689c25174663" id="r_a1622cb64ac09c39b9858689c25174663"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a1622cb64ac09c39b9858689c25174663">iterator</a> = <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">typename</a> std::vector&lt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a06d83e6ce87d0eb6736d770ebc1cb6f2">weak_page_handle</a> &gt;::iterator</td></tr>
+<tr class="separator:a1622cb64ac09c39b9858689c25174663"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:aecb228997d7c9268b886717677d67126" id="r_aecb228997d7c9268b886717677d67126"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#aecb228997d7c9268b886717677d67126">page_table_interface</a> ()=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:aecb228997d7c9268b886717677d67126" id="r_aecb228997d7c9268b886717677d67126"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#aecb228997d7c9268b886717677d67126">page_table_interface</a> ()=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:aecb228997d7c9268b886717677d67126"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab81789998461d38587258d4111fd092a" id="r_ab81789998461d38587258d4111fd092a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ab81789998461d38587258d4111fd092a">page_table_interface</a> (<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;)=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:ab81789998461d38587258d4111fd092a" id="r_ab81789998461d38587258d4111fd092a"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ab81789998461d38587258d4111fd092a">page_table_interface</a> (<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;)=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:ab81789998461d38587258d4111fd092a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5cc00d0a0a079515ac346b414b7fbf0" id="r_ae5cc00d0a0a079515ac346b414b7fbf0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ae5cc00d0a0a079515ac346b414b7fbf0">page_table_interface</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;&amp;)=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:ae5cc00d0a0a079515ac346b414b7fbf0" id="r_ae5cc00d0a0a079515ac346b414b7fbf0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ae5cc00d0a0a079515ac346b414b7fbf0">page_table_interface</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;&amp;)=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:ae5cc00d0a0a079515ac346b414b7fbf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa0d2d0ba433fd9f01e21e10b54cc6ef" id="r_afa0d2d0ba433fd9f01e21e10b54cc6ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#afa0d2d0ba433fd9f01e21e10b54cc6ef">operator=</a> (<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;) -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:afa0d2d0ba433fd9f01e21e10b54cc6ef" id="r_afa0d2d0ba433fd9f01e21e10b54cc6ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#afa0d2d0ba433fd9f01e21e10b54cc6ef">operator=</a> (<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;) -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:afa0d2d0ba433fd9f01e21e10b54cc6ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e5479432fb994531f6a3204b2a680db" id="r_a0e5479432fb994531f6a3204b2a680db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a0e5479432fb994531f6a3204b2a680db">operator=</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;&amp;) -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:a0e5479432fb994531f6a3204b2a680db" id="r_a0e5479432fb994531f6a3204b2a680db"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a0e5479432fb994531f6a3204b2a680db">operator=</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;&amp;) -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:a0e5479432fb994531f6a3204b2a680db"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a1fc8bc3b53d07be88573dabe7d7511" id="r_a0a1fc8bc3b53d07be88573dabe7d7511"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a0a1fc8bc3b53d07be88573dabe7d7511">map_page</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a987ea4a122e7c63fd2be12c3e9c79a30">page_handle</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">page</a>) -&gt; sclx::event=0</td></tr>
-<tr class="separator:a0a1fc8bc3b53d07be88573dabe7d7511"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab06cd2d34bae97719f1726feeb46ab32" id="r_ab06cd2d34bae97719f1726feeb46ab32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ab06cd2d34bae97719f1726feeb46ab32">device_id</a> () -&gt; std::variant&lt; <a class="el" href="namespacesclx.html#abd0df30b10976bf27ada2c46c0ffd760">device_id_t</a>, <a class="el" href="structsclx_1_1mpi__device.html">sclx::mpi_device</a> &gt;=0</td></tr>
+<tr class="memitem:a355d2746c5bdb1d3782f4629335b355b" id="r_a355d2746c5bdb1d3782f4629335b355b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a355d2746c5bdb1d3782f4629335b355b">map_page</a> (<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a9d86c0a0cac262cca028acf05dd8c94c">strong_page_handle</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">page</a>) -&gt; sclx::event=0</td></tr>
+<tr class="separator:a355d2746c5bdb1d3782f4629335b355b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab06cd2d34bae97719f1726feeb46ab32" id="r_ab06cd2d34bae97719f1726feeb46ab32"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ab06cd2d34bae97719f1726feeb46ab32">device_id</a> () -&gt; std::variant&lt; <a class="el" href="namespacesclx.html#abd0df30b10976bf27ada2c46c0ffd760">device_id_t</a>, <a class="el" href="structsclx_1_1mpi__device.html">sclx::mpi_device</a> &gt;=0</td></tr>
 <tr class="separator:ab06cd2d34bae97719f1726feeb46ab32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6460ead1d40a9f2f29229dc4260acb7b" id="r_a6460ead1d40a9f2f29229dc4260acb7b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a6460ead1d40a9f2f29229dc4260acb7b">unmap_invalid_pages</a> () -&gt; sclx::event=0</td></tr>
+<tr class="memitem:a6460ead1d40a9f2f29229dc4260acb7b" id="r_a6460ead1d40a9f2f29229dc4260acb7b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a6460ead1d40a9f2f29229dc4260acb7b">unmap_invalid_pages</a> () -&gt; sclx::event=0</td></tr>
 <tr class="separator:a6460ead1d40a9f2f29229dc4260acb7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af5e487bbb2d80390f5ac2dd402972202" id="r_af5e487bbb2d80390f5ac2dd402972202"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#af5e487bbb2d80390f5ac2dd402972202">begin</a> () -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a319e21238c1d69f9bd05e26c13b858e7">iterator</a>=0</td></tr>
+<tr class="memitem:af5e487bbb2d80390f5ac2dd402972202" id="r_af5e487bbb2d80390f5ac2dd402972202"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#af5e487bbb2d80390f5ac2dd402972202">begin</a> () -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a1622cb64ac09c39b9858689c25174663">iterator</a>=0</td></tr>
 <tr class="separator:af5e487bbb2d80390f5ac2dd402972202"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f176dd0f2a3a0dd415a0fb791914d8e" id="r_a5f176dd0f2a3a0dd415a0fb791914d8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a5f176dd0f2a3a0dd415a0fb791914d8e">end</a> () -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a319e21238c1d69f9bd05e26c13b858e7">iterator</a>=0</td></tr>
+<tr class="memitem:a5f176dd0f2a3a0dd415a0fb791914d8e" id="r_a5f176dd0f2a3a0dd415a0fb791914d8e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a5f176dd0f2a3a0dd415a0fb791914d8e">end</a> () -&gt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a1622cb64ac09c39b9858689c25174663">iterator</a>=0</td></tr>
 <tr class="separator:a5f176dd0f2a3a0dd415a0fb791914d8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a9f74e5eb7963176d2c7a50ba692f51" id="r_a9a9f74e5eb7963176d2c7a50ba692f51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a9a9f74e5eb7963176d2c7a50ba692f51">make_table_host_accessible</a> () -&gt; sclx::event=0</td></tr>
+<tr class="memitem:aee8c461f8cc4b60d9b63a091c2da9b0b" id="r_aee8c461f8cc4b60d9b63a091c2da9b0b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#aee8c461f8cc4b60d9b63a091c2da9b0b">pages</a> () <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> -&gt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> std::vector&lt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a06d83e6ce87d0eb6736d770ebc1cb6f2">weak_page_handle</a> &gt; &amp;=0</td></tr>
+<tr class="separator:aee8c461f8cc4b60d9b63a091c2da9b0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a9f74e5eb7963176d2c7a50ba692f51" id="r_a9a9f74e5eb7963176d2c7a50ba692f51"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a9a9f74e5eb7963176d2c7a50ba692f51">make_table_host_accessible</a> () -&gt; sclx::event=0</td></tr>
 <tr class="separator:a9a9f74e5eb7963176d2c7a50ba692f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad59c0fc2ce8e23710d738231fc5acc9a" id="r_ad59c0fc2ce8e23710d738231fc5acc9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ad59c0fc2ce8e23710d738231fc5acc9a">make_table_device_accessible</a> () -&gt; sclx::event=0</td></tr>
+<tr class="memitem:ad59c0fc2ce8e23710d738231fc5acc9a" id="r_ad59c0fc2ce8e23710d738231fc5acc9a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ad59c0fc2ce8e23710d738231fc5acc9a">make_table_device_accessible</a> () -&gt; sclx::event=0</td></tr>
 <tr class="separator:ad59c0fc2ce8e23710d738231fc5acc9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad6bd51dee2ee03127e7190e589520632" id="r_ad6bd51dee2ee03127e7190e589520632"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ad6bd51dee2ee03127e7190e589520632">~page_table_interface</a> ()=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td></tr>
+<tr class="memitem:ad6bd51dee2ee03127e7190e589520632" id="r_ad6bd51dee2ee03127e7190e589520632"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#ad6bd51dee2ee03127e7190e589520632">~page_table_interface</a> ()=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td></tr>
 <tr class="separator:ad6bd51dee2ee03127e7190e589520632"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a319e21238c1d69f9bd05e26c13b858e7" name="a319e21238c1d69f9bd05e26c13b858e7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a319e21238c1d69f9bd05e26c13b858e7">&#9670;&#160;</a></span>iterator</h2>
+<a id="a1622cb64ac09c39b9858689c25174663" name="a1622cb64ac09c39b9858689c25174663"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1622cb64ac09c39b9858689c25174663">&#9670;&#160;</a></span>iterator</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -155,15 +160,15 @@ Public Member Functions</h2></td></tr>
 template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a2372">page_size_t</a> PageSize = default_page_size&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">using</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::iterator =  <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">typename</a> std::vector&lt;<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a987ea4a122e7c63fd2be12c3e9c79a30">page_handle</a>&gt;::iterator</td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::iterator =  <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">typename</a> std::vector&lt;<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a06d83e6ce87d0eb6736d770ebc1cb6f2">weak_page_handle</a>&gt;::iterator</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a987ea4a122e7c63fd2be12c3e9c79a30" name="a987ea4a122e7c63fd2be12c3e9c79a30"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a987ea4a122e7c63fd2be12c3e9c79a30">&#9670;&#160;</a></span>page_handle</h2>
+<a id="a9d86c0a0cac262cca028acf05dd8c94c" name="a9d86c0a0cac262cca028acf05dd8c94c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d86c0a0cac262cca028acf05dd8c94c">&#9670;&#160;</a></span>strong_page_handle</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -171,7 +176,23 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a2372">page_size_t</a> PageSize = default_page_size&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">using</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::page_handle =  <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt;<a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a7ecc19e1a0be36ba2c6f05d06b5d3058">page_handle_type::weak</a>, <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a>&gt;</td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::strong_page_handle =  <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt;<a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a6f7f9432d35dea629c8384dab312259a">page_handle_type::strong</a>, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a>&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a06d83e6ce87d0eb6736d770ebc1cb6f2" name="a06d83e6ce87d0eb6736d770ebc1cb6f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06d83e6ce87d0eb6736d770ebc1cb6f2">&#9670;&#160;</a></span>weak_page_handle</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a2372">page_size_t</a> PageSize = default_page_size&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">using</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::weak_page_handle =  <a class="el" href="classsclx_1_1detail_1_1page__handle.html">sclx::detail::page_handle</a>&lt;<a class="el" href="namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a7ecc19e1a0be36ba2c6f05d06b5d3058">page_handle_type::weak</a>, <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -191,7 +212,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::page_table_interface </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::page_table_interface </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -218,9 +239,9 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::page_table_interface </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::page_table_interface </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt; &amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -246,9 +267,9 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::page_table_interface </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::page_table_interface </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt; &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt; &amp;&amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -274,7 +295,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::~<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::~<a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -302,10 +323,10 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::begin </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::begin </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a319e21238c1d69f9bd05e26c13b858e7">iterator</a></td>
+          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a1622cb64ac09c39b9858689c25174663">iterator</a></td>
         </tr>
       </table>
   </td>
@@ -315,7 +336,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#ae1819ac0a21544fe947f40ed3d03da3a">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#ae1819ac0a21544fe947f40ed3d03da3a">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a1cc5ed634c65db008212d13e9776a59b">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -331,7 +352,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::device_id </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::device_id </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> -&gt;  std::variant&lt; <a class="el" href="namespacesclx.html#abd0df30b10976bf27ada2c46c0ffd760">device_id_t</a>, <a class="el" href="structsclx_1_1mpi__device.html">sclx::mpi_device</a> &gt;</td>
@@ -344,7 +365,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a4222a4014dbeca4bb0645aac76aafc84">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a4222a4014dbeca4bb0645aac76aafc84">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a73c88939f6cd82e0c9fb0336cffcccca">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -360,10 +381,10 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::end </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::end </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a319e21238c1d69f9bd05e26c13b858e7">iterator</a></td>
+          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a1622cb64ac09c39b9858689c25174663">iterator</a></td>
         </tr>
       </table>
   </td>
@@ -373,7 +394,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a1381e21804bec201f763235fc777d9ea">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a1381e21804bec201f763235fc777d9ea">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#ac13a20b9c16f8d9efcbba20fc7b3d539">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -389,7 +410,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::make_table_device_accessible </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::make_table_device_accessible </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> -&gt;  sclx::event</td>
@@ -402,7 +423,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#accd7c4462ee6c62466cbcd5de7a84ed9">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#accd7c4462ee6c62466cbcd5de7a84ed9">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a474cf4253f8796b7d23be99adaed7d1e">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -418,7 +439,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::make_table_host_accessible </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::make_table_host_accessible </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> -&gt;  sclx::event</td>
@@ -431,12 +452,12 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a6f18e8839d6747fe4827828b6de0adce">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a6f18e8839d6747fe4827828b6de0adce">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a817515b0f9ccb8b861e9f47ebed10326">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
-<a id="a0a1fc8bc3b53d07be88573dabe7d7511" name="a0a1fc8bc3b53d07be88573dabe7d7511"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a1fc8bc3b53d07be88573dabe7d7511">&#9670;&#160;</a></span>map_page()</h2>
+<a id="a355d2746c5bdb1d3782f4629335b355b" name="a355d2746c5bdb1d3782f4629335b355b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a355d2746c5bdb1d3782f4629335b355b">&#9670;&#160;</a></span>map_page()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -447,9 +468,9 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::map_page </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::map_page </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a987ea4a122e7c63fd2be12c3e9c79a30">page_handle</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a9d86c0a0cac262cca028acf05dd8c94c">strong_page_handle</a>&#160;</td>
           <td class="paramname"><em>page</em></td><td>)</td>
           <td> -&gt;  sclx::event</td>
         </tr>
@@ -461,7 +482,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a70e1f88daa54d8de019e906c9614ccd1">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a4c73fe0e8d335e7376c7a70368b60752">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a8ad18fb40f486aa428f0fa7d0b0efb5a">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -477,11 +498,11 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">::operator</a>= </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::operator= </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt; &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt; &amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td>
+          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td>
         </tr>
       </table>
   </td>
@@ -505,11 +526,11 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">::operator</a>= </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::operator= </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt; &amp;&amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt; &amp;&amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
-          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">default</a></td>
+          <td> -&gt;  <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">page_table_interface</a> &amp;=<a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">default</a></td>
         </tr>
       </table>
   </td>
@@ -518,6 +539,35 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="aee8c461f8cc4b60d9b63a091c2da9b0b" name="aee8c461f8cc4b60d9b63a091c2da9b0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee8c461f8cc4b60d9b63a091c2da9b0b">&#9670;&#160;</a></span>pages()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a2372">page_size_t</a> PageSize = default_page_size&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::pages </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt;  <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">const</a> std::vector&lt; <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html#a06d83e6ce87d0eb6736d770ebc1cb6f2">weak_page_handle</a> &gt; &amp;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#aee350ec578802b8f259c4a2a7d7468ee">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#ab3b25ef56be5b649d4bf4f1dd42b7b6e">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>
@@ -533,7 +583,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">virtual</a> <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="namespacesclx.html#ac2d21ed31e26499c814588aae7a7bcf5">PageSize</a> &gt;::unmap_invalid_pages </td>
+          <td class="memname"><a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">virtual</a> <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">auto</a> <a class="el" href="classsclx_1_1detail_1_1page__table__interface.html">sclx::detail::page_table_interface</a>&lt; <a class="el" href="classsclx_1_1detail_1_1device__allocation__anchor.html">PageSize</a> &gt;::unmap_invalid_pages </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> -&gt;  sclx::event</td>
@@ -546,7 +596,7 @@ template&lt;<a class="el" href="namespacesclx.html#a6ffdeeed096ba6cd6a94a683b37a
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a7d319d424783154adb885be215aeda86">sclx::detail::device_page_table&lt; PageSize &gt;</a>.</p>
+<p>Implemented in <a class="el" href="classsclx_1_1detail_1_1device__page__table.html#a7d319d424783154adb885be215aeda86">sclx::detail::device_page_table&lt; PageSize &gt;</a>, and <a class="el" href="classsclx_1_1detail_1_1host__page__table.html#a00bc88a43098c74eee93df722aafc471">sclx::detail::host_page_table&lt; PageSize &gt;</a>.</p>
 
 </div>
 </div>

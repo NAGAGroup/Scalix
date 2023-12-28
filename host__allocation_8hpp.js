@@ -1,0 +1,7 @@
+var host__allocation_8hpp =
+[
+    [ "sclx::detail::host_allocation< pagination_type::contiguous, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
+    [ "sclx::detail::host_allocation< pagination_type::contiguous, T, ReusePagesFlag, PageSize >::allocation_handle", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192" ],
+    [ "sclx::detail::host_allocation< pagination_type::paginated, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
+    [ "sclx::detail::host_allocation< pagination_type::paginated, T, ReusePagesFlag, PageSize >::allocation_handle", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePage31010a1b322554cf0e0ae1a7fe845836.html", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePage31010a1b322554cf0e0ae1a7fe845836" ]
+];
