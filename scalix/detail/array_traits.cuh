@@ -34,7 +34,7 @@
 
 namespace sclx::detail {
 
-template<class T>
+template<class>
 struct is_scalix_array : std::false_type {};
 
 template<class T, uint Rank>

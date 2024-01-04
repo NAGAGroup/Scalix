@@ -42,14 +42,17 @@ struct is_scalix_array : detail::is_scalix_array<std::decay_t<T>> {};
 template<class T>
 constexpr bool is_scalix_array_v = is_scalix_array<T>::value;
 
-template<class T, class... Types>
-struct is_scalix_arrays : is_scalix_array<T>, is_scalix_arrays<Types...> {
-    static constexpr bool value
-        = is_scalix_array<T>::value && is_scalix_arrays<Types...>::value;
-};
+template<class... Types>
+struct is_scalix_arrays;
 
 template<class T>
 struct is_scalix_arrays<T> : is_scalix_array<T> {};
+
+template<class T, class... Types>
+struct is_scalix_arrays<T, Types...> : is_scalix_arrays<Types...> {
+    static constexpr bool value
+        = is_scalix_array<T>::value && is_scalix_arrays<Types...>::value;
+};
 
 template<class T, class... Types>
 constexpr bool is_scalix_arrays_v = is_scalix_arrays<T, Types...>::value;
