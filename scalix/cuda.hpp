@@ -86,6 +86,15 @@ struct traits {
         static constexpr shape_t<1> default_block_shape{256};
         static constexpr size_t default_grid_size
             = std::numeric_limits<size_t>::max();
+
+        static auto max_thread_count() -> const size_t & {
+            static size_t max_thread_count = std::numeric_limits<size_t>::max();
+            return max_thread_count;
+        }
+
+        static void set_max_thread_count(size_t count) {
+            const_cast<size_t&>(max_thread_count()) = count;
+        }
     };
 
     static int device_count() {

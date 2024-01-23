@@ -137,7 +137,12 @@ struct default_kernel_tag {
             size_t total_threads = device_range.elements();
             size_t max_grid_size = (total_threads + block_shape.elements() - 1)
                                  / block_shape.elements();
-            grid_size = std::min(max_grid_size, grid_size);
+            grid_size        = std::min(max_grid_size, grid_size);
+            auto max_threads = sclx::cuda::traits::kernel::max_thread_count();
+            auto actual_thread_load = block_shape.elements() * grid_size;
+            if (actual_thread_load > max_threads) {
+                grid_size = max_threads / block_shape.elements();
+            }
 
             sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(
                 global_range,
@@ -227,7 +232,12 @@ struct default_kernel_tag {
             size_t total_threads = index_generator.range().elements();
             size_t max_grid_size = (total_threads + block_shape.elements() - 1)
                                  / block_shape.elements();
-            grid_size = std::min(max_grid_size, grid_size);
+            grid_size        = std::min(max_grid_size, grid_size);
+            auto max_threads = sclx::cuda::traits::kernel::max_thread_count();
+            auto actual_thread_load = block_shape.elements() * grid_size;
+            if (actual_thread_load > max_threads) {
+                grid_size = max_threads / block_shape.elements();
+            }
 
             constexpr uint range_rank
                 = std::remove_reference_t<IndexGenerator>::range_rank;
@@ -389,6 +399,12 @@ struct default_kernel_tag {
                     = (total_threads + block_shape.elements() - 1)             \
                     / block_shape.elements();                                  \
                 grid_size = std::min(max_grid_size, grid_size);                \
+                auto max_threads                                               \
+                    = sclx::cuda::traits::kernel::max_thread_count();          \
+                auto actual_thread_load = block_shape.elements() * grid_size;  \
+                if (actual_thread_load > max_threads) {                        \
+                    grid_size = max_threads / block_shape.elements();          \
+                }                                                              \
                                                                                \
                 sclx::kernel_info<RangeRank, ThreadBlockRank> metadata(        \
                     global_range,                                              \
@@ -486,6 +502,12 @@ struct default_kernel_tag {
                     = (total_threads + block_shape.elements() - 1)             \
                     / block_shape.elements();                                  \
                 grid_size = std::min(max_grid_size, grid_size);                \
+                auto max_threads                                               \
+                    = sclx::cuda::traits::kernel::max_thread_count();          \
+                auto actual_thread_load = block_shape.elements() * grid_size;  \
+                if (actual_thread_load > max_threads) {                        \
+                    grid_size = max_threads / block_shape.elements();          \
+                }                                                              \
                                                                                \
                 constexpr uint range_rank                                      \
                     = std::remove_reference_t<IndexGenerator>::range_rank;     \
