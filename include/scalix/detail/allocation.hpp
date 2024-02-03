@@ -1,7 +1,6 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
-// Copyright (c) 2023 Jack Myers
+// Copyright (c) 2023-2024 Jack Myers
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,6 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
 #pragma once
 
@@ -43,81 +41,80 @@ namespace sclx::detail {
 
 enum class reuse_pages : std::uint8_t { if_possible, no };
 
+struct allocation_handle_base {
+    allocation_handle_base() = default;
+
+    allocation_handle_base(const allocation_handle_base&) = delete;
+    auto operator=(const allocation_handle_base&) -> allocation_handle_base& = delete;
+
+    allocation_handle_base(allocation_handle_base&&) = default;
+    auto operator=(allocation_handle_base&&) -> allocation_handle_base& = default;
+
+    virtual ~allocation_handle_base() = default;
+};
+
 template<page_size_t PageSize>
-class allocation_handle {
+class allocation_handle: public allocation_handle_base {
   public:
     using page_handle = page_handle<page_handle_type::strong, PageSize>;
-
-    allocation_handle()                                            = default;
-    allocation_handle(const allocation_handle&)                    = default;
-    allocation_handle(allocation_handle&&)                         = default;
-    auto operator=(const allocation_handle&) -> allocation_handle& = default;
-    auto operator=(allocation_handle&&) -> allocation_handle&      = default;
+    using allocation_handle_base::allocation_handle_base;
 
     [[nodiscard]] virtual auto device_id() const -> device_id_t = 0;
-
-    virtual ~allocation_handle() = default;
+    [[nodiscard]] virtual auto pages() const -> const std::vector<page_handle>& = 0;
 };
 
-template<page_size_t PageSize>
-class device_allocation_anchor;
+struct access_anchor_interface;
 
-template<page_size_t PageSize>
-struct access_anchor_creator_struct;
+class access_anchor {
+public:
+    access_anchor() = default;
+    access_anchor(access_anchor&) = default;
+    access_anchor(access_anchor&&) = default;
+    auto operator=(const access_anchor&) -> access_anchor& = default;
+    auto operator=(access_anchor&&) -> access_anchor& = default;
 
-template<page_size_t PageSize>
-class device_allocation_anchor {
-  public:
-    using page_handle = page_handle<page_handle_type::strong, PageSize>;
+    ~access_anchor() = default;
 
-    device_allocation_anchor()                                = default;
-    device_allocation_anchor(const device_allocation_anchor&) = default;
-    device_allocation_anchor(device_allocation_anchor&&)      = default;
-    auto operator=(const device_allocation_anchor&)
-        -> device_allocation_anchor& = default;
-    auto operator=(device_allocation_anchor&&)
-        -> device_allocation_anchor& = default;
+private:
+    access_anchor(std::shared_ptr<allocation_handle_base> handle)
+        : handle_(std::move(handle)) {}
 
-    [[nodiscard]] auto device_id() const -> device_id_t { return device_id_; }
-
-    [[nodiscard]] auto pages() const -> const std::vector<page_handle>& {
-        return pages_;
+    template <page_size_t PageSize>
+    [[nodiscard]] auto get_allocation() -> allocation_handle<PageSize>& {
+        return static_cast<allocation_handle<PageSize>&>(*handle_);
     }
 
-    friend struct access_anchor_creator_struct<PageSize>;
+    template <page_size_t PageSize>
+    [[nodiscard]] auto get_allocation() const -> const allocation_handle<PageSize>& {
+        return static_cast<allocation_handle<PageSize>&>(*handle_);
+    }
 
-    ~device_allocation_anchor() = default;
 
-  private:
-    explicit device_allocation_anchor(
-        device_id_t device_id,
-        std::vector<page_handle> pages
-    )
-        : device_id_(device_id),
-          pages_(std::move(pages)) {}
+    std::shared_ptr<allocation_handle_base> handle_;
 
-    device_id_t device_id_{};
-    std::vector<page_handle> pages_;
+    friend struct access_anchor_interface;
 };
 
-template<page_size_t PageSize>
-struct access_anchor_creator_struct {
-    static auto create(
-        device_id_t device_id,
-        const std::vector<page_handle<page_handle_type::strong, PageSize>>&
-            pages
-    ) -> device_allocation_anchor<PageSize> {
-        return device_allocation_anchor<PageSize>(device_id, pages);
+struct access_anchor_interface {
+    template <class AllocationHandle>
+    static auto create_anchor() -> access_anchor{
+        return {std::make_shared<AllocationHandle>()};
+    }
+
+    template <page_size_t PageSize>
+    static auto get_allocation(
+        access_anchor& anchor
+    ) -> allocation_handle<PageSize>& {
+        return anchor.get_allocation<PageSize>();
+    }
+
+    template <page_size_t PageSize>
+    static auto get_allocation(
+        const access_anchor& anchor
+    ) -> const allocation_handle<PageSize>& {
+        return anchor.get_allocation<PageSize>();
     }
 };
-
-template<page_size_t PageSize>
-auto make_access_anchor(
-    device_id_t device_id,
-    const std::vector<page_handle<page_handle_type::strong, PageSize>>& pages
-) -> device_allocation_anchor<PageSize> {
-    return access_anchor_creator_struct<PageSize>::create(device_id, pages);
-}
 
 template<
     class T,
@@ -152,81 +149,13 @@ concept AllocationConcept = requires(
     {
         static_cast<const AllocationType<T, ReusePagesFlag, PageSize>&>(alloc)
             .anchor()
-    } -> std::same_as<const device_allocation_anchor<PageSize>&>;
-};
-
-template<class T, page_size_t PageSize = default_page_size>
-class allocation_factory {
-  public:
-    using strong_page_handle = page_handle<page_handle_type::strong, PageSize>;
-    using weak_page_handle   = page_handle<page_handle_type::weak, PageSize>;
-    using strong_page_vector = std::vector<strong_page_handle>;
-    using weak_page_vector   = std::vector<weak_page_handle>;
-
-    template<
-        template<class, reuse_pages, page_size_t>
-        class AllocationType,
-        reuse_pages ReusePagesFlag,
-        class... Args>
-        requires AllocationConcept<
-            T,
-            AllocationType,
-            ReusePagesFlag,
-            PageSize,
-            Args...>
-    void allocate_pages(
-        device_id_t device_id,
-        const std::vector<page_index_t>& indices,
-        const weak_page_vector& weak_pages,
-        Args&&... args
-    ) {
-        using allocation = AllocationType<T, ReusePagesFlag, PageSize>;
-        allocation
-        alloc(device_id, indices, weak_pages, std::forward<Args>(args)...);
-        add_pages_from_anchor(alloc.anchor());
-    }
-
-    template<
-        template<class, reuse_pages, page_size_t>
-        class AllocationType,
-        reuse_pages ReusePagesFlag,
-        class... Args>
-        requires AllocationConcept<
-            T,
-            AllocationType,
-            ReusePagesFlag,
-            PageSize,
-            Args...>
-    void allocate_pages(
-        device_id_t device_id,
-        page_index_t first,
-        page_index_t last,
-        const weak_page_vector& weak_pages,
-        Args&&... args
-    ) {
-        using allocation = AllocationType<T, ReusePagesFlag, PageSize>;
-        allocation
-        alloc(device_id, first, last, weak_pages, std::forward<Args>(args)...);
-        add_pages_from_anchor(alloc.anchor());
-    }
-
-    void add_pages_from_anchor(const device_allocation_anchor<PageSize>& anchor
-    ) {
-        auto& device_pages = pages_[anchor.device_id()];
-        std::transform(
-            anchor.pages().begin(),
-            anchor.pages().end(),
-            std::back_inserter(device_pages),
-            [](auto& page) { return page; }
-        );
-    }
-
-    auto pages(device_id_t device_id) -> strong_page_vector& {
-        return pages_[device_id];
-    }
-
-  private:
-    std::unordered_map<device_id_t, strong_page_vector> pages_;
+    } -> std::same_as<const access_anchor&>;
 };
 
 }  // namespace sclx::detail
+
+namespace sclx {
+
+using access_anchor = detail::access_anchor;
+
+}

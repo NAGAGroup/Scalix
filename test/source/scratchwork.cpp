@@ -1,6 +1,6 @@
 // BSD 3-Clause License
 //
-// Copyright (c) 2023 Jack Myers
+// Copyright (c) 2023-2024 Jack Myers
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -52,27 +52,40 @@ void test_allocations(
     std::cout << "page_count: " << page_count << std::endl;
 
     auto device_id = std::get<sclx::device_id_t>(page_table.device_id());
-    sclx::detail::allocation_factory<float> factory;
-    factory.allocate_pages<
-        sclx::detail::pagination_traits<
-            sclx::detail::pagination_type::contiguous,
-            AllocationType>::template allocation_type,
-        sclx::detail::reuse_pages::if_possible>(device_id, 0, page_count, {});
+    AllocationType<
+        sclx::detail::pagination_type::contiguous,
+        value_type,
+        sclx::detail::reuse_pages::if_possible,
+        sclx::default_page_size>
+        allocation1(device_id, 0, page_count, {});
 
     std::vector<sclx::page_index_t> indices(page_count);
     std::iota(indices.begin(), indices.end(), 0);
-    factory.allocate_pages<
-        sclx::detail::pagination_traits<
-            sclx::detail::pagination_type::contiguous,
-            AllocationType>::template allocation_type,
-        sclx::detail::reuse_pages::if_possible>(device_id, indices, {});
+    AllocationType<
+        sclx::detail::pagination_type::contiguous,
+        value_type,
+        sclx::detail::reuse_pages::if_possible,
+        sclx::default_page_size>
+        allocation2(device_id, indices, {});
 
-    auto page_handles = factory.pages(device_id);
-    std::vector<sclx::event> events(page_handles.size());
+    auto page_handles1 = sclx::detail::access_anchor_interface::get_allocation<
+                             sclx::default_page_size>(allocation1.anchor())
+                             .pages();
+    std::vector<sclx::event> events;
     std::transform(
-        page_handles.begin(),
-        page_handles.end(),
-        events.begin(),
+        page_handles1.begin(),
+        page_handles1.end(),
+        std::back_inserter(events),
+        [&](auto& page_handle) { return page_table.map_page(page_handle); }
+    );
+
+    auto page_handles2 = sclx::detail::access_anchor_interface::get_allocation<
+                             sclx::default_page_size>(allocation2.anchor())
+                             .pages();
+    std::transform(
+        page_handles2.begin(),
+        page_handles2.end(),
+        std::back_inserter(events),
         [&](auto& page_handle) { return page_table.map_page(page_handle); }
     );
 
@@ -80,45 +93,47 @@ void test_allocations(
         event.wait_and_throw();
     }
 
-    sclx::detail::allocation_factory<float> factory2;
-    factory2.allocate_pages<
-        sclx::detail::pagination_traits<
-            sclx::detail::pagination_type::contiguous,
-            AllocationType>::template allocation_type,
-        sclx::detail::reuse_pages::if_possible>(
-        device_id,
-        0,
-        page_count,
-        page_table.pages()
-    );
+    AllocationType<
+        sclx::detail::pagination_type::paginated,
+        value_type,
+        sclx::detail::reuse_pages::if_possible,
+        sclx::default_page_size>
+        allocation3(device_id, 0, page_count, page_table.pages());
+    auto page_handles3 = sclx::detail::access_anchor_interface::get_allocation<
+                             sclx::default_page_size>(allocation3.anchor())
+                             .pages();
+
+    events.clear();
     std::transform(
-        page_handles.begin(),
-        page_handles.end(),
-        events.begin(),
+        page_handles3.begin(),
+        page_handles3.end(),
+        std::back_inserter(events),
         [&](auto& page_handle) { return page_table.map_page(page_handle); }
     );
 
-    factory = std::move(factory2);  // this will remove any allocation handles
+    allocation1
+        = std::move(allocation2);  // this will remove any allocation handles
     // from the factory, meaning we can't
     // reuse them anymore from the page table, as they are not valid anymore
-    factory.allocate_pages<
-        sclx::detail::pagination_traits<
-            sclx::detail::pagination_type::contiguous,
-            AllocationType>::template allocation_type,
-        sclx::detail::reuse_pages::if_possible>(
-        device_id,
-        indices,
-        page_table.pages()
-    );
+    AllocationType<
+        sclx::detail::pagination_type::paginated,
+        value_type,
+        sclx::detail::reuse_pages::if_possible,
+        sclx::default_page_size>
+        allocation4(device_id, indices, page_table.pages());
 
     for (auto& event : events) {
         event.wait_and_throw();
     }
 
+    page_handles1 = sclx::detail::access_anchor_interface::get_allocation<
+                        sclx::default_page_size>(allocation1.anchor())
+                        .pages();
+    events.clear();
     std::transform(
-        page_handles.begin(),
-        page_handles.end(),
-        events.begin(),
+        page_handles1.begin(),
+        page_handles1.end(),
+        std::back_inserter(events),
         [&](auto& page_handle) { return page_table.map_page(page_handle); }
     );
 

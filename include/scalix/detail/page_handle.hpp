@@ -1,7 +1,6 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
-// Copyright (c) 2023 Jack Myers
+// Copyright (c) 2023-2024 Jack Myers
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,6 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
 #pragma once
 #include <future>
@@ -38,9 +36,6 @@
 #include <variant>
 
 namespace sclx::detail {
-
-template<page_size_t PageSize>
-class allocation_handle;
 
 template<page_size_t PageSize>
 struct page_data {
@@ -54,11 +49,9 @@ class page_table_interface;
 template<page_size_t PageSize = default_page_size>
 class page_interface {
   public:
-    using allocation_handle         = sclx::detail::allocation_handle<PageSize>;
     static constexpr auto page_size = PageSize;
 
-    explicit page_interface(std::shared_ptr<allocation_handle> alloc_handle)
-        : alloc_handle_(std::move(alloc_handle)) {}
+    page_interface()                                         = default;
     page_interface(const page_interface&)                    = default;
     page_interface(page_interface&&)                         = default;
     auto operator=(const page_interface&) -> page_interface& = default;
@@ -80,9 +73,6 @@ class page_interface {
     virtual auto is_mpi_local() -> bool { return true; }
 
     virtual ~page_interface() = default;
-
-  private:
-    std::shared_ptr<allocation_handle> alloc_handle_;
 };
 
 struct page_copy_rules {

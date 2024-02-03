@@ -1,7 +1,6 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
-// Copyright (c) 2023 Jack Myers
+// Copyright (c) 2023-2024 Jack Myers
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,7 +28,6 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
 
 #pragma once
 
@@ -40,8 +38,7 @@ namespace sclx::detail {
 template<page_size_t PageSize>
 class local_page : public page_interface<PageSize> {
   public:
-    using page_interface    = sclx::detail::page_interface<PageSize>;
-    using allocation_handle = page_interface::allocation_handle;
+    using page_interface = sclx::detail::page_interface<PageSize>;
 
     local_page() = default;
 
@@ -49,11 +46,9 @@ class local_page : public page_interface<PageSize> {
         sclx::byte* data,
         device_id_t device_id,
         page_index_t index,
-        page_size_t allocated_bytes_per_page,
-        std::shared_ptr<allocation_handle> allocation_handle
+        page_size_t allocated_bytes_per_page
     )
-        : page_interface::page_interface(std::move(allocation_handle)),
-          data_(data),
+        : data_(data),
           device_id_(device_id),
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
@@ -61,11 +56,9 @@ class local_page : public page_interface<PageSize> {
     local_page(
         device_id_t device_id,
         page_index_t index,
-        page_size_t allocated_bytes_per_page,
-        std::shared_ptr<allocation_handle> allocation_handle
+        page_size_t allocated_bytes_per_page
     )
-        : page_interface::page_interface(std::move(allocation_handle)),
-          device_id_(device_id),
+        :           device_id_(device_id),
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
 
