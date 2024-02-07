@@ -206,17 +206,22 @@ class page_handle<page_handle_type::strong, PageSize> {
                 = std::get<std::future<bool>>(skip_copy_variant).share();
             auto skip_copy_ptr   = std::make_shared<bool>();
             auto skip_copy_event = queue.submit([&](sycl::handler& cgh) {
-                cgh.host_task([=]() { *skip_copy_ptr = skip_copy_future.get(); }
-                );
+                sclx::detail::host_task(cgh, [=]() {
+                    *skip_copy_ptr = skip_copy_future.get();
+                });
             });
             return queue.submit([&](sycl::handler& cgh) {
                 cgh.depends_on(skip_copy_event);
-                cgh.host_task([src, skip_copy_ptr, queue, this]() {
-                    if (*skip_copy_ptr) {
-                        return;
+                sclx::detail::host_task(
+                    cgh,
+                    [src, skip_copy_ptr, queue, this]() {
+                        if (*skip_copy_ptr) {
+                            return;
+                        }
+                        this->impl_->copy_from(queue, src.impl_)
+                            .wait_and_throw();
                     }
-                    this->impl_->copy_from(queue, src.impl_).wait_and_throw();
-                });
+                );
             });
         }
 
@@ -253,8 +258,7 @@ class page_handle<page_handle_type::strong, PageSize> {
             old_page,
             page_copy_rules{
                 .expect_valid_src = false,
-                .expect_valid_dst = false
-            }
+                .expect_valid_dst = false}
         );
         if (old_page.is_mpi_local()) {
             auto write_bit_variant = old_page.write_bit();
@@ -266,7 +270,7 @@ class page_handle<page_handle_type::strong, PageSize> {
 
         auto shared_write_bit          = std::make_shared<write_bit_t>();
         auto write_bit_retrieval_event = queue.submit([&](sycl::handler& cgh) {
-            cgh.host_task([=]() {
+            sclx::detail::host_task(cgh, [=]() {
                 auto write_bit_variant = old_page.write_bit();
                 auto& write_bit_future
                     = std::get<std::future<write_bit_t>>(write_bit_variant);
@@ -276,7 +280,7 @@ class page_handle<page_handle_type::strong, PageSize> {
         auto write_bit_event
             = queue.submit([&, write_bit_retrieval_event](sycl::handler& cgh) {
                   cgh.depends_on(write_bit_retrieval_event);
-                  cgh.host_task([=]() mutable {
+                  sclx::detail::host_task(cgh, [=]() mutable {
                       new_page.set_write_bit(*shared_write_bit);
                   });
               });

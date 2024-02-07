@@ -32,6 +32,7 @@
 //------------------------------------------------------------------------------
 
 #pragma once
+#include <scalix/detail/host_task.hpp>
 #include <scalix/scalix_export.hpp>
 #include <sycl/sycl.hpp>
 

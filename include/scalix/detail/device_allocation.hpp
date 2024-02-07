@@ -45,7 +45,7 @@ class device_allocation<
     T,
     ReusePagesFlag,
     PageSize> {
-public:
+  public:
     struct allocation_handle : sclx::detail::allocation_handle<PageSize> {
         sclx::unique_ptr<sclx::byte_array> data_;
         device_id_t device_id_{};
@@ -66,7 +66,8 @@ public:
         const std::vector<page_index_t>& indices,
         const std::vector<
             page_handle<page_handle_type::weak, PageSize>>& /*unused*/
-    ) : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
+    )
+        : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
         auto page_count     = static_cast<page_count_t>(indices.size());
         auto bytes_per_page = page_traits<T>::allocated_bytes_per_page;
         auto& alloc_handle  = static_cast<allocation_handle&>(
@@ -145,7 +146,7 @@ class device_allocation<
     T,
     ReusePagesFlag,
     PageSize> {
-public:
+  public:
     struct allocation_handle : sclx::detail::allocation_handle<PageSize> {
         std::vector<sclx::unique_ptr<sclx::byte_array>> raw_page_data_;
         device_id_t device_id_{};
@@ -166,7 +167,8 @@ public:
         const std::vector<page_index_t>& indices,
         const std::vector<page_handle<page_handle_type::weak, PageSize>>&
             existing_pages
-    ) : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
+    )
+        : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
         auto page_count     = static_cast<page_count_t>(indices.size());
         auto bytes_per_page = page_traits<T>::allocated_bytes_per_page;
         auto& alloc_handle  = static_cast<allocation_handle&>(
@@ -208,7 +210,8 @@ public:
         page_index_t last,
         const std::vector<page_handle<page_handle_type::weak, PageSize>>&
             existing_pages
-    ) : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
+    )
+        : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
         auto page_count     = last - first;
         auto bytes_per_page = page_traits<T>::allocated_bytes_per_page;
         auto& alloc_handle  = static_cast<allocation_handle&>(
@@ -244,8 +247,7 @@ public:
         }
     }
 
-    [[nodiscard]] auto anchor() const
-        -> const access_anchor& {
+    [[nodiscard]] auto anchor() const -> const access_anchor& {
         return anchor_;
     }
 

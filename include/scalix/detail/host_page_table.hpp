@@ -81,7 +81,7 @@ class host_page_table : public page_table_interface<PageSize> {
 
     auto make_table_host_accessible() -> sclx::event override {
         return queue_.submit([&](sycl::handler& cgh) {
-            cgh.host_task([&]() {
+            sclx::detail::host_task(cgh, [&]() {
                 for (std::size_t i = 0; i < pages_.size(); ++i) {
                     pages_[i].lock().set_write_bit(
                         simplified_page_data_[i].write_bit
@@ -93,7 +93,7 @@ class host_page_table : public page_table_interface<PageSize> {
 
     auto make_table_device_accessible() -> sclx::event override {
         return queue_.submit([&](sycl::handler& cgh) {
-            cgh.host_task([&]() {
+            sclx::detail::host_task(cgh, [&]() {
                 for (std::size_t i = 0; i < pages_.size(); ++i) {
                     auto page_lock = pages_[i].lock();
                     if (!page_lock.is_mpi_local()) {

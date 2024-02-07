@@ -58,7 +58,7 @@ class local_page : public page_interface<PageSize> {
         page_index_t index,
         page_size_t allocated_bytes_per_page
     )
-        :           device_id_(device_id),
+        : device_id_(device_id),
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
 

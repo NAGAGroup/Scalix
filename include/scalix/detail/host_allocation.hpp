@@ -45,7 +45,7 @@ class host_allocation<
     T,
     ReusePagesFlag,
     PageSize> {
-public:
+  public:
     struct allocation_handle : sclx::detail::allocation_handle<PageSize> {
         std::unique_ptr<sclx::byte_array> data_;
         std::vector<page_handle<page_handle_type::strong, PageSize>> pages_;
@@ -65,7 +65,8 @@ public:
         const std::vector<page_index_t>& indices,
         const std::vector<
             page_handle<page_handle_type::weak, PageSize>>& /*unused*/
-    ) : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
+    )
+        : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
         if (device_id != sclx::host_device_id) {
             throw std::runtime_error(
                 "host_allocation: device_id must be host_device_id"
@@ -100,7 +101,8 @@ public:
         page_index_t last,
         const std::vector<
             page_handle<page_handle_type::weak, PageSize>>& /*unused*/
-    ) : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
+    )
+        : anchor_(access_anchor_interface::create_anchor<allocation_handle>()) {
         auto page_count     = last - first;
         auto bytes_per_page = page_traits<T>::allocated_bytes_per_page;
         auto& alloc_handle  = static_cast<allocation_handle&>(
@@ -134,7 +136,7 @@ public:
 
 template<class T, reuse_pages ReusePagesFlag, page_size_t PageSize>
 class host_allocation<pagination_type::paginated, T, ReusePagesFlag, PageSize> {
-public:
+  public:
     struct allocation_handle : sclx::detail::allocation_handle<PageSize> {
         std::vector<std::unique_ptr<sclx::byte_array>> raw_page_data_;
         std::vector<page_handle<page_handle_type::strong, PageSize>> pages_;
@@ -197,8 +199,6 @@ public:
         auto& alloc_handle  = static_cast<allocation_handle&>(
             access_anchor_interface::get_allocation<PageSize>(anchor_)
         );
-        auto device = sclx::device::get_devices()[device_id];
-        sycl::queue queue{device};
         auto& pages = alloc_handle.pages_;
         for (page_index_t pidx = 0; pidx < page_count; ++pidx) {
             auto page_index           = first + pidx;

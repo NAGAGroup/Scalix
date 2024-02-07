@@ -45,50 +45,53 @@ struct allocation_handle_base {
     allocation_handle_base() = default;
 
     allocation_handle_base(const allocation_handle_base&) = delete;
-    auto operator=(const allocation_handle_base&) -> allocation_handle_base& = delete;
+    auto operator=(const allocation_handle_base&)
+        -> allocation_handle_base& = delete;
 
     allocation_handle_base(allocation_handle_base&&) = default;
-    auto operator=(allocation_handle_base&&) -> allocation_handle_base& = default;
+    auto operator=(allocation_handle_base&&)
+        -> allocation_handle_base& = default;
 
     virtual ~allocation_handle_base() = default;
 };
 
 template<page_size_t PageSize>
-class allocation_handle: public allocation_handle_base {
+class allocation_handle : public allocation_handle_base {
   public:
     using page_handle = page_handle<page_handle_type::strong, PageSize>;
     using allocation_handle_base::allocation_handle_base;
 
     [[nodiscard]] virtual auto device_id() const -> device_id_t = 0;
-    [[nodiscard]] virtual auto pages() const -> const std::vector<page_handle>& = 0;
+    [[nodiscard]] virtual auto pages() const
+        -> const std::vector<page_handle>& = 0;
 };
 
 struct access_anchor_interface;
 
 class access_anchor {
-public:
-    access_anchor() = default;
-    access_anchor(access_anchor&) = default;
-    access_anchor(access_anchor&&) = default;
+  public:
+    access_anchor()                                        = default;
+    access_anchor(access_anchor&)                          = default;
+    access_anchor(access_anchor&&)                         = default;
     auto operator=(const access_anchor&) -> access_anchor& = default;
-    auto operator=(access_anchor&&) -> access_anchor& = default;
+    auto operator=(access_anchor&&) -> access_anchor&      = default;
 
     ~access_anchor() = default;
 
-private:
+  private:
     access_anchor(std::shared_ptr<allocation_handle_base> handle)
         : handle_(std::move(handle)) {}
 
-    template <page_size_t PageSize>
+    template<page_size_t PageSize>
     [[nodiscard]] auto get_allocation() -> allocation_handle<PageSize>& {
         return static_cast<allocation_handle<PageSize>&>(*handle_);
     }
 
-    template <page_size_t PageSize>
-    [[nodiscard]] auto get_allocation() const -> const allocation_handle<PageSize>& {
+    template<page_size_t PageSize>
+    [[nodiscard]] auto get_allocation() const
+        -> const allocation_handle<PageSize>& {
         return static_cast<allocation_handle<PageSize>&>(*handle_);
     }
-
 
     std::shared_ptr<allocation_handle_base> handle_;
 
@@ -96,22 +99,20 @@ private:
 };
 
 struct access_anchor_interface {
-    template <class AllocationHandle>
-    static auto create_anchor() -> access_anchor{
+    template<class AllocationHandle>
+    static auto create_anchor() -> access_anchor {
         return {std::make_shared<AllocationHandle>()};
     }
 
-    template <page_size_t PageSize>
-    static auto get_allocation(
-        access_anchor& anchor
-    ) -> allocation_handle<PageSize>& {
+    template<page_size_t PageSize>
+    static auto get_allocation(access_anchor& anchor)
+        -> allocation_handle<PageSize>& {
         return anchor.get_allocation<PageSize>();
     }
 
-    template <page_size_t PageSize>
-    static auto get_allocation(
-        const access_anchor& anchor
-    ) -> const allocation_handle<PageSize>& {
+    template<page_size_t PageSize>
+    static auto get_allocation(const access_anchor& anchor)
+        -> const allocation_handle<PageSize>& {
         return anchor.get_allocation<PageSize>();
     }
 };

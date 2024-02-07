@@ -38,7 +38,7 @@
 
 using value_type = float;
 auto page_count
-    = sclx::detail::required_pages_for_elements<value_type>(1'000'000);
+    = sclx::detail::required_pages_for_elements<value_type>(100'000'000);
 
 template<template<
     sclx::detail::pagination_type,
