@@ -7,81 +7,91 @@
   },
   "configurePresets": [
     {
-      "name": "dev-common",
+      "name": "dev-base",
       "hidden": true,
       "generator": "Ninja",
-      "inherits": [
-        "clang-tidy",
-        "dev-mode",
-        "cppcheck"
-      ],
       "cacheVariables": {
         "BUILD_MCSS_DOCS": "ON"
       },
       "vendor": {
         "jetbrains.com/clion": {
-          "toolchain": "SYCLDockerDevLocal"
+          "toolchain": "Default"
         }
       }
     },
     {
-      "name": "dev",
-      "binaryDir": "${sourceDir}/build/dev",
+      "name": "dev-acpp",
+      "binaryDir": "${sourceDir}/build-acpp/dev",
       "inherits": [
-        "dev-common",
-        "ci-linux"
+        "dev-base",
+        "ci-test-acpp"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       }
     },
     {
-      "name": "dev-release",
-      "binaryDir": "${sourceDir}/build/dev-release",
+      "name": "dev-release-acpp",
+      "binaryDir": "${sourceDir}/build-acpp/dev-release",
       "inherits": [
-        "dev"
+        "dev-acpp"
       ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
-      "name": "dev-shared-lib",
-      "binaryDir": "${sourceDir}/build/dev-shared-lib",
+      "name": "dev-shared-lib-acpp",
+      "binaryDir": "${sourceDir}/build-acpp/dev-shared-lib",
       "inherits": [
-        "dev-release"
+        "dev-release-acpp",
+        "ci-linux-acpp"
       ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
         "BUILD_SHARED_LIBS": "ON"
       }
     },
     {
-      "name": "dev-coverage",
-      "binaryDir": "${sourceDir}/build/coverage",
+      "name": "dev-coverage-acpp",
+      "binaryDir": "${sourceDir}/build-acpp/coverage",
       "inherits": [
-        "dev",
-        "coverage-linux"
+        "dev-base",
+        "ci-coverage-acpp"
+      ]
+    },
+    {
+      "name": "dev-sanitize-acpp",
+      "binaryDir": "${sourceDir}/build-acpp/sanitize",
+      "inherits": [
+        "dev-base",
+        "ci-sanitize-acpp"
       ]
     }
   ],
   "buildPresets": [
     {
-      "name": "dev",
-      "configurePreset": "dev",
-      "configuration": "Debug",
+      "name": "dev-acpp",
+      "configurePreset": "dev-acpp",
       "jobs": 16
     },
     {
-      "name": "dev-release",
-      "configurePreset": "dev-release",
-      "configuration": "Release",
+      "name": "dev-release-acpp",
+      "configurePreset": "dev-release-acpp",
       "jobs": 16
     },
     {
-      "name": "dev-shared-lib",
-      "configurePreset": "dev-shared-lib",
-      "configuration": "Release",
+      "name": "dev-shared-lib-acpp",
+      "configurePreset": "dev-shared-lib-acpp",
+      "jobs": 16
+    },
+    {
+      "name": "dev-coverage-acpp",
+      "configurePreset": "dev-coverage-acpp",
+      "jobs": 16
+    },
+    {
+      "name": "dev-sanitize-acpp",
+      "configurePreset": "dev-sanitize-acpp",
       "jobs": 16
     }
   ]

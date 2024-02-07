@@ -4,6 +4,7 @@ project(ScalixTests LANGUAGES CXX)
 
 include(../cmake/project-is-top-level.cmake)
 include(../cmake/folders.cmake)
+include(../cmake/add_scalix_to_target.cmake)
 
 # ---- Dependencies ----
 
@@ -16,10 +17,7 @@ endif()
 
 add_executable(scratchwork source/scratchwork.cpp)
 target_link_libraries(scratchwork PRIVATE Scalix::Scalix)
-target_compile_features(scratchwork PRIVATE cxx_std_20)
-if(DEFINED "SCALIX_SYCL_CXX_FLAGS")
-  target_compile_options(scratchwork BEFORE PRIVATE ${SCALIX_SYCL_CXX_FLAGS})
-endif()
+add_scalix_to_executable(scratchwork)
 
 add_test(NAME scratchwork COMMAND scratchwork)
 

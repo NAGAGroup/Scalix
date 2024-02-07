@@ -32,27 +32,27 @@ write_basic_package_version_file("${package}ConfigVersion.cmake"
                                  COMPATIBILITY SameMajorVersion)
 
 # Allow package maintainers to freely override the path for the configs
-set(Scalix_INSTALL_CMAKEDIR
+set(SCALIX_INSTALL_CMAKEDIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/${package}"
     CACHE STRING "CMake package config location relative to the install prefix")
-set_property(CACHE Scalix_INSTALL_CMAKEDIR PROPERTY TYPE PATH)
-mark_as_advanced(Scalix_INSTALL_CMAKEDIR)
+set_property(CACHE SCALIX_INSTALL_CMAKEDIR PROPERTY TYPE PATH)
+mark_as_advanced(SCALIX_INSTALL_CMAKEDIR)
 
 install(
   FILES cmake/install-config.cmake
-  DESTINATION "${Scalix_INSTALL_CMAKEDIR}"
+  DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
   RENAME "${package}Config.cmake"
   COMPONENT Scalix_Development)
 
 install(
   FILES "${PROJECT_BINARY_DIR}/${package}ConfigVersion.cmake"
-  DESTINATION "${Scalix_INSTALL_CMAKEDIR}"
+  DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
   COMPONENT Scalix_Development)
 
 install(
   EXPORT ScalixTargets
   NAMESPACE Scalix::
-  DESTINATION "${Scalix_INSTALL_CMAKEDIR}"
+  DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
   COMPONENT Scalix_Development)
 
 if(PROJECT_IS_TOP_LEVEL)

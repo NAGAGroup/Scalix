@@ -26,92 +26,160 @@
       "hidden": true,
       "inherits": "cmake-pedantic",
       "cacheVariables": {
-        "Scalix_DEVELOPER_MODE": "ON"
+        "SCALIX_DEVELOPER_MODE": "ON"
       }
     },
     {
       "name": "cppcheck",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr"
+        "CMAKE_CXX_CPPCHECK": "cppcheck;--inline-suppr;--enable=warning,performance,portability,style;--language=c++"
       }
     },
     {
-      "name": "clang-tidy",
+      "name": "ci-linux-base",
       "hidden": true,
+      "generator": "Ninja",
       "cacheVariables": {
-        "SCALIX_CXX_CLANG_TIDY": "run-clang-tidy;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy",
-        "SCALIX_CLANG_TIDY_CXX_FLAGS": "-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=3;-D_GLIBCXX_ASSERTIONS=1;-fstack-protector-strong;-fstack-clash-protection;-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion;-Wcast-qual;-Wformat=2;-Wundef;-Werror=float-equal;-Wshadow;-Wcast-align;-Wunused;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough;-Wextra-semi;-Woverloaded-virtual;-Wnon-virtual-dtor;-Wold-style-cast"
-      }
-    },
-    {
-      "name": "ci-std",
-      "description": "This preset makes sure the project actually builds with at least the specified standard",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_CXX_EXTENSIONS": "OFF",
-        "CMAKE_CXX_STANDARD": "20",
-        "CMAKE_CXX_STANDARD_REQUIRED": "ON"
-      }
-    },
-    {
-      "name": "flags-llvm-sycl",
-      "description": "These flags are supported by both GCC and Clang",
-      "hidden": true,
-      "cacheVariables": {
-        "SCALIX_CXX_FLAGS": "-fsycl;-fsycl-targets=nvptx64-nvidia-cuda,spir64_x86_64,spir64_fpga;-U_FORTIFY_SOURCE;-D_FORTIFY_SOURCE=3;-D_GLIBCXX_ASSERTIONS=1;-fstack-protector-strong;-fstack-clash-protection;-Wall;-Wextra;-Wpedantic;-Wconversion;-Wsign-conversion;-Wcast-qual;-Wformat=2;-Wundef;-Werror=float-equal;-Wshadow;-Wcast-align;-Wunused;-Wnull-dereference;-Wdouble-promotion;-Wimplicit-fallthrough;-Wextra-semi;-Woverloaded-virtual;-Wnon-virtual-dtor;-Wold-style-cast",
         "CMAKE_EXE_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen",
-        "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen"
+        "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen",
+        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Werror=float-equal -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_EXTENSIONS": "OFF"
       }
     },
     {
-      "name": "ci-linux",
-      "generator": "Unix Makefiles",
-      "hidden": true,
-      "inherits": ["flags-llvm-sycl", "ci-std"],
+      "name": "ci-linux-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/release",
+      "inherits": [
+        "ci-linux-base"
+      ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "SCALIX_TIDY_INCLUDE_ARGS": "-isystem/home/sycl/.local/share/sycl/include/sycl;-isystem/home/sycl/.local/share/sycl/include",
+        "SCALIX_SYCL_TARGETS": "nvptx64-nvidia-cuda,spir64_x86_64,spir64_fpga",
+        "SCALIX_EXTRA_SYCL_ARGS": "",
+        "CMAKE_CXX_COMPILER": "/usr/local/sycl/bin/clang++"
+      }
+    },
+    {
+      "name": "ci-linux-acpp",
+      "binaryDir": "${sourceDir}/build-llvm/release",
+      "inherits": [
+        "ci-linux-base"
+      ],
+      "cacheVariables": {
+        "AdaptiveCpp_DIR": "/usr/local/lib/cmake/AdaptiveCpp",
+        "SCALIX_SYCL_TARGETS": "generic",
         "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
-      "name": "coverage-linux",
-      "binaryDir": "${sourceDir}/build/coverage",
-      "inherits": "ci-linux",
+      "name": "clang-tidy-base",
+      "hidden": true,
+      "cacheVariables": {
+        "SCALIX_CLANG_TIDY_ARGS": "-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy"
+      }
+    },
+    {
+      "name": "clang-tidy-llvm-sycl",
+      "hidden": true,
+      "inherits": "clang-tidy-base",
+      "cacheVariables": {
+        "SCALIX_CLANG_TIDY_COMMAND": "run-clang-tidy"
+      }
+    },
+    {
+      "name": "clang-tidy-acpp",
+      "hidden": true,
+      "inherits": "clang-tidy-base",
+      "cacheVariables": {
+        "SCALIX_CLANG_TIDY_COMMAND": "clang-tidy"
+      }
+    },
+    {
+      "name": "coverage-linux-base",
+      "inherits": [
+        "dev-mode"
+      ],
       "hidden": true,
       "cacheVariables": {
         "ENABLE_COVERAGE": "ON",
         "CMAKE_BUILD_TYPE": "Coverage",
         "CMAKE_CXX_FLAGS_COVERAGE": "-Og -g --coverage -fkeep-inline-functions -fkeep-static-functions",
         "CMAKE_EXE_LINKER_FLAGS_COVERAGE": "--coverage",
-        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage"
-      }
-    },
-    {
-      "name": "ci-coverage",
-      "inherits": ["coverage-linux", "dev-mode"],
-      "cacheVariables": {
+        "CMAKE_SHARED_LINKER_FLAGS_COVERAGE": "--coverage",
         "COVERAGE_HTML_COMMAND": ""
       }
     },
     {
-      "name": "ci-sanitize",
-      "binaryDir": "${sourceDir}/build/sanitize",
-      "inherits": ["ci-linux", "dev-mode"],
+      "name": "ci-coverage-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/coverage",
+      "inherits": [
+        "coverage-linux-base",
+        "ci-linux-llvm-sycl"
+      ]
+    },
+    {
+      "name": "ci-coverage-acpp",
+      "binaryDir": "${sourceDir}/build-llvm/coverage",
+      "inherits": [
+        "coverage-linux-base",
+        "ci-linux-acpp"
+      ]
+    },
+    {
+      "name": "ci-sanitize-base",
+      "hidden": true,
+      "inherits": [
+        "ci-linux-base",
+        "dev-mode"
+      ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Sanitize",
-        "CMAKE_CXX_FLAGS_SANITIZE": "-U_FORTIFY_SOURCE -O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common"
+        "CMAKE_CXX_FLAGS_SANITIZE": "-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common",
+        "BUILD_SHARED_LIBS": "ON"
       }
     },
     {
-      "name": "ci-build",
-      "binaryDir": "${sourceDir}/build",
-      "hidden": true
+      "name": "ci-sanitize-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/sanitize",
+      "inherits": [
+        "ci-sanitize-base",
+        "ci-linux-llvm-sycl"
+      ]
     },
     {
-      "name": "ci-test",
-      "inherits": ["ci-build", "ci-linux", "clang-tidy", "cppcheck", "dev-mode"]
+      "name": "ci-sanitize-acpp",
+      "binaryDir": "${sourceDir}/build-llvm/sanitize",
+      "inherits": [
+        "ci-sanitize-base",
+        "ci-linux-acpp"
+      ]
+    },
+    {
+      "name": "ci-test-base",
+      "hidden": true,
+      "inherits": [
+        "cppcheck",
+        "dev-mode"
+      ]
+    },
+    {
+      "name": "ci-test-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/test",
+      "inherits": [
+        "ci-test-base",
+        "clang-tidy-llvm-sycl",
+        "ci-linux-llvm-sycl"
+      ]
+    },
+    {
+      "name": "ci-test-acpp",
+      "binaryDir": "${sourceDir}/build-llvm/test",
+      "inherits": [
+        "ci-test-base",
+        "clang-tidy-acpp",
+        "ci-linux-acpp"
+      ]
     }
   ]
 }

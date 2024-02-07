@@ -13,7 +13,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nagagroup/sycl-docker-dev:latest
+      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
       options: --user=root
 
     steps:
@@ -23,17 +23,17 @@ jobs:
 
     - name: Clang Format
       shell: bash
-      run: source /home/sycl/.bashrc; cmake -D CLANG_FORMAT_COMMAND=clang-format -P cmake/clang-format.cmake
+      run: source /home/gpu-dev/setup_env.sh; cmake -D CLANG_FORMAT_COMMAND=clang-format -P cmake/clang-format.cmake
 
     - name: CMake Format
       shell: bash
       if: always()
-      run: source /home/sycl/.bashrc; cmake -D CMAKEFORMAT_COMMAND=cmake-format -P cmake/cmake-format.cmake
+      run: source /home/gpu-dev/setup_env.sh; cmake -D CMAKEFORMAT_COMMAND=cmake-format -P cmake/cmake-format.cmake
 
     - name: Prettier
       shell: bash
       if: always()
-      run: source /home/sycl/.bashrc; cmake -P cmake/prettier.cmake
+      run: source /home/gpu-dev/setup_env.sh; cmake -P cmake/prettier.cmake
 
   test:
     needs: [lint]
@@ -50,7 +50,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/nagagroup/sycl-docker-dev:latest
+      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
       options: --user=root
 
     steps:
@@ -60,21 +60,21 @@ jobs:
 
     - name: Configure
       shell: bash
-      run: source /home/sycl/.bashrc; cmake --preset=ci-test
+      run: source /home/gpu-dev/setup_env.sh; cmake --preset=ci-test-acpp
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
 
     - name: Build
       shell: bash
-      run: source /home/sycl/.bashrc; cmake --build build --config Release -j 2
+      run: source /home/gpu-dev/setup_env.sh; cmake --build build --config Release -j 2
 
     - name: Install
       shell: bash
-      run: source /home/sycl/.bashrc; cmake --install build --config Release --prefix prefix
+      run: source /home/gpu-dev/setup_env.sh; cmake --install build --config Release --prefix prefix
 
     - name: Test
       shell: bash
       working-directory: build
-      run: source /home/sycl/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
+      run: source /home/gpu-dev/setup_env.sh; ctest --output-on-failure --no-tests=error -C Release -j 2
 
   docs:
     # Deploy docs only when builds succeed
@@ -82,7 +82,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nagagroup/sycl-docker-dev:latest
+      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
       options: --user=root
 
     # To enable, first you have to create an orphaned gh-pages branch:
@@ -106,7 +106,7 @@ jobs:
         submodules: 'true'
 
     - name: Build docs
-      run: source /home/sycl/.bashrc; cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
+      run: source /home/gpu-dev/setup_env.sh; cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
         -P cmake/docs-ci.cmake
 
     - name: Deploy docs

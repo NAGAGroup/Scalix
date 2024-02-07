@@ -10,11 +10,34 @@ project(
   HOMEPAGE_URL "https://github.com/NAGAGroup/Scalix"
   LANGUAGES CXX)
 
+# check that standard is greater than or equal to 20, if not, raise an error if
+# unasigned, set to 20
+if(NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 20)
+elseif(CMAKE_CXX_STANDARD LESS 20)
+  message(
+    FATAL_ERROR
+      "Scalix requires C++20 or later. You are using C++${CMAKE_CXX_STANDARD}.")
+endif()
+
 include(cmake/project-is-top-level.cmake)
 include(cmake/variables.cmake)
 
 if(NOT DEFINED CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
+endif()
+
+include(cmake/add_scalix_to_target.cmake)
+
+# ---- Developer mode ----
+if(SCALIX_DEVELOPER_MODE)
+  if(NOT PROJECT_IS_TOP_LEVEL)
+    message(
+      AUTHOR_WARNING "Developer mode is intended for developers of Scalix")
+  else()
+    message(STATUS "Enabling developer mode for Scalix")
+    include(cmake/dev-mode.cmake)
+  endif()
 endif()
 
 # ---- Declare library ----
@@ -31,49 +54,10 @@ add_library(
   source/detail/host_page_table.cpp
   source/detail/local_page.cpp
   source/detail/host_page.cpp
-  source/detail/host_allocation.cpp)
+  source/detail/host_allocation.cpp
+  source/detail/host_task.cpp)
 add_library(Scalix::Scalix ALIAS scalix)
-
-if(DEFINED "SCALIX_CXX_FLAGS")
-  target_link_options(scalix BEFORE PUBLIC ${SCALIX_CXX_FLAGS})
-endif()
-
-if(DEFINED "SCALIX_CXX_FLAGS")
-  target_compile_options(scalix BEFORE PUBLIC ${SCALIX_CXX_FLAGS})
-endif()
-
-include(GenerateExportHeader)
-generate_export_header(
-  scalix
-  BASE_NAME
-  scalix
-  EXPORT_FILE_NAME
-  export/scalix/scalix_export.hpp
-  CUSTOM_CONTENT_FROM_VARIABLE
-  pragma_suppress_c4251)
-
-if(NOT BUILD_SHARED_LIBS)
-  target_compile_definitions(scalix PUBLIC SCALIX_STATIC_DEFINE)
-endif()
-
-# get compiler args for scalix
-set_target_properties(
-  scalix
-  PROPERTIES CXX_VISIBILITY_PRESET hidden
-             VISIBILITY_INLINES_HIDDEN YES
-             VERSION "${PROJECT_VERSION}"
-             SOVERSION "${PROJECT_VERSION_MAJOR}"
-             EXPORT_NAME Scalix
-             OUTPUT_NAME Scalix)
-
-target_include_directories(
-  scalix ${warning_guard}
-  PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
-
-target_include_directories(
-  scalix SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
-
-target_compile_features(scalix PUBLIC cxx_std_20)
+add_scalix_to_library(scalix)
 
 # ---- Install rules ----
 
@@ -81,12 +65,17 @@ if(NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
 endif()
 
-# ---- Developer mode ----
+# ---- Custom Clang Tidy if Needed ----
+if(DEFINED "SCALIX_USING_CUSTOM_CLANG_TIDY")
+  add_custom_target(
+    clang-tidy-checks
+    ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
+    ${CLANG_TIDY_CHECK_SUBTARGETS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-if(NOT Scalix_DEVELOPER_MODE)
-  return()
-elseif(NOT PROJECT_IS_TOP_LEVEL)
-  message(AUTHOR_WARNING "Developer mode is intended for developers of Scalix")
+  add_custom_target(
+    clang-tidy-fixes
+    ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
+    ${CLANG_TIDY_FIX_SUBTARGETS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
-
-include(cmake/dev-mode.cmake)
