@@ -57,7 +57,7 @@ add_library(
   source/detail/host_allocation.cpp
   source/detail/host_task.cpp)
 add_library(Scalix::Scalix ALIAS scalix)
-add_scalix_to_library(scalix)
+add_scalix_to_target(scalix)
 
 # ---- Install rules ----
 

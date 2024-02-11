@@ -31,6 +31,17 @@
       }
     },
     {
+      "name": "dev-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/dev",
+      "inherits": [
+        "dev-base",
+        "ci-test-llvm-sycl"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
       "name": "dev-release-acpp",
       "binaryDir": "${sourceDir}/build-acpp/dev-release",
       "inherits": [
@@ -65,13 +76,21 @@
       "inherits": [
         "dev-base",
         "ci-sanitize-acpp"
-      ]
+      ],
+      "cacheVariables": {
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "dev-acpp",
       "configurePreset": "dev-acpp",
+      "jobs": 16
+    },
+    {
+      "name": "dev-llvm-sycl",
+      "configurePreset": "dev-llvm-sycl",
       "jobs": 16
     },
     {

@@ -17,7 +17,7 @@ endif()
 
 add_executable(scratchwork source/scratchwork.cpp)
 target_link_libraries(scratchwork PRIVATE Scalix::Scalix)
-add_scalix_to_executable(scratchwork)
+add_scalix_to_target(scratchwork)
 
 add_test(NAME scratchwork COMMAND scratchwork)
 

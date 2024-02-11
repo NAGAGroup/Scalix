@@ -143,6 +143,9 @@ void test_allocations(
 }
 
 auto main() -> int {
+    auto ptr = std::make_shared<float[]>(5);
+    std::cout << "ptr: " << ptr[5] << std::endl;
+
     sclx::device device;
     // get a cuda device
     for (const auto& d : sycl::device::get_devices()) {

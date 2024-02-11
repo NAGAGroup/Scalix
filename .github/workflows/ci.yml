@@ -36,8 +36,6 @@ jobs:
       run: source /home/gpu-dev/setup_env.sh; cmake -P cmake/prettier.cmake
 
   test:
-    needs: [lint]
-
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -78,7 +76,7 @@ jobs:
 
   docs:
     # Deploy docs only when builds succeed
-    needs: [test]
+    needs: [test, lint]
 
     runs-on: ubuntu-latest
     container:

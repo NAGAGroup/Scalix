@@ -40,6 +40,7 @@
       "name": "ci-linux-base",
       "hidden": true,
       "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_EXE_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen",
         "CMAKE_SHARED_LINKER_FLAGS": "-Wl,--allow-shlib-undefined,--as-needed,-z,noexecstack,-z,relro,-z,now,-z,nodlopen",
@@ -50,7 +51,6 @@
     },
     {
       "name": "ci-linux-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/release",
       "inherits": [
         "ci-linux-base"
       ],
@@ -62,7 +62,6 @@
     },
     {
       "name": "ci-linux-acpp",
-      "binaryDir": "${sourceDir}/build-llvm/release",
       "inherits": [
         "ci-linux-base"
       ],
@@ -112,7 +111,6 @@
     },
     {
       "name": "ci-coverage-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/coverage",
       "inherits": [
         "coverage-linux-base",
         "ci-linux-llvm-sycl"
@@ -120,7 +118,6 @@
     },
     {
       "name": "ci-coverage-acpp",
-      "binaryDir": "${sourceDir}/build-llvm/coverage",
       "inherits": [
         "coverage-linux-base",
         "ci-linux-acpp"
@@ -141,7 +138,6 @@
     },
     {
       "name": "ci-sanitize-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/sanitize",
       "inherits": [
         "ci-sanitize-base",
         "ci-linux-llvm-sycl"
@@ -149,7 +145,6 @@
     },
     {
       "name": "ci-sanitize-acpp",
-      "binaryDir": "${sourceDir}/build-llvm/sanitize",
       "inherits": [
         "ci-sanitize-base",
         "ci-linux-acpp"
@@ -165,7 +160,6 @@
     },
     {
       "name": "ci-test-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/test",
       "inherits": [
         "ci-test-base",
         "clang-tidy-llvm-sycl",
@@ -174,7 +168,6 @@
     },
     {
       "name": "ci-test-acpp",
-      "binaryDir": "${sourceDir}/build-llvm/test",
       "inherits": [
         "ci-test-base",
         "clang-tidy-acpp",
