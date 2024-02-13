@@ -23,19 +23,19 @@ jobs:
 
     - name: Clang Format
       shell: bash
-      run: source /home/gpu-dev/setup_env.sh; cmake -D CLANG_FORMAT_COMMAND=clang-format -P cmake/clang-format.cmake
+      run: source /home/gpu-dev/.bashrc; cmake -D CLANG_FORMAT_COMMAND=clang-format -P cmake/clang-format.cmake
 
     - name: CMake Format
       shell: bash
       if: always()
-      run: source /home/gpu-dev/setup_env.sh; cmake -D CMAKEFORMAT_COMMAND=cmake-format -P cmake/cmake-format.cmake
+      run: source /home/gpu-dev/.bashrc; cmake -D CMAKEFORMAT_COMMAND=cmake-format -P cmake/cmake-format.cmake
 
     - name: Prettier
       shell: bash
       if: always()
-      run: source /home/gpu-dev/setup_env.sh; cmake -P cmake/prettier.cmake
+      run: source /home/gpu-dev/.bashrc; cmake -P cmake/prettier.cmake
 
-  test:
+  test-acpp:
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -58,25 +58,64 @@ jobs:
 
     - name: Configure
       shell: bash
-      run: source /home/gpu-dev/setup_env.sh; cmake --preset=ci-test-acpp
+      run: source /home/gpu-dev/.bashrc; cmake --preset=ci-test-acpp
         -D BUILD_SHARED_LIBS=${{ matrix.shared }}
 
     - name: Build
       shell: bash
-      run: source /home/gpu-dev/setup_env.sh; cmake --build build --config Release -j 2
+      run: source /home/gpu-dev/.bashrc; cmake --build build --config Release -j 2
 
     - name: Install
       shell: bash
-      run: source /home/gpu-dev/setup_env.sh; cmake --install build --config Release --prefix prefix
+      run: source /home/gpu-dev/.bashrc; cmake --install build --config Release --prefix prefix
 
     - name: Test
       shell: bash
       working-directory: build
-      run: source /home/gpu-dev/setup_env.sh; ctest --output-on-failure --no-tests=error -C Release -j 2
+      run: source /home/gpu-dev/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
+
+  test-llvm-sycl:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+        type: [shared, static]
+
+        include:
+          - { type: shared, shared: YES }
+          - { type: static, shared: NO }
+
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/nagagroup/naga-dev-container:llvm-sycl-12.3.1
+      options: --user=root
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Configure
+        shell: bash
+        run: source /home/gpu-dev/.bashrc; cmake --preset=ci-test-llvm-sycl
+          -D BUILD_SHARED_LIBS=${{ matrix.shared }}
+
+      - name: Build
+        shell: bash
+        run: source /home/gpu-dev/.bashrc; cmake --build build --config Release -j 2
+
+      - name: Install
+        shell: bash
+        run: source /home/gpu-dev/.bashrc; cmake --install build --config Release --prefix prefix
+
+      - name: Test
+        shell: bash
+        working-directory: build
+        run: source /home/gpu-dev/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
 
   docs:
     # Deploy docs only when builds succeed
-    needs: [test, lint]
+    needs: [lint, test-acpp, test-llvm-sycl]
 
     runs-on: ubuntu-latest
     container:
@@ -104,7 +143,7 @@ jobs:
         submodules: 'true'
 
     - name: Build docs
-      run: source /home/gpu-dev/setup_env.sh; cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
+      run: source /home/gpu-dev/.bashrc; cmake "-DPROJECT_SOURCE_DIR=$PWD" "-DPROJECT_BINARY_DIR=$PWD/build"
         -P cmake/docs-ci.cmake
 
     - name: Deploy docs

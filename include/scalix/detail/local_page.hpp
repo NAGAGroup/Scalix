@@ -62,8 +62,8 @@ class local_page : public page_interface<PageSize> {
           index_(index),
           allocated_bytes_per_page_(allocated_bytes_per_page) {}
 
-    auto data()
-        -> std::variant<sclx::byte*, std::future<sclx::byte*>> override {
+    auto
+    data() -> std::variant<sclx::byte*, std::future<sclx::byte*>> override {
         return data_;
     }
 

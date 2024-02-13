@@ -17,8 +17,7 @@ endif()
 
 include(cmake/lint-targets.cmake)
 include(cmake/spell-targets.cmake)
-if(DEFINED "SCALIX_CXX_CLANG_TIDY" AND DEFINED "AdaptiveCpp_DIR")
-  set(CMAKE_CXX_CLANG_TIDY ${SCALIX_CXX_CLANG_TIDY})
-endif()
+# if(DEFINED "SCALIX_CXX_CLANG_TIDY" AND DEFINED "AdaptiveCpp_DIR")
+# set(CMAKE_CXX_CLANG_TIDY ${SCALIX_CXX_CLANG_TIDY}) endif()
 
 add_folders(Project)

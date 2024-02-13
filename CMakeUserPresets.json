@@ -63,6 +63,18 @@
       }
     },
     {
+      "name": "dev-shared-lib-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/dev-shared-lib",
+      "inherits": [
+        "dev-llvm-sycl",
+        "ci-linux-llvm-sycl"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_SHARED_LIBS": "ON"
+      }
+    },
+    {
       "name": "dev-coverage-acpp",
       "binaryDir": "${sourceDir}/build-acpp/coverage",
       "inherits": [
@@ -76,10 +88,15 @@
       "inherits": [
         "dev-base",
         "ci-sanitize-acpp"
-      ],
-      "cacheVariables": {
-          "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-      }
+      ]
+    },
+    {
+      "name": "dev-sanitize-llvm-sycl",
+      "binaryDir": "${sourceDir}/build-llvm/sanitize",
+      "inherits": [
+        "dev-base",
+        "ci-sanitize-llvm-sycl"
+      ]
     }
   ],
   "buildPresets": [
@@ -104,6 +121,11 @@
       "jobs": 16
     },
     {
+      "name": "dev-shared-lib-llvm-sycl",
+      "configurePreset": "dev-shared-lib-llvm-sycl",
+      "jobs": 16
+    },
+    {
       "name": "dev-coverage-acpp",
       "configurePreset": "dev-coverage-acpp",
       "jobs": 16
@@ -111,6 +133,11 @@
     {
       "name": "dev-sanitize-acpp",
       "configurePreset": "dev-sanitize-acpp",
+      "jobs": 16
+    },
+    {
+      "name": "dev-sanitize-llvm-sycl",
+      "configurePreset": "dev-sanitize-llvm-sycl",
       "jobs": 16
     }
   ]

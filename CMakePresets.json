@@ -57,7 +57,7 @@
       "cacheVariables": {
         "SCALIX_SYCL_TARGETS": "nvptx64-nvidia-cuda,spir64_x86_64,spir64_fpga",
         "SCALIX_EXTRA_SYCL_ARGS": "",
-        "CMAKE_CXX_COMPILER": "/usr/local/sycl/bin/clang++"
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
@@ -72,26 +72,10 @@
       }
     },
     {
-      "name": "clang-tidy-base",
+      "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "SCALIX_CLANG_TIDY_ARGS": "-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy"
-      }
-    },
-    {
-      "name": "clang-tidy-llvm-sycl",
-      "hidden": true,
-      "inherits": "clang-tidy-base",
-      "cacheVariables": {
-        "SCALIX_CLANG_TIDY_COMMAND": "run-clang-tidy"
-      }
-    },
-    {
-      "name": "clang-tidy-acpp",
-      "hidden": true,
-      "inherits": "clang-tidy-base",
-      "cacheVariables": {
-        "SCALIX_CLANG_TIDY_COMMAND": "clang-tidy"
+        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy"
       }
     },
     {
@@ -162,7 +146,7 @@
       "name": "ci-test-llvm-sycl",
       "inherits": [
         "ci-test-base",
-        "clang-tidy-llvm-sycl",
+        "clang-tidy",
         "ci-linux-llvm-sycl"
       ]
     },
@@ -170,7 +154,7 @@
       "name": "ci-test-acpp",
       "inherits": [
         "ci-test-base",
-        "clang-tidy-acpp",
+        "clang-tidy",
         "ci-linux-acpp"
       ]
     }

@@ -58,17 +58,16 @@ class page_interface {
     auto operator=(page_interface&&) -> page_interface&      = default;
 
     virtual auto data() -> std::variant<sclx::byte*, std::future<sclx::byte*>>
-        = 0;
+                           = 0;
     virtual auto device_id() -> std::variant<device_id_t, sclx::mpi_device> = 0;
-    virtual auto write_bit()
-        -> std::variant<sclx::write_bit_t, std::future<write_bit_t>>
-        = 0;
+    virtual auto
+    write_bit() -> std::variant<sclx::write_bit_t, std::future<write_bit_t>>
+                   = 0;
     virtual auto set_write_bit(sclx::write_bit_t bit) -> sclx::event = 0;
     virtual auto index() -> page_index_t                             = 0;
     virtual auto
     copy_from(sycl::queue queue, std::shared_ptr<page_interface> src)
-        -> sclx::event
-        = 0;
+        -> sclx::event = 0;
 
     virtual auto is_mpi_local() -> bool { return true; }
 
@@ -151,24 +150,24 @@ class page_handle<page_handle_type::strong, PageSize> {
     auto operator=(const page_handle&) -> page_handle& = default;
     auto operator=(page_handle&&) -> page_handle&      = default;
 
-    [[nodiscard]] auto data() const
-        -> std::variant<sclx::byte*, std::future<sclx::byte*>> {
+    [[nodiscard]] auto
+    data() const -> std::variant<sclx::byte*, std::future<sclx::byte*>> {
         if (!is_valid()) {
             return nullptr;
         }
         return impl_->data();
     }
 
-    [[nodiscard]] auto device_id() const
-        -> std::variant<device_id_t, sclx::mpi_device> {
+    [[nodiscard]] auto
+    device_id() const -> std::variant<device_id_t, sclx::mpi_device> {
         if (!is_valid()) {
             return no_device;
         }
         return impl_->device_id();
     }
 
-    [[nodiscard]] auto write_bit() const
-        -> std::variant<write_bit_t, std::future<write_bit_t>> {
+    [[nodiscard]] auto
+    write_bit() const -> std::variant<write_bit_t, std::future<write_bit_t>> {
         if (!is_valid()) {
             return write_bit_t{0};
         }
@@ -258,7 +257,8 @@ class page_handle<page_handle_type::strong, PageSize> {
             old_page,
             page_copy_rules{
                 .expect_valid_src = false,
-                .expect_valid_dst = false}
+                .expect_valid_dst = false
+            }
         );
         if (old_page.is_mpi_local()) {
             auto write_bit_variant = old_page.write_bit();
@@ -374,8 +374,8 @@ struct page_handle_creator_struct {
 };
 
 template<class PageImpl, class... Args>
-auto make_page_handle(Args&&... args)
-    -> page_handle_creator_struct<PageImpl::page_size>::page_handle {
+auto make_page_handle(Args&&... args
+) -> page_handle_creator_struct<PageImpl::page_size>::page_handle {
     return page_handle_creator_struct<PageImpl::page_size>::template create<
         PageImpl>(std::forward<Args>(args)...);
 }
@@ -390,8 +390,8 @@ struct page_traits {
 };
 
 template<class T, page_size_t PageSize = default_page_size>
-constexpr auto required_pages_for_elements(page_count_t elements)
-    -> page_count_t {
+constexpr auto required_pages_for_elements(page_count_t elements
+) -> page_count_t {
     return (elements + page_traits<T, PageSize>::elements_per_page - 1)
          / page_traits<T, PageSize>::elements_per_page;
 }
