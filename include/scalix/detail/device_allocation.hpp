@@ -55,9 +55,8 @@ class device_allocation<
             return device_id_;
         }
 
-        [[nodiscard]] auto pages() const
-            -> const std::vector<
-                page_handle<page_handle_type::strong, PageSize>>& final {
+        [[nodiscard]] auto pages() const -> const std::vector<
+            page_handle<page_handle_type::strong, PageSize>>& final {
             return pages_;
         }
     };
@@ -157,9 +156,8 @@ class device_allocation<
             return device_id_;
         }
 
-        [[nodiscard]] auto pages() const
-            -> const std::vector<
-                page_handle<page_handle_type::strong, PageSize>>& final {
+        [[nodiscard]] auto pages() const -> const std::vector<
+            page_handle<page_handle_type::strong, PageSize>>& final {
             return pages_;
         }
     };

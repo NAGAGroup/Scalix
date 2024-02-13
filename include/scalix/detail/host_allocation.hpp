@@ -54,9 +54,8 @@ class host_allocation<
             return sclx::host_device_id;
         }
 
-        [[nodiscard]] auto pages() const
-            -> const std::vector<
-                page_handle<page_handle_type::strong, PageSize>>& final {
+        [[nodiscard]] auto pages() const -> const std::vector<
+            page_handle<page_handle_type::strong, PageSize>>& final {
             return pages_;
         }
     };
@@ -146,9 +145,8 @@ class host_allocation<pagination_type::paginated, T, ReusePagesFlag, PageSize> {
             return sclx::host_device_id;
         }
 
-        [[nodiscard]] auto pages() const
-            -> const std::vector<
-                page_handle<page_handle_type::strong, PageSize>>& final {
+        [[nodiscard]] auto pages() const -> const std::vector<
+            page_handle<page_handle_type::strong, PageSize>>& final {
             return pages_;
         }
     };

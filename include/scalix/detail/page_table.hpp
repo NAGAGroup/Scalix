@@ -51,8 +51,8 @@ class page_table_interface {
     page_table_interface()                            = default;
     page_table_interface(const page_table_interface&) = default;
     page_table_interface(page_table_interface&&)      = default;
-    auto
-    operator=(const page_table_interface&) -> page_table_interface& = default;
+    auto operator=(const page_table_interface&)
+        -> page_table_interface&                                    = default;
     auto operator=(page_table_interface&&) -> page_table_interface& = default;
 
     virtual auto map_page(strong_page_handle page) -> sclx::event           = 0;
