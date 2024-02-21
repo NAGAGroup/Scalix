@@ -75,7 +75,8 @@
       "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CLANG_TIDY": "clang-tidy;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy"
+        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy-acpp.py;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR": "clang-tidy-fixes"
       }
     },
     {

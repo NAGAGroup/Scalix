@@ -45,17 +45,35 @@ endif()
 add_library(
   scalix
   source/detail/page_handle.cpp
+  include/scalix/detail/page_handle.hpp
   source/detail/allocation.cpp
+  include/scalix/detail/allocation.hpp
   source/detail/page_table.cpp
+  include/scalix/detail/page_table.hpp
   source/detail/device_allocation.cpp
+  include/scalix/detail/device_allocation.hpp
   source/find_device.cpp
+  include/scalix/find_device.hpp
   source/detail/device_page.cpp
+  include/scalix/detail/device_page.hpp
   source/detail/device_page_table.cpp
+  include/scalix/detail/device_page_table.hpp
   source/detail/host_page_table.cpp
+  include/scalix/detail/host_page_table.hpp
   source/detail/local_page.cpp
+  include/scalix/detail/local_page.hpp
   source/detail/host_page.cpp
+  include/scalix/detail/host_page.hpp
   source/detail/host_allocation.cpp
-  source/detail/host_task.cpp)
+  include/scalix/detail/host_allocation.hpp
+  source/detail/host_task.cpp
+  include/scalix/detail/host_task.hpp
+  source/detail/state_machine.cpp
+  include/scalix/detail/state_machine.hpp
+  source/detail/concurrent_guard.cpp
+  include/scalix/detail/concurrent_guard.hpp
+  source/detail/state_based_scheduler.cpp
+  include/scalix/detail/state_based_scheduler.hpp)
 add_library(Scalix::Scalix ALIAS scalix)
 add_scalix_to_target(scalix)
 

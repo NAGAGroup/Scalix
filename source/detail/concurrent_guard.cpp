@@ -28,33 +28,4 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
-#pragma once
-#include <sycl/sycl.hpp>
-
-namespace sclx::detail {
-
-template<class InterOpFunction>
-struct bound_host_kernel {
-    explicit bound_host_kernel(InterOpFunction&& f)
-        : f_(std::forward<InterOpFunction>(f)) {}
-
-    template<class InteropHandle>
-    void operator()(InteropHandle&& /*unused*/) {
-        f_();
-    }
-
-    InterOpFunction f_;
-};
-
-template<class InterOpFunction>
-void host_task(sycl::handler& cgh, InterOpFunction&& f) {
-#ifndef SCALIX_ADAPTIVECPP
-    cgh.host_task(std::forward<InterOpFunction>(f));
-#else
-    cgh.hipSYCL_enqueue_custom_operation(bound_host_kernel<InterOpFunction>{
-        std::forward<InterOpFunction>(f)});
-#endif
-}
-
-}  // namespace sclx::detail
+#include <scalix/detail/concurrent_guard.hpp>  // NOLINT(misc-include-cleaner)

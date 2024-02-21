@@ -71,7 +71,7 @@ struct access_anchor_interface;
 class access_anchor {
   public:
     access_anchor()                                        = default;
-    access_anchor(access_anchor&)                          = default;
+    access_anchor(const access_anchor&)                    = default;
     access_anchor(access_anchor&&)                         = default;
     auto operator=(const access_anchor&) -> access_anchor& = default;
     auto operator=(access_anchor&&) -> access_anchor&      = default;
@@ -79,7 +79,7 @@ class access_anchor {
     ~access_anchor() = default;
 
   private:
-    access_anchor(std::shared_ptr<allocation_handle_base> handle)
+    explicit access_anchor(std::shared_ptr<allocation_handle_base> handle)
         : handle_(std::move(handle)) {}
 
     template<page_size_t PageSize>
@@ -101,7 +101,9 @@ class access_anchor {
 struct access_anchor_interface {
     template<class AllocationHandle>
     static auto create_anchor() -> access_anchor {
-        return {std::make_shared<AllocationHandle>()};
+        return access_anchor{std::static_pointer_cast<allocation_handle_base>(
+            std::make_shared<AllocationHandle>()
+        )};
     }
 
     template<page_size_t PageSize>

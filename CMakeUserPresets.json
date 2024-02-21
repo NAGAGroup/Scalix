@@ -21,7 +21,7 @@
     },
     {
       "name": "dev-acpp",
-      "binaryDir": "${sourceDir}/build-acpp/dev",
+      "binaryDir": "${sourceDir}/build/acpp/dev",
       "inherits": [
         "dev-base",
         "ci-test-acpp"
@@ -32,7 +32,7 @@
     },
     {
       "name": "dev-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/dev",
+      "binaryDir": "${sourceDir}/build/llvm/dev",
       "inherits": [
         "dev-base",
         "ci-test-llvm-sycl"
@@ -43,7 +43,7 @@
     },
     {
       "name": "dev-release-acpp",
-      "binaryDir": "${sourceDir}/build-acpp/dev-release",
+      "binaryDir": "${sourceDir}/build/acpp/dev-release",
       "inherits": [
         "dev-acpp"
       ],
@@ -53,7 +53,7 @@
     },
     {
       "name": "dev-shared-lib-acpp",
-      "binaryDir": "${sourceDir}/build-acpp/dev-shared-lib",
+      "binaryDir": "${sourceDir}/build/acpp/dev-shared-lib",
       "inherits": [
         "dev-release-acpp",
         "ci-linux-acpp"
@@ -64,7 +64,7 @@
     },
     {
       "name": "dev-shared-lib-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/dev-shared-lib",
+      "binaryDir": "${sourceDir}/build/llvm/dev-shared-lib",
       "inherits": [
         "dev-llvm-sycl",
         "ci-linux-llvm-sycl"
@@ -76,7 +76,7 @@
     },
     {
       "name": "dev-coverage-acpp",
-      "binaryDir": "${sourceDir}/build-acpp/coverage",
+      "binaryDir": "${sourceDir}/build/acpp/coverage",
       "inherits": [
         "dev-base",
         "ci-coverage-acpp"
@@ -84,7 +84,7 @@
     },
     {
       "name": "dev-sanitize-acpp",
-      "binaryDir": "${sourceDir}/build-acpp/sanitize",
+      "binaryDir": "${sourceDir}/build/acpp/sanitize",
       "inherits": [
         "dev-base",
         "ci-sanitize-acpp"
@@ -92,7 +92,7 @@
     },
     {
       "name": "dev-sanitize-llvm-sycl",
-      "binaryDir": "${sourceDir}/build-llvm/sanitize",
+      "binaryDir": "${sourceDir}/build/llvm/sanitize",
       "inherits": [
         "dev-base",
         "ci-sanitize-llvm-sycl"
