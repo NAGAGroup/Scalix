@@ -50,43 +50,53 @@ class state_based_scheduler {
         typename state_machine_traits<state_machine_type>::inputs_type;
 
   private:
-    struct action_wrapper_base {
-        action_wrapper_base()                           = default;
-        action_wrapper_base(const action_wrapper_base&) = delete;
-        action_wrapper_base(action_wrapper_base&&)      = delete;
-        auto operator=(const action_wrapper_base&)
-            -> action_wrapper_base&                                   = delete;
-        auto operator=(action_wrapper_base&&) -> action_wrapper_base& = delete;
+    struct action_metadata {
+        using valid_action_t = bool;
+        std::promise<void> action_signal;
+        valid_action_t action_signal_valid;
 
-        virtual void operator()() const = 0;
-        virtual ~action_wrapper_base()  = default;
+        action_metadata(
+            std::promise<void> action_signal,
+            const valid_action_t& action_signal_valid
+        )
+            : action_signal{std::move(action_signal)},
+              action_signal_valid{action_signal_valid} {}
     };
 
     struct scheduler_metadata {
         state_machine_type state_machine_;
-        std::queue<std::unique_ptr<action_wrapper_base>> action_queue_;
+        using valid_action_t = bool;
+        std::queue<action_metadata> action_signal_queue_;
     };
 
     template<class Action, class... Args>
-    struct action_wrapper final : action_wrapper_base {
+    struct action_wrapper {
         Action action;
         std::tuple<Args...> args;
 
         explicit action_wrapper(
-            Action&& action,  // NOLINT(*-rvalue-reference-param-not-moved)
+            Action&& action,
             Args&&... args
         )
-            : action{std::forward<Action>(action)},
+            : action{std::move<Action>(action)},
               args{std::forward<Args>(args)...} {}
 
-        void operator()() const override { std::apply(action, args); }
+        action_wrapper(const action_wrapper&)                    = delete;
+        auto operator=(const action_wrapper&) -> action_wrapper& = delete;
+        action_wrapper(action_wrapper&&)                         = default;
+        auto operator=(action_wrapper&&) -> action_wrapper&      = default;
+
+        void operator()() const { std::apply(action, args); }
+
+        ~action_wrapper() = default;
     };
 
+    template<class Action, class... Args>
     struct action_definition {
         state_label entry_requirement;
         inputs_type inputs_on_test_entry;
         inputs_type inputs_on_exit;
-        std::unique_ptr<action_wrapper_base> action;
+        action_wrapper<Action, Args...> action;
     };
 
   public:
@@ -104,84 +114,114 @@ class state_based_scheduler {
         auto queue_empty_on_submit
             = metadata_view.access().action_queue_.empty();
 
-        auto original_action = std::make_unique<action_wrapper_type>(
+        auto wrapped_action = action_wrapper_type{
             std::forward<Action>(action),
             std::forward<Args>(args)...
-        );
+        };
 
-        std::promise<void> action_promise;
-        auto action_future   = action_promise.get_future();
-        auto promised_action = std::make_unique<action_wrapper_type>(
-            [original_action = std::move(original_action),
-             action_promise  = std::move(action_promise)] mutable {
-                (*original_action)();
-                action_promise.set_value();
-            }
-        );
-        auto promised_action_def = action_definition{
+        std::promise<void> action_signal;
+        auto action_signal_future = action_signal.get_future();
+        auto promised_action_def  = action_definition{
             entry_requirement,
             inputs_on_test_entry,
             inputs_on_exit,
-            std::move(promised_action)
+            std::move(wrapped_action)
         };
-        metadata_view.access().action_queue_.emplace(
-            std::move(promised_action_def)
+        metadata_view.access().action_signal_queue_.emplace(
+            std::move(action_signal),
+            true
         );
-        return queue_.submit([&](sycl::handler& cgh) {
-            host_task(cgh, [action_future = std::move(action_future)] {
-                action_future.wait();
-            });
-        });
-    }
 
-    auto get_next_action() const -> action_definition& {
-        return metadata_guard_.get_view().access().action_queue_.front();
-    }
-
-    auto pop_action() -> void {
-        metadata_guard_.get_view().access().action_queue_.pop();
-    }
-
-    auto execute_next_action() -> sclx::event {
-        auto event = queue_.submit([&](sycl::handler& cgh) {
-            const auto& metadata_guard       = metadata_guard_;
-            auto& action_def                 = get_next_action();
-            bool requirement_satisfied       = false;
-            const auto& entry_requirement    = action_def.entry_requirement;
-            const auto& inputs_on_test_entry = action_def.inputs_on_test_entry;
-            while (!requirement_satisfied) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                auto metadata_view = metadata_guard.get_view();
-                metadata_view.access().state_machine_.transition_states(
-                    inputs_on_test_entry
-                );
-                requirement_satisfied
-                    = metadata_view.access().state_machine_.current_state()
-                   == entry_requirement;
-            }
+        auto action_event = queue_.submit([&](sycl::handler& cgh) {
+            const auto& metadata_guard = metadata_guard_;
             host_task(
                 cgh,
-                [metadata_guard, action_def = std::move(action_def)] {
-                    const auto& action_ptr = action_def.action;
-                    (*action_ptr)();
-                    const auto& inputs_on_exit = action_def.inputs_on_exit;
-                    auto metadata_view         = metadata_guard.get_view();
-                    metadata_view.access().state_machine_.transition_states(
-                        inputs_on_exit
-                    );
+                [action_signal_future = std::move(action_signal_future),
+                 promised_action_def  = std::move(promised_action_def),
+                 metadata_guard] mutable {
+                    // wait for the action to be signaled
+                    // by the scheduler
+                    action_signal_future.get();
+
+                    auto action_metadata_view = metadata_guard.get_view();
+                    action_metadata_view.unlock();
+                    while (true) {
+                        action_metadata_view.lock();
+
+                        auto& metadata = action_metadata_view.access();
+
+                        // the state machine is transitioned each loop
+                        // by the inputs testing the entry requirement
+                        //
+                        // making the entry requirement a callable was
+                        // considered, in which case the state machine would've
+                        // only been transitioned if the requirement was
+                        // satisfied which would occur once another running
+                        // action transitioned the state machine to a valid
+                        // state on exit. this would allow actions to have entry
+                        // requirements that took a union of different states
+                        //
+                        // but it made more sense to keep the entry requirement
+                        // as a simple state label check, instead offloading
+                        // the logic to the state machine itself, keeping
+                        // the spirit of a state-based scheduler intact
+                        metadata.state_machine_.transition_states(
+                            promised_action_def.inputs_on_test_entry
+                        );
+
+                        if (metadata.state_machine_.current_state()
+                            == promised_action_def.entry_requirement) {
+                            break;
+                        }
+
+                        action_metadata_view.unlock();
+
+                        std::this_thread::yield();
+                    }
+
+                    action_metadata_view.access().action_signal_queue_.pop();
+                    action_metadata_view.unlock();
+                    promised_action_def.action();
+
+                    action_metadata_view.lock();
+                    action_metadata_view.access()
+                        .state_machine_.transition_states(
+                            promised_action_def.inputs_on_exit
+                        );
                 }
             );
         });
 
-        pop_action();
-        if (!metadata_guard_.get_view().access().action_queue_.empty()) {
-            execute_next_action();
-        }
+        // by calling execute action for every action submitted
+        // we can ensure that each action will get executed, even if
+        // the following call doesn't execute the action submitted
+        // by the current call
+        execute_next_action();
 
-        return event;
+        return action_event;
     }
 
   private:
+    void execute_next_action() {
+        auto metadata_view = metadata_guard_.get_view();
+        metadata_view.unlock();
+        while (true) {
+            metadata_view.lock();
+            auto& metadata = metadata_view.access();
+
+            if (auto& action_signal_queue = metadata.action_signal_queue_;
+                action_signal_queue.front().action_signal_valid) {
+                action_signal_queue.front().action_signal.set_value();
+                action_signal_queue.front().action_signal_valid = false;
+                return;
+            }
+
+            metadata_view.unlock();
+
+            std::this_thread::yield();
+        }
+    }
+
     concurrent_guard<scheduler_metadata> metadata_guard_{
         std::make_unique<scheduler_metadata>()
     };
@@ -189,4 +229,4 @@ class state_based_scheduler {
     sycl::queue queue_;
 };
 
-};  // namespace sclx::detail
+}  // namespace sclx::detail

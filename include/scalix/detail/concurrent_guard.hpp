@@ -56,7 +56,7 @@ class exclusive_view {
         return *ptr_;
     }
 
-    void release() {
+    void unlock() {
         lock_.unlock();
     }
 
