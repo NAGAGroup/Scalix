@@ -8,7 +8,7 @@ project(
   DESCRIPTION
     "SYCL-like library for easily distributing data parallel applications across available compute resources"
   HOMEPAGE_URL "https://github.com/NAGAGroup/Scalix"
-  LANGUAGES CXX)
+  LANGUAGES CXX C)
 
 # check that standard is greater than or equal to 20, if not, raise an error if
 # unasigned, set to 20
@@ -73,9 +73,29 @@ add_library(
   source/detail/concurrent_guard.cpp
   include/scalix/detail/concurrent_guard.hpp
   source/detail/state_based_scheduler.cpp
-  include/scalix/detail/state_based_scheduler.hpp)
+  include/scalix/detail/state_based_scheduler.hpp
+  source/generic_task.cpp
+  include/scalix/generic_task.hpp
+  include/scalix/typed_task.hpp
+)
 add_library(Scalix::Scalix ALIAS scalix)
+
+# ---- This handles SYCL stuffs ----
 add_scalix_to_target(scalix)
+
+# ---- Library Dependencies ----
+include(FetchContent)
+
+find_package(cpptrace QUIET)
+if (NOT cpptrace_FOUND)
+  FetchContent_Declare(
+    cpptrace
+    GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+    GIT_TAG        v0.5.0 # <HASH or TAG>
+  )
+  FetchContent_MakeAvailable(cpptrace)
+endif()
+target_link_libraries(scalix INTERFACE cpptrace::cpptrace)
 
 # ---- Install rules ----
 

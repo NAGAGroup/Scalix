@@ -48,7 +48,7 @@
         "dev-acpp"
       ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
     {
@@ -70,7 +70,7 @@
         "ci-linux-llvm-sycl"
       ],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "BUILD_SHARED_LIBS": "ON"
       }
     },

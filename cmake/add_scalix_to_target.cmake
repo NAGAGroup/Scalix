@@ -46,17 +46,6 @@ function(add_scalix_to_target target)
     target_link_options(${target} PUBLIC ${SCALIX_CXX_FLAGS})
   endif()
 
-  if(NOT BUILD_SHARED_LIBS)
-    target_compile_definitions(${target} PUBLIC SCALIX_STATIC_DEFINE)
-  endif()
-
-  target_include_directories(
-    ${target} ${warning_guard}
-    PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
-
-  target_include_directories(
-    ${target} SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
-
   get_target_property(target_type ${target} TYPE)
   if("${target_type}" MATCHES "LIBRARY")
     include(GenerateExportHeader)
@@ -71,17 +60,28 @@ function(add_scalix_to_target target)
 
     # get compiler args for scalix
     set_target_properties(
-      scalix
+      ${target}
       PROPERTIES CXX_VISIBILITY_PRESET hidden
                  VISIBILITY_INLINES_HIDDEN YES
                  VERSION "${PROJECT_VERSION}"
                  SOVERSION "${PROJECT_VERSION_MAJOR}")
+
+    if(NOT BUILD_SHARED_LIBS)
+      target_compile_definitions(${target} PUBLIC SCALIX_STATIC_DEFINE)
+    endif()
+
+    target_include_directories(
+      ${target} ${warning_guard}
+      PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
+
+    target_include_directories(
+      ${target} SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
   endif()
 
   if(DEFINED "AdaptiveCpp_DIR")
     target_compile_definitions(${target} PUBLIC SCALIX_ADAPTIVECPP)
-    get_target_property(SCALIX_SOURCES ${target} SOURCES)
-    add_sycl_to_target(TARGET ${target} SOURCES ${SCALIX_SOURCES})
+    get_target_property(TARGET_SOURCES ${target} SOURCES)
+    add_sycl_to_target(TARGET ${target} SOURCES ${TARGET_SOURCES})
     target_link_libraries(${target} PUBLIC Threads::Threads)
   endif()
 endfunction()

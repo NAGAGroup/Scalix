@@ -13,13 +13,16 @@ if(PROJECT_IS_TOP_LEVEL)
   enable_testing()
 endif()
 
+find_package(Catch2 3 REQUIRED)
+include(Catch)
+
 # ---- Tests ----
 
-add_executable(scratchwork source/scratchwork.cpp)
-target_link_libraries(scratchwork PRIVATE Scalix::Scalix)
-add_scalix_to_target(scratchwork)
-
-add_test(NAME scratchwork COMMAND scratchwork)
+add_executable(tests source/scratchwork.cpp
+)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace)
+catch_discover_tests(tests)
+add_scalix_to_target(tests)
 
 # ---- End-of-file commands ----
 
