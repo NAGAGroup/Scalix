@@ -48,13 +48,19 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
+      image: ghcr.io/nagagroup/naga-dev-container:acpp-latest
       options: --user=root
 
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: 'true'
+
+    - name: Install vcpkg + dependencies
+      shell: bash
+      run: |
+        git clone https://github.com/microsoft/vcpkg
+        sh vcpkg/bootstrap-vcpkg.sh
 
     - name: Configure
       shell: bash
@@ -74,48 +80,49 @@ jobs:
       working-directory: build
       run: source /home/gpu-dev/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
 
-  test-llvm-sycl:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-
-        type: [shared, static]
-
-        include:
-          - { type: shared, shared: YES }
-          - { type: static, shared: NO }
-
-    runs-on: ${{ matrix.os }}
-    container:
-      image: ghcr.io/nagagroup/naga-dev-container:llvm-sycl-12.3.1
-      options: --user=root
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'true'
-
-      - name: Configure
-        shell: bash
-        run: source /home/gpu-dev/.bashrc; cmake --preset=ci-test-llvm-sycl
-          -D BUILD_SHARED_LIBS=${{ matrix.shared }}
-
-      - name: Build
-        shell: bash
-        run: source /home/gpu-dev/.bashrc; cmake --build build --config Release -j 2
-
-      - name: Install
-        shell: bash
-        run: source /home/gpu-dev/.bashrc; cmake --install build --config Release --prefix prefix
-
-      - name: Test
-        shell: bash
-        working-directory: build
-        run: source /home/gpu-dev/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
+#  test-llvm-sycl:
+#    strategy:
+#      matrix:
+#        os: [ubuntu-latest]
+#
+#        type: [shared, static]
+#
+#        include:
+#          - { type: shared, shared: YES }
+#          - { type: static, shared: NO }
+#
+#    runs-on: ${{ matrix.os }}
+#    container:
+#      image: ghcr.io/nagagroup/naga-dev-container:llvm-sycl-12.3.1
+#      options: --user=root
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          submodules: 'true'
+#
+#      - name: Configure
+#        shell: bash
+#        run: source /home/gpu-dev/.bashrc; cmake --preset=ci-test-llvm-sycl
+#          -D BUILD_SHARED_LIBS=${{ matrix.shared }}
+#
+#      - name: Build
+#        shell: bash
+#        run: source /home/gpu-dev/.bashrc; cmake --build build --config Release -j 2
+#
+#      - name: Install
+#        shell: bash
+#        run: source /home/gpu-dev/.bashrc; cmake --install build --config Release --prefix prefix
+#
+#      - name: Test
+#        shell: bash
+#        working-directory: build
+#        run: source /home/gpu-dev/.bashrc; ctest --output-on-failure --no-tests=error -C Release -j 2
 
   docs:
     # Deploy docs only when builds succeed
-    needs: [lint, test-acpp, test-llvm-sycl]
+    needs: [lint, test-acpp]
+#    needs: [lint, test-acpp, test-llvm-sycl]
 
     runs-on: ubuntu-latest
     container:

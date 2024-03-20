@@ -60,13 +60,13 @@ constexpr bool is_bounded_array_v<bounded_array_type<T, N>> = true;
 template<class T>
 class default_delete {
   public:
-    default_delete()                      = default;
-    default_delete(const default_delete&) = default;
-    default_delete(default_delete&&)       noexcept = default;
+    default_delete()                          = default;
+    default_delete(const default_delete&)     = default;
+    default_delete(default_delete&&) noexcept = default;
     explicit default_delete(const sycl::queue& queue) : queue_(queue) {}
 
-    auto operator=(const default_delete&) -> default_delete& = default;
-    auto operator=(default_delete&&)  noexcept -> default_delete&      = default;
+    auto operator=(const default_delete&) -> default_delete&     = default;
+    auto operator=(default_delete&&) noexcept -> default_delete& = default;
 
     void operator()(std::remove_extent_t<T>* ptr) const {
         sycl::free(ptr, queue_);

@@ -44,40 +44,9 @@ endif()
 
 add_library(
   scalix
-  source/detail/page_handle.cpp
-  include/scalix/detail/page_handle.hpp
-  source/detail/allocation.cpp
-  include/scalix/detail/allocation.hpp
-  source/detail/page_table.cpp
-  include/scalix/detail/page_table.hpp
-  source/detail/device_allocation.cpp
-  include/scalix/detail/device_allocation.hpp
-  source/find_device.cpp
-  include/scalix/find_device.hpp
-  source/detail/device_page.cpp
-  include/scalix/detail/device_page.hpp
-  source/detail/device_page_table.cpp
-  include/scalix/detail/device_page_table.hpp
-  source/detail/host_page_table.cpp
-  include/scalix/detail/host_page_table.hpp
-  source/detail/local_page.cpp
-  include/scalix/detail/local_page.hpp
-  source/detail/host_page.cpp
-  include/scalix/detail/host_page.hpp
-  source/detail/host_allocation.cpp
-  include/scalix/detail/host_allocation.hpp
-  source/detail/host_task.cpp
-  include/scalix/detail/host_task.hpp
-  source/detail/state_machine.cpp
-  include/scalix/detail/state_machine.hpp
-  source/detail/concurrent_guard.cpp
-  include/scalix/detail/concurrent_guard.hpp
-  source/detail/state_based_scheduler.cpp
-  include/scalix/detail/state_based_scheduler.hpp
-  source/generic_task.cpp
-  include/scalix/generic_task.hpp
-  include/scalix/typed_task.hpp
-)
+  source/generic_task.cpp include/scalix/generic_task.hpp
+  include/scalix/typed_task.hpp include/scalix/detail/generic_task.hpp
+  include/scalix/detail/typed_task.inl)
 add_library(Scalix::Scalix ALIAS scalix)
 
 # ---- This handles SYCL stuffs ----
@@ -87,15 +56,15 @@ add_scalix_to_target(scalix)
 include(FetchContent)
 
 find_package(cpptrace QUIET)
-if (NOT cpptrace_FOUND)
+if(NOT cpptrace_FOUND)
   FetchContent_Declare(
     cpptrace
     GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
-    GIT_TAG        v0.5.0 # <HASH or TAG>
+    GIT_TAG v0.5.0 # <HASH or TAG>
   )
   FetchContent_MakeAvailable(cpptrace)
 endif()
-target_link_libraries(scalix INTERFACE cpptrace::cpptrace)
+target_link_libraries(scalix PUBLIC cpptrace::cpptrace)
 
 # ---- Install rules ----
 

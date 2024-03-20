@@ -20,7 +20,7 @@ include(Catch)
 
 add_executable(tests source/scratchwork.cpp
 )
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain cpptrace::cpptrace)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain Scalix::Scalix)
 catch_discover_tests(tests)
 add_scalix_to_target(tests)
 

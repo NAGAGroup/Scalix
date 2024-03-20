@@ -2,7 +2,7 @@
   "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 14,
+    "minor": 27,
     "patch": 0
   },
   "configurePresets": [
@@ -25,7 +25,7 @@
       "name": "vcpkg",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{PIXI_PROJECT_ROOT}/.pixi/envs/$env{PIXI_ENVIRONMENT_NAME}/share/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
       }
     },
     {
@@ -78,7 +78,7 @@
       "cacheVariables": {
         "AdaptiveCpp_DIR": "$env{PIXI_PROJECT_ROOT}/.pixi/envs/$env{PIXI_ENVIRONMENT_NAME}/lib/cmake/AdaptiveCpp/",
         "SCALIX_SYCL_TARGETS": "generic",
-        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_COMPILER": "acpp",
         "CMAKE_C_COMPILER": "clang"
       }
     },
@@ -86,7 +86,7 @@
       "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy-acpp.py;-header-filter=^${sourceDir}/;--header-filter=-config-file=${sourceDir}/.clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy-acpp.py;-header-filter=^${sourceDir}/;-config-file=${sourceDir}/.clang-tidy",
         "CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR": "clang-tidy-fixes"
       }
     },

@@ -1,0 +1,9 @@
+{
+  "name" : "scalix",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "46e4c4c78c347ded6add526b0c2bb66db35d4710",
+  "dependencies" : [ {
+    "name" : "cpptrace",
+    "version>=" : "0.5.0"
+  } ]
+}

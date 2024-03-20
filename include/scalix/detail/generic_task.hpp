@@ -29,41 +29,37 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
-#include <memory>
+
+#include "../generic_task.hpp"
+#include <vector>
 
 namespace sclx {
-template<class R>
-class typed_task;
 
-class generic_task {
-    template<class R>
-    friend class typed_task;
+struct generic_task::task_metadata {
+    int dependency_count{0};
+    bool has_launched{false};
+    bool has_completed{false};
+    std::vector<generic_task> dependent_tasks;
+    std::mutex mutex;
+};
 
+class generic_task::impl {
   public:
-    generic_task(const generic_task&)                    = delete;
-    auto operator=(const generic_task&) -> generic_task& = delete;
+    impl(impl&&) noexcept                    = default;
+    auto operator=(impl&&) noexcept -> impl& = default;
+    impl(const impl&)                        = delete;
+    auto operator=(const impl&) -> impl&     = delete;
 
-    generic_task(generic_task&&)                    = default;
-    auto operator=(generic_task&&) -> generic_task& = default;
+    virtual ~impl();
 
-    void launch();
+    impl() = default;
 
-    void add_dependent_task(const generic_task& dependent_task) const;
+    virtual void async_execute(std::shared_ptr<task_metadata> metadata) const
+        = 0;
 
-    ~generic_task() = default;
-
-  private:
-    struct task_metadata;
-    class impl;
-
-    explicit generic_task(std::unique_ptr<impl>&& impl);
-    generic_task(
-        std::shared_ptr<impl> impl,
-        std::shared_ptr<task_metadata> metadata
-    );
-
-    std::shared_ptr<impl> impl_;
-    std::shared_ptr<task_metadata> metadata_;
+    void
+    decrease_dependency_count(const std::shared_ptr<task_metadata>& metadata
+    ) const;
 };
 
 }  // namespace sclx

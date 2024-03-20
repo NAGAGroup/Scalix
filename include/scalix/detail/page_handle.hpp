@@ -51,11 +51,11 @@ class page_interface {
   public:
     static constexpr auto page_size = PageSize;
 
-    page_interface()                                         = default;
-    page_interface(const page_interface&)                    = default;
-    page_interface(page_interface&&)                          noexcept = default;
-    auto operator=(const page_interface&) -> page_interface& = default;
-    auto operator=(page_interface&&)  noexcept -> page_interface&      = default;
+    page_interface()                                             = default;
+    page_interface(const page_interface&)                        = default;
+    page_interface(page_interface&&) noexcept                    = default;
+    auto operator=(const page_interface&) -> page_interface&     = default;
+    auto operator=(page_interface&&) noexcept -> page_interface& = default;
 
     virtual auto data() -> std::variant<sclx::byte*, std::future<sclx::byte*>>
         = 0;
@@ -110,10 +110,10 @@ class page_handle<page_handle_type::weak, PageSize> {
 
     page_handle() = default;
 
-    page_handle(const page_handle&)                    = default;
-    page_handle(page_handle&&)                          noexcept = default;
-    auto operator=(const page_handle&) -> page_handle& = default;
-    auto operator=(page_handle&&)  noexcept -> page_handle&      = default;
+    page_handle(const page_handle&)                        = default;
+    page_handle(page_handle&&) noexcept                    = default;
+    auto operator=(const page_handle&) -> page_handle&     = default;
+    auto operator=(page_handle&&) noexcept -> page_handle& = default;
 
     explicit page_handle(page_handle<page_handle_type::strong, PageSize> other)
         : impl_(std::move(other.impl_)) {}
@@ -146,10 +146,10 @@ class page_handle<page_handle_type::strong, PageSize> {
 
     page_handle() = default;
 
-    page_handle(const page_handle&)                    = default;
-    page_handle(page_handle&&)                          noexcept = default;
-    auto operator=(const page_handle&) -> page_handle& = default;
-    auto operator=(page_handle&&)  noexcept -> page_handle&      = default;
+    page_handle(const page_handle&)                        = default;
+    page_handle(page_handle&&) noexcept                    = default;
+    auto operator=(const page_handle&) -> page_handle&     = default;
+    auto operator=(page_handle&&) noexcept -> page_handle& = default;
 
     [[nodiscard]] auto data() const
         -> std::variant<sclx::byte*, std::future<sclx::byte*>> {

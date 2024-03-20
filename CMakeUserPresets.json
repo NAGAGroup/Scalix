@@ -2,7 +2,7 @@
   "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 14,
+    "minor": 27,
     "patch": 0
   },
   "configurePresets": [
@@ -11,7 +11,8 @@
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {
-        "BUILD_MCSS_DOCS": "ON"
+        "BUILD_MCSS_DOCS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/.vcpkg-clion/vcpkg/scripts/buildsystems/vcpkg.cmake"
       },
       "vendor": {
         "jetbrains.com/clion": {

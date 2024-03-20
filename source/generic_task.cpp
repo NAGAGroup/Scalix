@@ -29,45 +29,15 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <scalix/generic_task.hpp>  // NOLINT(misc-include-cleaner)
+#include <stdexcept>
+#include <utility>
+#include <memory>
+#include <mutex>
+#include <scalix/generic_task.hpp>
+#include <scalix/detail/generic_task.hpp>
 #include <scalix/scalix_export.hpp>
-#include <vector>
 
 namespace sclx {
-struct generic_task::task_metadata {
-    int dependency_count{0};
-    bool has_launched{false};
-    bool has_completed{false};
-    std::vector<generic_task> dependent_tasks;
-    std::mutex mutex;
-};
-
-class generic_task::impl {
-    friend class generic_task;
-
-  public:
-    impl(impl&&) noexcept                    = default;
-    auto operator=(impl&&) noexcept -> impl& = default;
-    impl(const impl&)                        = delete;
-    auto operator=(const impl&) -> impl&     = delete;
-
-    virtual ~impl();
-
-  protected:
-    impl() = default;
-
-    virtual void async_execute(std::shared_ptr<task_metadata> metadata) const
-        = 0;
-
-    void decrease_dependency_count(std::shared_ptr<task_metadata> metadata
-    ) const {
-        const std::lock_guard lock(metadata->mutex);
-        metadata->dependency_count--;
-        if (metadata->dependency_count == 0 && metadata->has_launched) {
-            this->async_execute(metadata);
-        }
-    }
-};
 
 generic_task::generic_task(std::unique_ptr<impl>&& impl)
     : impl_{std::move(impl)},
@@ -80,13 +50,13 @@ generic_task::generic_task(
     : impl_{std::move(impl)},
       metadata_{std::move(metadata)} {}
 
-SCALIX_EXPORT void generic_task::add_dependent_task(const generic_task& dependent_task
-) const {
-    std::lock_guard lock(metadata_->mutex);
+SCALIX_EXPORT void
+generic_task::add_dependent_task(const generic_task& dependent_task) const {
+    const std::lock_guard lock(metadata_->mutex);
     if (dependent_task.metadata_ == nullptr) {
         throw std::runtime_error("task instance is in an invalid state");
     }
-    std::lock_guard dependent_lock(dependent_task.metadata_->mutex);
+    const std::lock_guard dependent_lock(dependent_task.metadata_->mutex);
     if (metadata_->has_completed) {
         return;
     }
@@ -113,4 +83,14 @@ SCALIX_EXPORT void generic_task::launch() {
 
 generic_task::impl::~impl() = default;
 
+void generic_task::impl::decrease_dependency_count(
+    const std::shared_ptr<task_metadata>& metadata
+) const {
+    const std::lock_guard lock(metadata->mutex);
+    metadata->dependency_count--;
+    if (metadata->dependency_count == 0 && metadata->has_launched) {
+        this->async_execute(metadata);
+    }
 }
+
+}  // namespace sclx

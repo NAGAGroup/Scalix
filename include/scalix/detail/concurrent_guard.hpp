@@ -49,20 +49,14 @@ class exclusive_view {
     friend class concurrent_guard<T>;
     auto access() const -> T& {
         if (!lock_.owns_lock()) {
-            throw std::runtime_error(
-                "exclusive_view has been released"
-            );
+            throw std::runtime_error("exclusive_view has been released");
         }
         return *ptr_;
     }
 
-    void unlock() {
-        lock_.unlock();
-    }
+    void unlock() { lock_.unlock(); }
 
-    void lock() {
-        lock_.lock();
-    }
+    void lock() { lock_.lock(); }
 
   private:
     exclusive_view(
@@ -93,9 +87,7 @@ class concurrent_guard {
     concurrent_guard(concurrent_guard&&)                    = default;
     auto operator=(concurrent_guard&&) -> concurrent_guard& = default;
 
-    auto get_view() const -> exclusive_view<T> {
-        return get_view_generic<T>();
-    }
+    auto get_view() const -> exclusive_view<T> { return get_view_generic<T>(); }
 
     auto get_const_view() const -> exclusive_view<const T> {
         return get_view_generic<const T>();
@@ -104,13 +96,10 @@ class concurrent_guard {
     ~concurrent_guard() = default;
 
   private:
-
-    template <class U>
-    auto get_view_generic () const -> exclusive_view<U>
-    {
+    template<class U>
+    auto get_view_generic() const -> exclusive_view<U> {
         if (!ptr_) {
-            throw std::runtime_error(
-                "concurrent_guard does not hold valid data"
+            throw std::runtime_error("concurrent_guard does not hold valid data"
             );
         }
 
@@ -118,14 +107,11 @@ class concurrent_guard {
 
         lock_type lock(*mutex_, std::defer_lock);
 
-        return exclusive_view<U>{
-            ptr_,
-            mutex_,
-            std::move(lock)
-        };
+        return exclusive_view<U>{ptr_, mutex_, std::move(lock)};
     }
     std::shared_ptr<T> ptr_;
-    std::shared_ptr<std::shared_mutex> mutex_ = std::make_shared<std::shared_mutex>();
+    std::shared_ptr<std::shared_mutex> mutex_
+        = std::make_shared<std::shared_mutex>();
 };
 
 }  // namespace sclx::detail

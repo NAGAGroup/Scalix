@@ -37,8 +37,8 @@ namespace sclx::detail {
 
 template<class Func>
 concept StateBasedActionType = requires(Func&& func) {
-    { func() } -> std::same_as<void>;
-};
+                                   { func() } -> std::same_as<void>;
+                               };
 
 template<class StateDefinition>
 class state_based_scheduler {
@@ -74,10 +74,7 @@ class state_based_scheduler {
         Action action;
         std::tuple<Args...> args;
 
-        explicit action_wrapper(
-            Action&& action,
-            Args&&... args
-        )
+        explicit action_wrapper(Action&& action, Args&&... args)
             : action{std::move<Action>(action)},
               args{std::forward<Args>(args)...} {}
 
@@ -116,8 +113,7 @@ class state_based_scheduler {
 
         auto wrapped_action = action_wrapper_type{
             std::forward<Action>(action),
-            std::forward<Args>(args)...
-        };
+            std::forward<Args>(args)...};
 
         std::promise<void> action_signal;
         auto action_signal_future = action_signal.get_future();
@@ -125,8 +121,7 @@ class state_based_scheduler {
             entry_requirement,
             inputs_on_test_entry,
             inputs_on_exit,
-            std::move(wrapped_action)
-        };
+            std::move(wrapped_action)};
         metadata_view.access().action_signal_queue_.emplace(
             std::move(action_signal),
             true
@@ -223,8 +218,7 @@ class state_based_scheduler {
     }
 
     concurrent_guard<scheduler_metadata> metadata_guard_{
-        std::make_unique<scheduler_metadata>()
-    };
+        std::make_unique<scheduler_metadata>()};
 
     sycl::queue queue_;
 };
