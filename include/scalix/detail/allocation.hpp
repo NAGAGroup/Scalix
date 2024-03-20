@@ -126,37 +126,34 @@ template<
     reuse_pages ReusePagesFlag,
     page_size_t PageSize,
     class... Args>
-concept AllocationConcept
-    = requires(
-        AllocationType<T, ReusePagesFlag, PageSize> alloc,
-        Args&&... args
-    ) {
-          {
-              AllocationType<T, ReusePagesFlag, PageSize>(
-                  device_id_t(),
-                  std::declval<const std::vector<page_index_t>&>(),
-                  std::declval<const std::vector<
-                      page_handle<page_handle_type::weak, PageSize>>&>(),
-                  std::forward<Args>(args)...
-              )
-          };
-          {
-              AllocationType<T, ReusePagesFlag, PageSize>(
-                  device_id_t(),
-                  page_index_t(),
-                  page_index_t(),
-                  std::declval<const std::vector<
-                      page_handle<page_handle_type::weak, PageSize>>&>(),
-                  std::forward<Args>(args)...
-              )
-          };
-          {
-              static_cast<const AllocationType<T, ReusePagesFlag, PageSize>&>(
-                  alloc
-              )
-                  .anchor()
-              } -> std::same_as<const access_anchor&>;
-      };
+concept AllocationConcept = requires(
+    AllocationType<T, ReusePagesFlag, PageSize> alloc,
+    Args&&... args
+) {
+    {
+        AllocationType<T, ReusePagesFlag, PageSize>(
+            device_id_t(),
+            std::declval<const std::vector<page_index_t>&>(),
+            std::declval<const std::vector<
+                page_handle<page_handle_type::weak, PageSize>>&>(),
+            std::forward<Args>(args)...
+        )
+    };
+    {
+        AllocationType<T, ReusePagesFlag, PageSize>(
+            device_id_t(),
+            page_index_t(),
+            page_index_t(),
+            std::declval<const std::vector<
+                page_handle<page_handle_type::weak, PageSize>>&>(),
+            std::forward<Args>(args)...
+        )
+    };
+    {
+        static_cast<const AllocationType<T, ReusePagesFlag, PageSize>&>(alloc)
+            .anchor()
+    } -> std::same_as<const access_anchor&>;
+};
 
 }  // namespace sclx::detail
 

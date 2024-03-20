@@ -52,8 +52,9 @@ void host_task(sycl::handler& cgh, InterOpFunction&& f) {
 #ifndef SCALIX_ADAPTIVECPP
     cgh.host_task(std::forward<InterOpFunction>(f));
 #else
-    cgh.hipSYCL_enqueue_custom_operation(bound_host_kernel<InterOpFunction>{
-        std::forward<InterOpFunction>(f)});
+    cgh.hipSYCL_enqueue_custom_operation(
+        bound_host_kernel<InterOpFunction>{std::forward<InterOpFunction>(f)}
+    );
 #endif
 }
 

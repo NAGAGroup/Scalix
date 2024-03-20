@@ -48,8 +48,8 @@ class typed_task<R>::typed_impl<R(Args...)> final : public impl {
   public:
     template<class F>
     explicit typed_impl(F&& func)  // cppcheck-suppress // NOLINT
-        : task_{std::make_shared<std::packaged_task<R()>>(std::forward<F>(func)
-        )},
+        : task_{std::make_shared<std::packaged_task<R()>>(std::forward<F>(func))
+        },
           args_ptr_{std::make_shared<std::tuple<>>()} {
         static_assert(
             !std::is_base_of_v<impl, F>,
@@ -70,7 +70,8 @@ class typed_task<R>::typed_impl<R(Args...)> final : public impl {
               std::make_shared<std::tuple<std::remove_reference_t<Args>...>>(
                   std::forward<PassedArg1>(arg1),
                   std::forward<PassedArgs>(args)...
-              )} {
+              )
+          } {
         static_assert(
             sizeof...(PassedArgs) + 1 == sizeof...(Args),
             "provided task arguments in constructor do not match task signature"
@@ -94,7 +95,8 @@ class typed_task<R>::typed_impl<R(Args...)> final : public impl {
                     );
                 }
                 metadata->has_completed = true;
-            }};
+            }
+        };
         exec_thread.detach();
     }
 

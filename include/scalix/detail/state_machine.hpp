@@ -210,8 +210,8 @@ class state_machine {
     }
 
   private:
-    std::unique_ptr<state_type> current_state_{
-        state_type::make_initial_state()};
+    std::unique_ptr<state_type> current_state_{state_type::make_initial_state()
+    };
 };
 
 }  // namespace sclx::detail

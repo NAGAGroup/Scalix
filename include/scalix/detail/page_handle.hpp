@@ -258,7 +258,8 @@ class page_handle<page_handle_type::strong, PageSize> {
             old_page,
             page_copy_rules{
                 .expect_valid_src = false,
-                .expect_valid_dst = false}
+                .expect_valid_dst = false
+            }
         );
         if (old_page.is_mpi_local()) {
             auto write_bit_variant = old_page.write_bit();
