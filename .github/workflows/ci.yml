@@ -13,7 +13,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
+      image: ghcr.io/nagagroup/naga-dev:acpp-latest
       options: --user=root
 
     steps:
@@ -48,7 +48,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/nagagroup/naga-dev-container:acpp-latest
+      image: ghcr.io/nagagroup/naga-dev:acpp-latest
       options: --user=root
 
     steps:
@@ -93,7 +93,7 @@ jobs:
 #
 #    runs-on: ${{ matrix.os }}
 #    container:
-#      image: ghcr.io/nagagroup/naga-dev-container:llvm-sycl-12.3.1
+#      image: ghcr.io/nagagroup/naga-dev:llvm-sycl-latest
 #      options: --user=root
 #
 #    steps:
@@ -126,7 +126,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nagagroup/naga-dev-container:acpp-12.3.1
+      image: ghcr.io/nagagroup/naga-dev:acpp-latest
       options: --user=root
 
     # To enable, first you have to create an orphaned gh-pages branch:
