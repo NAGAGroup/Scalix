@@ -12,7 +12,8 @@
       "generator": "Ninja",
       "cacheVariables": {
         "BUILD_MCSS_DOCS": "ON",
-        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/.vcpkg-clion/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/.vcpkg-clion/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "BUILD_TESTING": "ON"
       },
       "vendor": {
         "jetbrains.com/clion": {

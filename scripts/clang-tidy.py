@@ -31,11 +31,17 @@
 
 import sys
 import os
+import subprocess
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     args = [arg for arg in args if "--acpp-targets" not in arg]
+    command = f"clang-tidy {' '.join(args)}"
+    command = command.split(" -- ")[0]
 
     # run clang-tidy with modified arguments
-    print(f"Running clang-tidy with args: {args}")
-    os.system(f"clang-tidy {' '.join(args)}")
+    print(f"Running clang-tidy with command: {command}")
+    status = subprocess.run(command, shell=True)
+
+    # return the status code
+    sys.exit(status.returncode)

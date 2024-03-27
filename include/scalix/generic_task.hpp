@@ -32,9 +32,6 @@
 #include <memory>
 
 namespace sclx {
-template<class R>
-class typed_task;
-
 class generic_task {
     template<class R>
     friend class typed_task;

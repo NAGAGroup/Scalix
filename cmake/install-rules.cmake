@@ -45,6 +45,16 @@ install(
   COMPONENT Scalix_Development)
 
 install(
+  FILES cmake/configure_target_for_scalix.cmake
+  DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
+  COMPONENT Scalix_Development)
+
+install(
+  FILES cmake/dependencies.cmake
+  DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
+  COMPONENT Scalix_Development)
+
+install(
   FILES "${PROJECT_BINARY_DIR}/${package}ConfigVersion.cmake"
   DESTINATION "${SCALIX_INSTALL_CMAKEDIR}"
   COMPONENT Scalix_Development)

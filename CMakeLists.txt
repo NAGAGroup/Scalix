@@ -10,6 +10,9 @@ project(
   HOMEPAGE_URL "https://github.com/NAGAGroup/Scalix"
   LANGUAGES CXX C)
 
+# ---- Library Dependencies ----
+include(cmake/dependencies.cmake)
+
 # check that standard is greater than or equal to 20, if not, raise an error if
 # unasigned, set to 20
 if(NOT DEFINED CMAKE_CXX_STANDARD)
@@ -27,7 +30,10 @@ if(NOT DEFINED CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-include(cmake/add_scalix_to_target.cmake)
+include(cmake/configure_target_for_scalix.cmake)
+
+# ---- Clang tidy ----
+include(cmake/clang-tidy.cmake)
 
 # ---- Developer mode ----
 if(SCALIX_DEVELOPER_MODE)
@@ -44,45 +50,74 @@ endif()
 
 add_library(
   scalix
-  source/generic_task.cpp include/scalix/generic_task.hpp
-  include/scalix/typed_task.hpp include/scalix/detail/generic_task.hpp
-  include/scalix/detail/typed_task.inl)
-add_library(Scalix::Scalix ALIAS scalix)
+  include/scalix/detail/generic_task.hpp
+  source/generic_task.cpp
+  include/scalix/generic_task.hpp
+  include/scalix/typed_task_interface.hpp
+  include/scalix/typed_task.hpp
+  source/typed_task.cpp
+  include/scalix/concurrent_guard.hpp
+  source/concurrent_guard.cpp)
+add_library(Scalix::scalix ALIAS scalix)
 
 # ---- This handles SYCL stuffs ----
-add_scalix_to_target(scalix)
+configure_target_for_scalix(scalix)
 
-# ---- Library Dependencies ----
-include(FetchContent)
+# ---- Configure library ----
 
-find_package(cpptrace QUIET)
-if(NOT cpptrace_FOUND)
-  FetchContent_Declare(
-    cpptrace
-    GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
-    GIT_TAG v0.5.0 # <HASH or TAG>
-  )
-  FetchContent_MakeAvailable(cpptrace)
+# This ensures clang-tidy runs on all source files, including headers
+get_target_property(TARGET_SOURCES scalix SOURCES)
+get_target_property(TARGET_COMPILE_FLAGS scalix COMPILE_FLAGS)
+set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE CXX)
+foreach(source_file ${TARGET_SOURCES})
+  if(source_file MATCHES ".*\\.hpp")
+    set_source_files_properties(${source_file} PROPERTIES COMPILE_FLAGS
+      "-x c++-header")
+  endif()
+endforeach()
+
+if (DEFINED "CUDAToolkit_FOUND")
+  target_include_directories(scalix SYSTEM PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
 endif()
+
+include(GenerateExportHeader)
+generate_export_header(
+  scalix
+  BASE_NAME
+  scalix
+  EXPORT_FILE_NAME
+  export/scalix/scalix_export.hpp
+  CUSTOM_CONTENT_FROM_VARIABLE
+  pragma_suppress_c4251)
+
+# get compiler args for scalix
+set_target_properties(
+  scalix
+  PROPERTIES CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN YES
+  VERSION "${PROJECT_VERSION}"
+  SOVERSION "${PROJECT_VERSION_MAJOR}")
+
+if(NOT BUILD_SHARED_LIBS)
+  target_compile_definitions(scalix PUBLIC SCALIX_STATIC_DEFINE)
+endif()
+
+target_include_directories(
+  scalix ${warning_guard}
+  SYSTEM PUBLIC
+  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/Scalix-${PROJECT_VERSION}>")
+
+target_include_directories(
+  scalix
+  SYSTEM PUBLIC
+  "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
+
+# ---- Dependencies ----
 target_link_libraries(scalix PUBLIC cpptrace::cpptrace)
 
 # ---- Install rules ----
 
 if(NOT CMAKE_SKIP_INSTALL_RULES)
   include(cmake/install-rules.cmake)
-endif()
-
-# ---- Custom Clang Tidy if Needed ----
-if(DEFINED "SCALIX_USING_CUSTOM_CLANG_TIDY")
-  add_custom_target(
-    clang-tidy-checks
-    ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
-    ${CLANG_TIDY_CHECK_SUBTARGETS}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
-  add_custom_target(
-    clang-tidy-fixes
-    ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
-    ${CLANG_TIDY_FIX_SUBTARGETS}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()

@@ -30,9 +30,14 @@
 // POSSIBILITY OF SUCH DAMAGE.
 
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
 #include <future>
 #include <memory>
+#include <mutex>
 #include <scalix/typed_task.hpp>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace sclx {
 
@@ -122,7 +127,8 @@ struct constructor_assignment_counter {
         return *this;
     }
 
-    auto assign_no_count(constructor_assignment_counter&& other)
+    auto assign_no_count(constructor_assignment_counter&& other
+    )  // NOLINT(*-rvalue-reference-param-not-moved)
         -> constructor_assignment_counter& {
         num_copy_constructor_calls = other.num_copy_constructor_calls;
         num_copy_assignment_calls  = other.num_copy_assignment_calls;
@@ -132,16 +138,18 @@ struct constructor_assignment_counter {
         return *this;
     }
 
+    ~constructor_assignment_counter() = default;
+
     int num_copy_constructor_calls{0};
     int num_move_constructor_calls{0};
     int num_copy_assignment_calls{0};
     int num_move_assignment_calls{0};
 };
 
-TEST_CASE(
+TEST_CASE(  // NOLINT(*-function-cognitive-complexity)
     "sclx::task arg behavior",
     "[sclx::task]"
-) {  // NOLINT(*-function-cognitive-complexity)
+) {
     argument_rvalue_check arg;
     auto task = sclx::create_task(pass_argument_rvalue_check, std::move(arg));
     auto task_future = task.get_future();
@@ -161,9 +169,12 @@ TEST_CASE(
         constexpr int expected_value = 42;
 
         auto int_ptr = std::make_shared<int>(expected_value);
-        std::weak_ptr int_wptr{int_ptr};
+        std::weak_ptr const int_wptr{int_ptr};
         auto scoped_task = sclx::create_task(
-            [&fut](std::shared_ptr<int>&& moved_ptr, std::weak_ptr<int>& wptr) {
+            [&fut](
+                std::shared_ptr<int>&& moved_ptr,
+                const std::weak_ptr<int>& wptr
+            ) {
                 fut.wait();
                 const auto ptr               = std::move(moved_ptr);
                 const bool correct_use_count = ptr.use_count() == 1;
@@ -201,7 +212,8 @@ TEST_CASE(
                 std::move(counter)
             );
             scoped_task.launch();
-            counter.assign_no_count(std::move(*scoped_task.get_future().get()));
+            counter.assign_no_count(std::move(*scoped_task.get_future().get())
+            );  // NOLINT
         }
         REQUIRE(counter.num_copy_constructor_calls == 0);
         REQUIRE(
@@ -213,7 +225,8 @@ TEST_CASE(
 
         {
             auto scoped_task = sclx::create_task(
-                [](constructor_assignment_counter counter
+                [](constructor_assignment_counter
+                       counter  // NOLINT(*-unnecessary-value-param)
                 ) -> std::unique_ptr<constructor_assignment_counter> {
                     auto ptr
                         = std::make_unique<constructor_assignment_counter>();
@@ -223,7 +236,7 @@ TEST_CASE(
                 std::move(counter)
             );
             scoped_task.launch();
-            counter.assign_no_count(*scoped_task.get_future().get());
+            counter.assign_no_count(*scoped_task.get_future().get());  // NOLINT
         }
         REQUIRE(counter.num_copy_constructor_calls == 0);
         REQUIRE(
@@ -255,7 +268,7 @@ TEST_CASE(
 
         {
             auto scoped_task = sclx::create_task(
-                [](constructor_assignment_counter counter
+                [](constructor_assignment_counter counter  // NOLINT
                 ) -> std::unique_ptr<constructor_assignment_counter> {
                     auto ptr
                         = std::make_unique<constructor_assignment_counter>();
@@ -281,7 +294,7 @@ TEST_CASE(
 // 1. task A is parent of tasks B and C
 // 2. task B and C are parents of task D
 enum class task_tag : std::uint8_t { A, B, C, D };
-TEST_CASE("sclx::task dependencies", "[sclx::task]") {
+TEST_CASE("sclx::task dependencies", "[sclx::task]") {  // NOLINT
     std::vector<task_tag> task_order;
     std::mutex task_order_mutex;
 

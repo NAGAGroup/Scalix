@@ -29,40 +29,33 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
-
-#include "../generic_task.hpp"
+#include "generic_task.hpp"
+#include <future>
 #include <memory>
-#include <mutex>
-#include <vector>
+#include <type_traits>
 
 namespace sclx {
 
-struct generic_task::task_metadata {
-    int dependency_count{0};    // cppcheck-suppress unusedStructMember
-    bool has_launched{false};   // cppcheck-suppress unusedStructMember
-    bool has_completed{false};  // cppcheck-suppress unusedStructMember
-    std::vector<generic_task>
-        dependent_tasks;  // cppcheck-suppress unusedStructMember
-    std::mutex mutex;
-};
+struct task_factory;
 
-class generic_task::impl {
+template<class R>
+class typed_task : public generic_task {
+    friend struct task_factory;
+
   public:
-    impl(impl&&) noexcept                    = default;
-    auto operator=(impl&&) noexcept -> impl& = default;
-    impl(const impl&)                        = delete;
-    auto operator=(const impl&) -> impl&     = delete;
+    auto get_future() -> std::future<R>;
 
-    virtual ~impl();
+  private:
+    template<class...>
+    class typed_impl;
 
-    impl() = default;
+    typed_task(std::unique_ptr<impl>&& impl, std::future<R>&& future);
 
-    virtual void async_execute(std::shared_ptr<task_metadata> metadata) const
-        = 0;
-
-    void
-    decrease_dependency_count(const std::shared_ptr<task_metadata>& metadata
-    ) const;
+    std::future<R> future_{};
 };
+
+template<class F, class... Args>
+auto create_task(F&& func, Args&&... args)
+    -> typed_task<std::invoke_result_t<F, Args...>>;
 
 }  // namespace sclx

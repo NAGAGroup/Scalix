@@ -25,57 +25,25 @@ if(DEFINED "AdaptiveCpp_DIR")
   find_package(Threads REQUIRED)
   if(NOT DEFINED "SCALIX_SYCL_TARGETS")
     message(WARNING "No SYCL targets defined, using default generic SSCP mode")
-  else()
-    set(ACPP_TARGETS "${SCALIX_SYCL_TARGETS}")
+    set(SCALIX_SYCL_TARGETS "generic")
   endif()
+  if ("${SCALIX_SYCL_TARGETS}" MATCHES "cuda\..*")
+    find_package(CUDAToolkit REQUIRED)
+  endif()
+  set(ACPP_TARGETS "${SCALIX_SYCL_TARGETS}")
 else()
   if(NOT DEFINED "SCALIX_SYCL_TARGETS")
     message(WARNING "No SYCL targets defined, using default spir64_x86_64")
     set(SCALIX_SYCL_TARGETS "spir64_x86_64")
   endif()
-  if(NOT DEFINED "SCALIX_EXTRA_SYCL_ARGS")
-    set(SCALIX_EXTRA_SYCL_ARGS "")
-  endif()
   set(SCALIX_CXX_FLAGS "-fsycl" "-fsycl-targets=${SCALIX_SYCL_TARGETS}"
                        "${SCALIX_EXTRA_SYCL_ARGS}")
 endif()
 
-function(add_scalix_to_target target)
+function(configure_target_for_scalix target)
   if(DEFINED "SCALIX_CXX_FLAGS")
     target_compile_options(${target} PUBLIC ${SCALIX_CXX_FLAGS})
     target_link_options(${target} PUBLIC ${SCALIX_CXX_FLAGS})
-  endif()
-
-  get_target_property(target_type ${target} TYPE)
-  if("${target_type}" MATCHES "LIBRARY")
-    include(GenerateExportHeader)
-    generate_export_header(
-      ${target}
-      BASE_NAME
-      scalix
-      EXPORT_FILE_NAME
-      export/${target}/${target}_export.hpp
-      CUSTOM_CONTENT_FROM_VARIABLE
-      pragma_suppress_c4251)
-
-    # get compiler args for scalix
-    set_target_properties(
-      ${target}
-      PROPERTIES CXX_VISIBILITY_PRESET hidden
-                 VISIBILITY_INLINES_HIDDEN YES
-                 VERSION "${PROJECT_VERSION}"
-                 SOVERSION "${PROJECT_VERSION_MAJOR}")
-
-    if(NOT BUILD_SHARED_LIBS)
-      target_compile_definitions(${target} PUBLIC SCALIX_STATIC_DEFINE)
-    endif()
-
-    target_include_directories(
-      ${target} ${warning_guard}
-      PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
-
-    target_include_directories(
-      ${target} SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
   endif()
 
   if(DEFINED "AdaptiveCpp_DIR")

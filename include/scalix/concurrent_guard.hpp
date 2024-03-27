@@ -32,34 +32,55 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <stdexcept>
+#include <type_traits>
+#include <utility>
 
-namespace sclx::detail {
+namespace sclx {
 
 template<class T>
+    requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard;
 
+enum class access_mode { read, write };
+
 template<class T>
-class exclusive_view {
+class concurrent_view {
+    friend class concurrent_guard<std::remove_const_t<T>>;
     using lock_type = std::conditional_t<
         std::is_const_v<T>,
         std::shared_lock<std::shared_mutex>,
         std::unique_lock<std::shared_mutex>>;
 
   public:
-    friend class concurrent_guard<T>;
-    auto access() const -> T& {
+    using value_type = T;
+
+    explicit operator concurrent_view<const T>() {
+        if constexpr (!std::is_const_v<T>) {
+            unlock();
+        }
+        return concurrent_view<const T>{
+            ptr_,
+            mutex_,
+            concurrent_view<const T>::lock_type(*mutex_, std::defer_lock)
+        };
+    }
+
+    [[nodiscard]] auto access() const& -> T& {
         if (!lock_.owns_lock()) {
-            throw std::runtime_error("exclusive_view has been released");
+            throw std::runtime_error("concurrent_view has been unlocked");
         }
         return *ptr_;
     }
+
+    auto access() && -> T& = delete;
 
     void unlock() { lock_.unlock(); }
 
     void lock() { lock_.lock(); }
 
   private:
-    exclusive_view(
+    concurrent_view(
         std::shared_ptr<T> ptr,
         std::shared_ptr<std::shared_mutex> mutex,
         lock_type lock
@@ -75,11 +96,19 @@ class exclusive_view {
     lock_type lock_;
 };
 
+template<class T, access_mode Mode>
+using concurrent_view_t = std::conditional_t<
+    Mode == access_mode::read,
+    concurrent_view<const T>,
+    concurrent_view<T>>;
+
 template<class T>
+    requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard {
   public:
     concurrent_guard() = default;
-    explicit concurrent_guard(std::unique_ptr<T> ptr) : ptr_(std::move(ptr)) {}
+    explicit concurrent_guard(T value)
+        : ptr_(std::make_shared<T>(std::move(value))) {}
 
     concurrent_guard(const concurrent_guard&)                    = default;
     auto operator=(const concurrent_guard&) -> concurrent_guard& = default;
@@ -87,31 +116,33 @@ class concurrent_guard {
     concurrent_guard(concurrent_guard&&)                    = default;
     auto operator=(concurrent_guard&&) -> concurrent_guard& = default;
 
-    auto get_view() const -> exclusive_view<T> { return get_view_generic<T>(); }
-
-    auto get_const_view() const -> exclusive_view<const T> {
-        return get_view_generic<const T>();
+    template<access_mode Mode = sclx::access_mode::read>
+    [[nodiscard]] [[nodiscard]] auto get_view() const
+        -> concurrent_view_t<T, Mode> {
+        return get_view_generic<
+            typename concurrent_view_t<T, Mode>::value_type>();
     }
 
     ~concurrent_guard() = default;
 
   private:
     template<class U>
-    auto get_view_generic() const -> exclusive_view<U> {
+    [[nodiscard]] [[nodiscard]] auto get_view_generic() const
+        -> concurrent_view<U> {
         if (!ptr_) {
             throw std::runtime_error("concurrent_guard does not hold valid data"
             );
         }
 
-        using lock_type = typename exclusive_view<U>::lock_type;
+        using lock_type = typename concurrent_view<U>::lock_type;
 
         lock_type lock(*mutex_, std::defer_lock);
 
-        return exclusive_view<U>{ptr_, mutex_, std::move(lock)};
+        return concurrent_view<U>{ptr_, mutex_, std::move(lock)};
     }
-    std::shared_ptr<T> ptr_;
+    std::shared_ptr<T> ptr_ = std::make_shared<T>();
     std::shared_ptr<std::shared_mutex> mutex_
         = std::make_shared<std::shared_mutex>();
 };
 
-}  // namespace sclx::detail
+}  // namespace sclx
