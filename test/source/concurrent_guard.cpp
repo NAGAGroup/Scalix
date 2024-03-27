@@ -37,11 +37,11 @@
 #include <vector>
 
 namespace concurrent_guard_test {
-enum class task_tag: std::uint8_t {A, B, C};
+enum class task_tag : std::uint8_t { A, B, C };
 }
-using namespace concurrent_guard_test; // NOLINT(*-build-using-namespace)
-TEST_CASE("concurrent_guard") { // NOLINT(*-function-cognitive-complexity)
-  sclx::concurrent_guard<int> guard;
+using namespace concurrent_guard_test;  // NOLINT(*-build-using-namespace)
+TEST_CASE("concurrent_guard") {  // NOLINT(*-function-cognitive-complexity)
+    sclx::concurrent_guard<int> guard;
     std::promise<void> A2_promise;
     auto A2_future = A2_promise.get_future();
     std::promise<void> B_promise;
@@ -52,7 +52,7 @@ TEST_CASE("concurrent_guard") { // NOLINT(*-function-cognitive-complexity)
     std::mutex order_mutex;
     std::vector<task_tag> order;
     auto fut1 = std::async(std::launch::async, [&] {
-        auto view = guard.get_view<sclx::access_mode::write>();
+        auto view     = guard.get_view<sclx::access_mode::write>();
         view.access() = 1;
         order.push_back(task_tag::A);
     });
@@ -75,7 +75,7 @@ TEST_CASE("concurrent_guard") { // NOLINT(*-function-cognitive-complexity)
     auto fut3 = std::async(std::launch::async, [&] {
         B_future.wait();
         C_future.wait();
-        auto view = guard.get_view<sclx::access_mode::write>();
+        auto view     = guard.get_view<sclx::access_mode::write>();
         view.access() = 2;
         order.push_back(task_tag::A);
     });

@@ -72,11 +72,11 @@ set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE CXX)
 foreach(source_file ${TARGET_SOURCES})
   if(source_file MATCHES ".*\\.hpp")
     set_source_files_properties(${source_file} PROPERTIES COMPILE_FLAGS
-      "-x c++-header")
+                                                          "-x c++-header")
   endif()
 endforeach()
 
-if (DEFINED "CUDAToolkit_FOUND")
+if(DEFINED "CUDAToolkit_FOUND")
   target_include_directories(scalix SYSTEM PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
 endif()
 
@@ -94,24 +94,21 @@ generate_export_header(
 set_target_properties(
   scalix
   PROPERTIES CXX_VISIBILITY_PRESET hidden
-  VISIBILITY_INLINES_HIDDEN YES
-  VERSION "${PROJECT_VERSION}"
-  SOVERSION "${PROJECT_VERSION_MAJOR}")
+             VISIBILITY_INLINES_HIDDEN YES
+             VERSION "${PROJECT_VERSION}"
+             SOVERSION "${PROJECT_VERSION_MAJOR}")
 
 if(NOT BUILD_SHARED_LIBS)
   target_compile_definitions(scalix PUBLIC SCALIX_STATIC_DEFINE)
 endif()
 
 target_include_directories(
-  scalix ${warning_guard}
-  SYSTEM PUBLIC
-  "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-  "$<INSTALL_INTERFACE:include/Scalix-${PROJECT_VERSION}>")
+  scalix ${warning_guard} SYSTEM
+  PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+         "$<INSTALL_INTERFACE:include/Scalix-${PROJECT_VERSION}>")
 
 target_include_directories(
-  scalix
-  SYSTEM PUBLIC
-  "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
+  scalix SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
 
 # ---- Dependencies ----
 target_link_libraries(scalix PUBLIC cpptrace::cpptrace)

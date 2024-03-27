@@ -17,12 +17,12 @@ if(NOT cpptrace_FOUND)
   set(SCALIX_FETCHED_CPPTRACE TRUE)
 endif()
 
-if (SCALIX_FETCHED_DEPS)
+if(SCALIX_FETCHED_DEPS)
   FetchContent_MakeAvailable(${SCALIX_FETCHED_DEPS})
 endif()
 
-if (SCALIX_FETCHED_CPPTRACE)
+if(SCALIX_FETCHED_CPPTRACE)
   # copy include directory to build directory
-  file(COPY ${cpptrace_SOURCE_DIR}/include/ DESTINATION ${cpptrace_BINARY_DIR}/include/)
+  file(COPY ${cpptrace_SOURCE_DIR}/include/
+       DESTINATION ${cpptrace_BINARY_DIR}/include/)
 endif()
-

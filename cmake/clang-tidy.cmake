@@ -5,9 +5,8 @@ if(DEFINED "CMAKE_CXX_CLANG_TIDY")
   if(DEFINED "CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR")
     add_custom_target(
       clang-tidy-fix
-      COMMAND
-      clang-apply-replacements ${CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR}
-      --ignore-insert-conflict
+      COMMAND clang-apply-replacements ${CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR}
+              --ignore-insert-conflict
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       COMMENT "Build all targets if necessary and apply clang-tidy fixes"
       VERBATIM USES_TERMINAL)
