@@ -41,7 +41,8 @@ if __name__ == '__main__':
 
     # run clang-tidy with modified arguments
     print(f"Running clang-tidy with command: {command}")
-    status = subprocess.run(command, shell=True)
+    # keep environment variables
+    status = subprocess.run(command, shell=True, env=os.environ)
 
     # return the status code
     sys.exit(status.returncode)

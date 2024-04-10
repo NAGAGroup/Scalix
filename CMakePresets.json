@@ -2,7 +2,7 @@
   "version": 2,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 27,
+    "minor": 14,
     "patch": 0
   },
   "configurePresets": [
@@ -78,14 +78,15 @@
       "cacheVariables": {
         "AdaptiveCpp_DIR": "$env{PIXI_PROJECT_ROOT}/.pixi/envs/$env{PIXI_ENVIRONMENT_NAME}/lib/cmake/AdaptiveCpp/",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_C_COMPILER": "clang"
+        "CMAKE_C_COMPILER": "clang",
+        "SCALIX_SYCL_TARGETS": "generic"
       }
     },
     {
       "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy.py;--header-filter={sourceDir}/include/.*;--config-file=${sourceDir}/.clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy.py;--header-filter=${sourceDir}/include/.*;--config-file=${sourceDir}/.clang-tidy",
         "CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR": "${sourceDir}/clang-tidy-fixes",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }

@@ -71,8 +71,7 @@ get_target_property(TARGET_COMPILE_FLAGS scalix COMPILE_FLAGS)
 set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE CXX)
 foreach(source_file ${TARGET_SOURCES})
   if(source_file MATCHES ".*\\.hpp")
-    set_source_files_properties(${source_file} PROPERTIES COMPILE_FLAGS
-                                                          "-x c++-header")
+    set_source_files_properties(${source_file} PROPERTIES HEADER_FILE_ONLY FALSE)
   endif()
 endforeach()
 
