@@ -8,7 +8,7 @@ project(
   DESCRIPTION
     "SYCL-like library for easily distributing data parallel applications across available compute resources"
   HOMEPAGE_URL "https://github.com/NAGAGroup/Scalix"
-  LANGUAGES CXX C)
+  LANGUAGES C CXX)
 
 # ---- Library Dependencies ----
 include(cmake/dependencies.cmake)
