@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['strong_0',['strong',['../namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726a6f7f9432d35dea629c8384dab312259a',1,'sclx::detail']]]
+  ['read_0',['read',['../namespacesclx.html#aee244c994273025ee0f2d3f963d95dc1aecae13117d6f0584c25a9da6c8f8415e',1,'sclx']]]
 ];

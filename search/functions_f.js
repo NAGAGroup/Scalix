@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['write_5fbit_0',['write_bit',['../classsclx_1_1detail_1_1local__page.html#a1e0e7fb212de2ec6d6a30795a3fcc840',1,'sclx::detail::local_page::write_bit()'],['../classsclx_1_1detail_1_1page__interface.html#a62bb10cc4ea8f37113f2b6c9170c70d1',1,'sclx::detail::page_interface::write_bit()'],['../classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#aedf08d36c697d50b5c2bab3cc8c2ee88',1,'sclx::detail::page_handle&lt; page_handle_type::strong, PageSize &gt;::write_bit()']]]
+  ['transition_5fstates_0',['transition_states',['../classsclx_1_1detail_1_1state__machine.html#ad752525d5963267ac3441266d8467515',1,'sclx::detail::state_machine']]],
+  ['typed_5fimpl_1',['typed_impl',['../classsclx_1_1typed__task_1_1typed__impl.html#a8e91f284463ca9dc7ef623bec886b5f5',1,'sclx::typed_task::typed_impl::typed_impl(F &amp;&amp;func)'],['../classsclx_1_1typed__task_1_1typed__impl.html#a363f2847f67511ce30f66e1711d6b7e4',1,'sclx::typed_task::typed_impl::typed_impl(F &amp;&amp;func, PassedArg1 &amp;&amp;arg1, PassedArgs &amp;&amp;... args)']]]
 ];

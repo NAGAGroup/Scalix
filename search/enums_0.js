@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['page_5fhandle_5ftype_0',['page_handle_type',['../namespacesclx_1_1detail.html#a252c910478747ee6e9665befcb890726',1,'sclx::detail']]],
-  ['pagination_5ftype_1',['pagination_type',['../namespacesclx_1_1detail.html#a72a8a600562a0a36f6e0f032e899cc2c',1,'sclx::detail']]]
+  ['access_5fmode_0',['access_mode',['../namespacesclx.html#aee244c994273025ee0f2d3f963d95dc1',1,'sclx']]]
 ];

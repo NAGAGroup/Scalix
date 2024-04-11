@@ -1,10 +1,7 @@
 var searchData=
 [
-  ['ignore_5fpage_5findex_0',['ignore_page_index',['../structsclx_1_1detail_1_1page__copy__rules.html#a14f26ef77bda579fedcab6f6017ebfc3',1,'sclx::detail::page_copy_rules']]],
-  ['ignore_5funwritten_1',['ignore_unwritten',['../structsclx_1_1detail_1_1page__copy__rules.html#affdf1663753579e642ba34f1a22c01bb',1,'sclx::detail::page_copy_rules']]],
-  ['invalid_5fpage_2',['invalid_page',['../namespacesclx.html#a96dec1d5f0e869f984b55ff8f8643efe',1,'sclx']]],
-  ['is_5fbounded_5farray_5fv_3',['is_bounded_array_v',['../namespacesclx_1_1detail.html#a1f5bc811bed6abeddbc4f8bf9447e1a5',1,'sclx::detail']]],
-  ['is_5fbounded_5farray_5fv_3c_20bounded_5farray_5ftype_3c_20t_2c_20n_20_3e_20_3e_4',['is_bounded_array_v&lt; bounded_array_type&lt; T, N &gt; &gt;',['../namespacesclx_1_1detail.html#a17f3d3dc463e5d67db9caf6ead2b824c',1,'sclx::detail']]],
-  ['is_5funbounded_5farray_5fv_5',['is_unbounded_array_v',['../namespacesclx_1_1detail.html#af8fbe60f8f5184f6a07a7c4150bfe422',1,'sclx::detail']]],
-  ['is_5funbounded_5farray_5fv_3c_20array_5ftype_3c_20t_20_3e_20_3e_6',['is_unbounded_array_v&lt; array_type&lt; T &gt; &gt;',['../namespacesclx_1_1detail.html#a247ca432c9b7b2e688afe849a7efb334',1,'sclx::detail']]]
+  ['handle_5ftype_0',['handle_type',['../classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1weak_00_01PageSize_01_4.html#a4739a80508bbcf88b14b0c8d217b3d71',1,'sclx::detail::page_handle&lt; page_handle_type::weak, PageSize &gt;::handle_type'],['../classsclx_1_1detail_1_1page__handle_3_01page__handle__type_1_1strong_00_01PageSize_01_4.html#a562cc7324ba91cc7fedc2facadefb3ff',1,'sclx::detail::page_handle&lt; page_handle_type::strong, PageSize &gt;::handle_type']]],
+  ['has_5fcompleted_1',['has_completed',['../structsclx_1_1generic__task_1_1task__metadata.html#a1b75f48491e159fb614111b426afef3c',1,'sclx::generic_task::task_metadata']]],
+  ['has_5flaunched_2',['has_launched',['../structsclx_1_1generic__task_1_1task__metadata.html#a29e4a42167522a12b1687ccd0b4146ca',1,'sclx::generic_task::task_metadata']]],
+  ['host_5fdevice_5fid_3',['host_device_id',['../namespacesclx.html#acd5911fdaeeac3d62ab873b94e0b5079',1,'sclx']]]
 ];

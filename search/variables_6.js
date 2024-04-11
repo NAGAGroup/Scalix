@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['page_5fsize_0',['page_size',['../classsclx_1_1detail_1_1page__interface.html#a109ef00c55d6a8fb53f4dd86724248f6',1,'sclx::detail::page_interface::page_size'],['../structsclx_1_1detail_1_1page__traits.html#a01230998fee4acbfe28354b4e296bc3d',1,'sclx::detail::page_traits::page_size']]]
+  ['mutex_0',['mutex',['../structsclx_1_1generic__task_1_1task__metadata.html#a26e65896a6135590ad09531ddec13295',1,'sclx::generic_task::task_metadata']]]
 ];

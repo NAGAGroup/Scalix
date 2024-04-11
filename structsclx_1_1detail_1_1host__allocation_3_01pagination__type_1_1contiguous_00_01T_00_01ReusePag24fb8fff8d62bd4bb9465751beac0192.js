@@ -1,5 +1,7 @@
 var structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192 =
 [
-    [ "device_id", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#af9707adc12d8b0155704ff2e22354a4f", null ],
-    [ "data_", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#a1698bc409a3e85ef65b49d9d168eb61e", null ]
+    [ "device_id", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#aaa1f5af8628fbddbe7311adf1b778b59", null ],
+    [ "pages", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#a82474052c89b5c30d559c2064e19d764", null ],
+    [ "data_", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#a1698bc409a3e85ef65b49d9d168eb61e", null ],
+    [ "pages_", "structsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePag24fb8fff8d62bd4bb9465751beac0192.html#aba6f6f412cf0f2ef47e3f17b9dab8639", null ]
 ];

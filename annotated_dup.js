@@ -2,19 +2,24 @@ var annotated_dup =
 [
     [ "sclx", "namespacesclx.html", [
       [ "detail", "namespacesclx_1_1detail.html", [
-        [ "access_anchor_creator_struct", "structsclx_1_1detail_1_1access__anchor__creator__struct.html", null ],
+        [ "access_anchor", "classsclx_1_1detail_1_1access__anchor.html", "classsclx_1_1detail_1_1access__anchor" ],
+        [ "access_anchor_interface", "structsclx_1_1detail_1_1access__anchor__interface.html", null ],
         [ "allocation", "classsclx_1_1detail_1_1allocation.html", null ],
-        [ "allocation_factory", "classsclx_1_1detail_1_1allocation__factory.html", "classsclx_1_1detail_1_1allocation__factory" ],
         [ "allocation_handle", "classsclx_1_1detail_1_1allocation__handle.html", "classsclx_1_1detail_1_1allocation__handle" ],
+        [ "allocation_handle_base", "structsclx_1_1detail_1_1allocation__handle__base.html", "structsclx_1_1detail_1_1allocation__handle__base" ],
+        [ "bound_host_kernel", "structsclx_1_1detail_1_1bound__host__kernel.html", "structsclx_1_1detail_1_1bound__host__kernel" ],
+        [ "default_state_machine_tag", "structsclx_1_1detail_1_1default__state__machine__tag.html", null ],
         [ "device_allocation", "classsclx_1_1detail_1_1device__allocation.html", null ],
         [ "device_allocation< pagination_type::contiguous, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
         [ "device_allocation< pagination_type::paginated, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1device__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
-        [ "device_allocation_anchor", "classsclx_1_1detail_1_1device__allocation__anchor.html", "classsclx_1_1detail_1_1device__allocation__anchor" ],
         [ "device_page_table", "classsclx_1_1detail_1_1device__page__table.html", "classsclx_1_1detail_1_1device__page__table" ],
         [ "host_allocation", "classsclx_1_1detail_1_1host__allocation.html", null ],
         [ "host_allocation< pagination_type::contiguous, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1contiguous_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
         [ "host_allocation< pagination_type::paginated, T, ReusePagesFlag, PageSize >", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4.html", "classsclx_1_1detail_1_1host__allocation_3_01pagination__type_1_1paginated_00_01T_00_01ReusePagesFlag_00_01PageSize_01_4" ],
         [ "host_page_table", "classsclx_1_1detail_1_1host__page__table.html", "classsclx_1_1detail_1_1host__page__table" ],
+        [ "is_state_definition", "structsclx_1_1detail_1_1is__state__definition.html", null ],
+        [ "is_state_definition< state_definition< StateInputs, StateLabel > >", "structsclx_1_1detail_1_1is__state__definition_3_01state__definition_3_01StateInputs_00_01StateLabel_01_4_01_4.html", null ],
+        [ "is_state_definition< StateManager< StateInputs, StateLabel > >", "structsclx_1_1detail_1_1is__state__definition_3_01StateManager_3_01StateInputs_00_01StateLabel_01_4_01_4.html", null ],
         [ "local_page", "classsclx_1_1detail_1_1local__page.html", "classsclx_1_1detail_1_1local__page" ],
         [ "page_copy_rules", "structsclx_1_1detail_1_1page__copy__rules.html", "structsclx_1_1detail_1_1page__copy__rules" ],
         [ "page_data", "structsclx_1_1detail_1_1page__data.html", "structsclx_1_1detail_1_1page__data" ],
@@ -26,9 +31,22 @@ var annotated_dup =
         [ "page_interface", "classsclx_1_1detail_1_1page__interface.html", "classsclx_1_1detail_1_1page__interface" ],
         [ "page_table_interface", "classsclx_1_1detail_1_1page__table__interface.html", "classsclx_1_1detail_1_1page__table__interface" ],
         [ "page_traits", "structsclx_1_1detail_1_1page__traits.html", null ],
-        [ "pagination_traits", "structsclx_1_1detail_1_1pagination__traits.html", "structsclx_1_1detail_1_1pagination__traits" ]
+        [ "pagination_traits", "structsclx_1_1detail_1_1pagination__traits.html", "structsclx_1_1detail_1_1pagination__traits" ],
+        [ "state_based_scheduler", "classsclx_1_1detail_1_1state__based__scheduler.html", "classsclx_1_1detail_1_1state__based__scheduler" ],
+        [ "state_definition", "classsclx_1_1detail_1_1state__definition.html", "classsclx_1_1detail_1_1state__definition" ],
+        [ "state_machine", "classsclx_1_1detail_1_1state__machine.html", "classsclx_1_1detail_1_1state__machine" ],
+        [ "state_machine_invalid_label_type", "structsclx_1_1detail_1_1state__machine__invalid__label__type.html", null ],
+        [ "state_machine_invalid_state", "structsclx_1_1detail_1_1state__machine__invalid__state.html", null ],
+        [ "state_machine_terminal_state", "structsclx_1_1detail_1_1state__machine__terminal__state.html", null ],
+        [ "state_machine_traits", "structsclx_1_1detail_1_1state__machine__traits.html", "structsclx_1_1detail_1_1state__machine__traits" ],
+        [ "state_transition", "classsclx_1_1detail_1_1state__transition.html", "classsclx_1_1detail_1_1state__transition" ]
       ] ],
+      [ "concurrent_guard", "classsclx_1_1concurrent__guard.html", "classsclx_1_1concurrent__guard" ],
+      [ "concurrent_view", "classsclx_1_1concurrent__view.html", "classsclx_1_1concurrent__view" ],
       [ "default_delete", "classsclx_1_1default__delete.html", "classsclx_1_1default__delete" ],
-      [ "mpi_device", "structsclx_1_1mpi__device.html", "structsclx_1_1mpi__device" ]
+      [ "generic_task", "classsclx_1_1generic__task.html", "classsclx_1_1generic__task" ],
+      [ "mpi_device", "structsclx_1_1mpi__device.html", "structsclx_1_1mpi__device" ],
+      [ "task_factory", "structsclx_1_1task__factory.html", null ],
+      [ "typed_task", "classsclx_1_1typed__task.html", "classsclx_1_1typed__task" ]
     ] ]
 ];
