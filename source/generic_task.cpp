@@ -35,7 +35,7 @@
 #include <mutex>
 #include <scalix/generic_task.hpp>
 #include <scalix/detail/generic_task.hpp>
-#include <scalix/scalix_export.hpp>
+
 
 namespace sclx {
 
@@ -50,7 +50,7 @@ generic_task::generic_task(
     : impl_{std::move(impl)},
       metadata_{std::move(metadata)} {}
 
-SCALIX_EXPORT void
+ void
 generic_task::add_dependent_task(const generic_task& dependent_task) const {
     const std::lock_guard lock(metadata_->mutex);
     if (dependent_task.metadata_ == nullptr) {
@@ -68,7 +68,7 @@ generic_task::add_dependent_task(const generic_task& dependent_task) const {
     dependent_task.metadata_->dependency_count++;
 }
 
-SCALIX_EXPORT void generic_task::launch() {
+ void generic_task::launch() {
     if (metadata_ == nullptr) {
         throw std::runtime_error("task instance is in an invalid state");
     }
@@ -81,9 +81,9 @@ SCALIX_EXPORT void generic_task::launch() {
     impl_->async_execute(std::move(metadata_));
 }
 
-generic_task::impl::~impl() = default;
+ generic_task::impl::~impl() = default;
 
-void generic_task::impl::decrease_dependency_count(
+ void generic_task::impl::decrease_dependency_count(
     const std::shared_ptr<task_metadata>& metadata
 ) const {
     const std::lock_guard lock(metadata->mutex);
