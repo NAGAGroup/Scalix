@@ -30,39 +30,36 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
-#include "../generic_task.hpp"
-#include <memory>
-#include <mutex>
+#include <scalix/concurrent_guard.hpp>
+#include <scalix/generic_task.hpp>
 #include <vector>
 
 namespace sclx {
 
-struct generic_task::task_metadata {
-    int dependency_count{0};    // cppcheck-suppress unusedStructMember
-    bool has_launched{false};   // cppcheck-suppress unusedStructMember
-    bool has_completed{false};  // cppcheck-suppress unusedStructMember
-    std::vector<generic_task>
-        dependent_tasks;  // cppcheck-suppress unusedStructMember
-    std::mutex mutex;
-};
-
 class generic_task::impl {
   public:
+    struct task_metadata {
+        int dependency_count{0};    // cppcheck-suppress unusedStructMember
+        bool has_launched{false};   // cppcheck-suppress unusedStructMember
+        bool has_completed{false};  // cppcheck-suppress unusedStructMember
+        std::vector<generic_task>
+            dependent_tasks;  // cppcheck-suppress unusedStructMember
+    };
+
+    concurrent_guard<task_metadata> metadata_;
+
+    impl() : metadata_{task_metadata{}} {}
+
     impl(impl&&) noexcept                    = default;
     auto operator=(impl&&) noexcept -> impl& = default;
     impl(const impl&)                        = delete;
     auto operator=(const impl&) -> impl&     = delete;
 
+    void decrease_dependency_count() const;
+
+    virtual void async_execute() const = 0;
+
     virtual ~impl();
-
-    impl() = default;
-
-    virtual void async_execute(std::shared_ptr<task_metadata> metadata) const
-        = 0;
-
-    void
-    decrease_dependency_count(const std::shared_ptr<task_metadata>& metadata
-    ) const;
 };
 
 }  // namespace sclx

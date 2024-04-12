@@ -37,30 +37,24 @@ class generic_task {
     friend class typed_task;
 
   public:
-    generic_task(const generic_task&)                    = delete;
-    auto operator=(const generic_task&) -> generic_task& = delete;
+    generic_task(const generic_task&)                    = default;
+    auto operator=(const generic_task&) -> generic_task& = default;
 
     generic_task(generic_task&&)                    = default;
     auto operator=(generic_task&&) -> generic_task& = default;
 
     void launch();
 
-    void add_dependent_task(const generic_task& dependent_task) const;
+    void add_dependent_task(const generic_task& dependent_task);
 
     ~generic_task() = default;
 
   private:
-    struct task_metadata;
     class impl;
 
-    explicit generic_task(std::unique_ptr<impl>&& impl);
-    generic_task(
-        std::shared_ptr<impl> impl,
-        std::shared_ptr<task_metadata> metadata
-    );
+    explicit generic_task(std::unique_ptr<impl> impl);
 
     std::shared_ptr<impl> impl_;
-    std::shared_ptr<task_metadata> metadata_;
 };
 
 }  // namespace sclx

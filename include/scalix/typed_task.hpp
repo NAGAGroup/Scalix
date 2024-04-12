@@ -35,7 +35,7 @@
 #include <cstdint>
 #include <future>
 #include <memory>
-#include <mutex>
+#include <scalix/concurrent_guard.hpp>
 #include <thread>
 #include <tuple>
 #include <type_traits>
@@ -49,15 +49,19 @@ auto typed_task<R>::get_future() -> std::future<R> {
 }
 
 template<class R>
-typed_task<R>::typed_task(std::unique_ptr<impl>&& impl, std::future<R>&& future)
-    : generic_task{std::move(impl)},
-      future_{std::move(future)} {}
+template<class... Args>
+typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
+    : generic_task{std::move(impl)} {
+    future_ = std::move(static_cast<decltype(impl.get())>(this->impl_.get())
+                            ->task_->get_future());
+}
 
 template<class R>
 template<class... Args>
 class typed_task<R>::typed_impl final : public impl {
   public:
-    using function_type = R(Args...);
+    using function_type
+        = std::conditional_t<sizeof...(Args) == 0, R(), R(Args...)>;
 
     template<class F>
     explicit typed_impl(F&& func)  // cppcheck-suppress // NOLINT
@@ -77,38 +81,33 @@ class typed_task<R>::typed_impl final : public impl {
 
     template<class F, class PassedArg1, class... PassedArgs>
     typed_impl(F&& func, PassedArg1&& arg1, PassedArgs&&... args)
-        : task_{std::make_shared<std::packaged_task<function_type>>(
-            std::forward<F>(func)
+        : args_ptr_{std::make_shared<std::tuple<
+            std::remove_reference_t<PassedArg1>,
+            std::remove_reference_t<PassedArgs>...>>(
+            std::forward<PassedArg1>(arg1),
+            std::forward<PassedArgs>(args)...
         )},
-          args_ptr_{
-              std::make_shared<std::tuple<std::remove_reference_t<Args>...>>(
-                  std::forward<PassedArg1>(arg1),
-                  std::forward<PassedArgs>(args)...
-              )
-          } {
+          task_{std::make_shared<std::packaged_task<function_type>>(
+              std::forward<F>(func)
+          )} {
         static_assert(
             sizeof...(PassedArgs) + 1 == sizeof...(Args),
             "provided task arguments in constructor do not match task signature"
         );
     }
 
-    [[nodiscard]] auto get_future() const -> std::future<R> {
-        return task_->get_future();
-    }
-
-    void async_execute(std::shared_ptr<task_metadata> metadata) const override {
+    void async_execute() const override {
         auto& args_ptr = args_ptr_;
         auto& task     = task_;
+        auto metadata  = metadata_.get_view<access_mode::write>();
         std::thread exec_thread{
             [metadata = std::move(metadata), args_ptr, task] {
                 typed_impl::apply(*task, *args_ptr);
-                const std::lock_guard lock(metadata->mutex);
-                for (const auto& dependent_task : metadata->dependent_tasks) {
-                    dependent_task.impl_->decrease_dependency_count(
-                        dependent_task.metadata_
-                    );
+                for (const auto& dependent_task :
+                     metadata.access().dependent_tasks) {
+                    dependent_task.impl_->decrease_dependency_count();
                 }
-                metadata->has_completed = true;
+                metadata.access().has_completed = true;
             }
         };
         exec_thread.detach();
@@ -152,20 +151,19 @@ struct task_factory {
     static auto create_task(F&& func, Args&&... args)
         -> typed_task<std::invoke_result_t<F, Args...>> {
         using task_t       = typed_task<std::invoke_result_t<F, Args...>>;
-        using typed_impl_t = typename task_t::template typed_impl<Args&&...>;
-        auto impl_ptr      = std::make_unique<typed_impl_t>(
+        using typed_impl_t = typename task_t::template typed_impl<
+            decltype(std::forward<Args>(args))...>;
+        return task_t{std::make_unique<typed_impl_t>(
             std::forward<F>(func),
             std::forward<Args>(args)...
-        );
-        auto future = impl_ptr->get_future();
-        return task_t{std::move(impl_ptr), std::move(future)};
+        )};
     }
 };
 
 template<class F, class... Args>
 auto create_task(F&& func, Args&&... args)
     -> typed_task<std::invoke_result_t<F, Args...>> {
-    return task_factory::create_task<F, Args...>(
+    return task_factory::create_task(
         std::forward<F>(func),
         std::forward<Args>(args)...
     );

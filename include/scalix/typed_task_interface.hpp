@@ -49,7 +49,8 @@ class typed_task : public generic_task {
     template<class...>
     class typed_impl;
 
-    typed_task(std::unique_ptr<impl>&& impl, std::future<R>&& future);
+    template<class... Args>
+    explicit typed_task(std::unique_ptr<typed_impl<Args...>> impl);
 
     std::future<R> future_{};
 };

@@ -82,13 +82,11 @@ class concurrent_view {
   private:
     concurrent_view(
         std::shared_ptr<T> ptr,
-        std::shared_ptr<std::shared_mutex> mutex,
-        lock_type lock
+        std::shared_ptr<std::shared_mutex> mutex
     )
         : ptr_(std::move(ptr)),
-          mutex_(std::move(mutex)),
-          lock_(std::move(lock)) {
-        lock_.lock();
+          mutex_(std::move(mutex)) {
+        lock_ = lock_type(*mutex_);
     }
 
     std::shared_ptr<T> ptr_;
@@ -106,7 +104,8 @@ template<class T>
     requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard {
   public:
-    concurrent_guard() = default;
+    concurrent_guard() : ptr_(std::make_shared<T>()) {}
+
     explicit concurrent_guard(T value)
         : ptr_(std::make_shared<T>(std::move(value))) {}
 
@@ -117,11 +116,12 @@ class concurrent_guard {
     auto operator=(concurrent_guard&&) -> concurrent_guard& = default;
 
     template<access_mode Mode = sclx::access_mode::read>
-    [[nodiscard]] [[nodiscard]] auto get_view() const
-        -> concurrent_view_t<T, Mode> {
+    [[nodiscard]] auto get_view() const -> concurrent_view_t<T, Mode> {
         return get_view_generic<
             typename concurrent_view_t<T, Mode>::value_type>();
     }
+
+    [[nodiscard]] auto valid() const -> bool { return ptr_ != nullptr; }
 
     ~concurrent_guard() = default;
 
@@ -129,16 +129,12 @@ class concurrent_guard {
     template<class U>
     [[nodiscard]] [[nodiscard]] auto get_view_generic() const
         -> concurrent_view<U> {
-        if (!ptr_) {
+        if (!valid()) {
             throw std::runtime_error("concurrent_guard does not hold valid data"
             );
         }
 
-        using lock_type = typename concurrent_view<U>::lock_type;
-
-        lock_type lock(*mutex_, std::defer_lock);
-
-        return concurrent_view<U>{ptr_, mutex_, std::move(lock)};
+        return {ptr_, mutex_};
     }
     std::shared_ptr<T> ptr_ = std::make_shared<T>();
     std::shared_ptr<std::shared_mutex> mutex_

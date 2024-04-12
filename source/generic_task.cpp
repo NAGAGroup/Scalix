@@ -29,67 +29,58 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
+#include <scalix/concurrent_guard.hpp>
+#include <scalix/detail/generic_task.hpp>
+#include <scalix/generic_task.hpp>
 #include <stdexcept>
 #include <utility>
-#include <memory>
-#include <mutex>
-#include <scalix/generic_task.hpp>
-#include <scalix/detail/generic_task.hpp>
-
 
 namespace sclx {
 
-generic_task::generic_task(std::unique_ptr<impl>&& impl)
-    : impl_{std::move(impl)},
-      metadata_{std::make_shared<task_metadata>()} {}
+generic_task::generic_task(std::unique_ptr<impl> impl)
+    : impl_{std::move(impl)} {}
 
-generic_task::generic_task(
-    std::shared_ptr<impl> impl,
-    std::shared_ptr<task_metadata> metadata
-)
-    : impl_{std::move(impl)},
-      metadata_{std::move(metadata)} {}
-
- void
-generic_task::add_dependent_task(const generic_task& dependent_task) const {
-    const std::lock_guard lock(metadata_->mutex);
-    if (dependent_task.metadata_ == nullptr) {
-        throw std::runtime_error("task instance is in an invalid state");
-    }
-    const std::lock_guard dependent_lock(dependent_task.metadata_->mutex);
-    if (metadata_->has_completed) {
+void generic_task::add_dependent_task(const generic_task& dependent_task) {
+    auto metadata = impl_->metadata_.get_view<access_mode::write>();
+    auto dependent_metadata
+        = dependent_task.impl_->metadata_.get_view<access_mode::write>();
+    if (metadata.access().has_completed) {
         return;
     }
 
-    generic_task copied_task{dependent_task.impl_, dependent_task.metadata_};
+    metadata.access().dependent_tasks.push_back(dependent_task);
 
-    metadata_->dependent_tasks.push_back(std::move(copied_task));
-
-    dependent_task.metadata_->dependency_count++;
+    dependent_metadata.access().dependency_count++;
 }
 
- void generic_task::launch() {
-    if (metadata_ == nullptr) {
-        throw std::runtime_error("task instance is in an invalid state");
-    }
-    const std::lock_guard lock(metadata_->mutex);
-    metadata_->has_launched = true;
+void generic_task::launch() {
+    {
+        auto metadata = impl_->metadata_.get_view<access_mode::write>();
 
-    if (metadata_->dependency_count > 0) {
-        return;
+        if (metadata.access().has_launched) {
+            throw std::runtime_error{"Task has already been launched"};
+        }
+
+        metadata.access().has_launched = true;
+
+        if (metadata.access().dependency_count > 0) {
+            return;
+        }
     }
-    impl_->async_execute(std::move(metadata_));
+
+    impl_->async_execute();
 }
 
- generic_task::impl::~impl() = default;
+generic_task::impl::~impl() = default;
 
- void generic_task::impl::decrease_dependency_count(
-    const std::shared_ptr<task_metadata>& metadata
-) const {
-    const std::lock_guard lock(metadata->mutex);
-    metadata->dependency_count--;
-    if (metadata->dependency_count == 0 && metadata->has_launched) {
-        this->async_execute(metadata);
+void generic_task::impl::decrease_dependency_count() const {
+    auto metadata = metadata_.get_view<access_mode::write>();
+    metadata.access().dependency_count--;
+    if (metadata.access().dependency_count == 0
+        && metadata.access().has_launched) {
+        metadata.unlock();
+        this->async_execute();
     }
 }
 
