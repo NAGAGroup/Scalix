@@ -7,7 +7,7 @@ var searchData=
   ['access_5fanchor_4',['access_anchor',['../classsclx_1_1detail_1_1access__anchor.html',1,'sclx::detail::access_anchor'],['../classsclx_1_1detail_1_1access__anchor.html#a2a06e4e426b4b1c7e7143d13e35761db',1,'sclx::detail::access_anchor::access_anchor()=default'],['../classsclx_1_1detail_1_1access__anchor.html#a11a57463f30d0e2dab59cfbb4b57f7e0',1,'sclx::detail::access_anchor::access_anchor(const access_anchor &amp;)=default'],['../classsclx_1_1detail_1_1access__anchor.html#a12b5bc4aee64ee4315f2633dabc53013',1,'sclx::detail::access_anchor::access_anchor(access_anchor &amp;&amp;)=default'],['../namespacesclx.html#ae2cc55f51ff7c6df356f612754938dde',1,'sclx::access_anchor']]],
   ['access_5fanchor_5finterface_5',['access_anchor_interface',['../structsclx_1_1detail_1_1access__anchor__interface.html',1,'sclx::detail::access_anchor_interface'],['../classsclx_1_1detail_1_1access__anchor.html#afba983c6288314e07779e01bb20e7203',1,'sclx::detail::access_anchor::access_anchor_interface']]],
   ['access_5fmode_6',['access_mode',['../namespacesclx.html#aee244c994273025ee0f2d3f963d95dc1',1,'sclx']]],
-  ['add_5fdependent_5ftask_7',['add_dependent_task',['../classsclx_1_1generic__task.html#af8c202d7ad8ed0a0ed19014acaea5596',1,'sclx::generic_task']]],
+  ['add_5fdependent_5ftask_7',['add_dependent_task',['../classsclx_1_1generic__task.html#a59a7956623f20494915f68c5b3eeda28',1,'sclx::generic_task']]],
   ['allocated_5fbytes_5fper_5fpage_8',['allocated_bytes_per_page',['../structsclx_1_1detail_1_1page__traits.html#a75b54efc6f9b731c6fbed53a07d943fb',1,'sclx::detail::page_traits']]],
   ['allocation_9',['allocation',['../classsclx_1_1detail_1_1allocation.html',1,'sclx::detail']]],
   ['allocation_2ehpp_10',['allocation.hpp',['../allocation_8hpp.html',1,'']]],
@@ -18,5 +18,5 @@ var searchData=
   ['apply_15',['apply',['../classsclx_1_1typed__task_1_1typed__impl.html#a204bd0fdb66bceaaf6baa525827a1b03',1,'sclx::typed_task::typed_impl']]],
   ['args_5fptr_5f_16',['args_ptr_',['../classsclx_1_1typed__task_1_1typed__impl.html#a4bb6d61bc9b5958f96cf276f3e0f4076',1,'sclx::typed_task::typed_impl']]],
   ['array_5ftype_17',['array_type',['../namespacesclx.html#a94eccc841470ab76d246674828601560',1,'sclx']]],
-  ['async_5fexecute_18',['async_execute',['../classsclx_1_1generic__task_1_1impl.html#aa18e114721ff94ad0b54a55b4740793f',1,'sclx::generic_task::impl::async_execute()'],['../classsclx_1_1typed__task_1_1typed__impl.html#afa9d1b0bc008aff3f4dceb38dab4f663',1,'sclx::typed_task::typed_impl::async_execute()']]]
+  ['async_5fexecute_18',['async_execute',['../classsclx_1_1generic__task_1_1impl.html#a6db3e5e5d23812ecd6da4471a2657e0a',1,'sclx::generic_task::impl::async_execute()'],['../classsclx_1_1typed__task_1_1typed__impl.html#aca5261d700d2e0f3c71f8e505f0289b8',1,'sclx::typed_task::typed_impl::async_execute()']]]
 ];

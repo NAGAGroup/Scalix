@@ -14,6 +14,7 @@ var hierarchy =
     [ "sclx::detail::bound_host_kernel< InterOpFunction >", "structsclx_1_1detail_1_1bound__host__kernel.html", null ],
     [ "sclx::concurrent_guard< T >", "classsclx_1_1concurrent__guard.html", null ],
     [ "sclx::concurrent_guard< scheduler_metadata >", "classsclx_1_1concurrent__guard.html", null ],
+    [ "sclx::concurrent_guard< sclx::generic_task::impl::task_metadata >", "classsclx_1_1concurrent__guard.html", null ],
     [ "sclx::concurrent_view< T >", "classsclx_1_1concurrent__view.html", null ],
     [ "sclx::default_delete< T >", "classsclx_1_1default__delete.html", null ],
     [ "sclx::detail::default_state_machine_tag", "structsclx_1_1detail_1_1default__state__machine__tag.html", null ],
@@ -65,7 +66,7 @@ var hierarchy =
     [ "sclx::detail::state_machine_traits< state_machine_type >", "structsclx_1_1detail_1_1state__machine__traits.html", null ],
     [ "sclx::detail::state_transition< StateInputs, StateLabel >", "classsclx_1_1detail_1_1state__transition.html", null ],
     [ "sclx::task_factory", "structsclx_1_1task__factory.html", null ],
-    [ "sclx::generic_task::task_metadata", "structsclx_1_1generic__task_1_1task__metadata.html", null ],
+    [ "sclx::generic_task::impl::task_metadata", "structsclx_1_1generic__task_1_1impl_1_1task__metadata.html", null ],
     [ "std::true_type", null, [
       [ "sclx::detail::is_state_definition< state_definition< StateInputs, StateLabel > >", "structsclx_1_1detail_1_1is__state__definition_3_01state__definition_3_01StateInputs_00_01StateLabel_01_4_01_4.html", null ]
     ] ]

@@ -116,8 +116,8 @@ Inheritance diagram for sclx::typed_task&lt; R &gt;::typed_impl&lt; R &gt;:</div
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a2877ebafb906ae04529baf4b32628b11" id="r_a2877ebafb906ae04529baf4b32628b11"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2877ebafb906ae04529baf4b32628b11">function_type</a> = <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(Args...)</td></tr>
-<tr class="separator:a2877ebafb906ae04529baf4b32628b11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a427ebd7d5c94b6f9bbed03117a6bd08e" id="r_a427ebd7d5c94b6f9bbed03117a6bd08e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">using</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a427ebd7d5c94b6f9bbed03117a6bd08e">function_type</a> = std::conditional_t&lt;sizeof...(<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">Args</a>) == 0, <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(), <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(Args...)&gt;</td></tr>
+<tr class="separator:a427ebd7d5c94b6f9bbed03117a6bd08e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -127,11 +127,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a363f2847f67511ce30f66e1711d6b7e4" id="r_a363f2847f67511ce30f66e1711d6b7e4"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">F</a> , <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">PassedArg1</a> , class... PassedArgs&gt; </td></tr>
 <tr class="memitem:a363f2847f67511ce30f66e1711d6b7e4"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a363f2847f67511ce30f66e1711d6b7e4">typed_impl</a> (<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">F</a> &amp;&amp;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">func</a>, <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">PassedArg1</a> &amp;&amp;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">arg1</a>, <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">PassedArgs</a> &amp;&amp;... args)</td></tr>
 <tr class="separator:a363f2847f67511ce30f66e1711d6b7e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9d17bb1586618a84cf841f87a0a42da2" id="r_a9d17bb1586618a84cf841f87a0a42da2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9d17bb1586618a84cf841f87a0a42da2">get_future</a> () <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a> -&gt; std::future&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;</td></tr>
-<tr class="separator:a9d17bb1586618a84cf841f87a0a42da2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa9d1b0bc008aff3f4dceb38dab4f663" id="r_afa9d1b0bc008aff3f4dceb38dab4f663"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afa9d1b0bc008aff3f4dceb38dab4f663">async_execute</a> (std::shared_ptr&lt; <a class="el" href="structsclx_1_1generic__task_1_1task__metadata.html">task_metadata</a> &gt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">metadata</a>) <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">override</a></td></tr>
-<tr class="separator:afa9d1b0bc008aff3f4dceb38dab4f663"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca5261d700d2e0f3c71f8e505f0289b8" id="r_aca5261d700d2e0f3c71f8e505f0289b8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aca5261d700d2e0f3c71f8e505f0289b8">async_execute</a> () <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">override</a></td></tr>
+<tr class="separator:aca5261d700d2e0f3c71f8e505f0289b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classsclx_1_1generic__task_1_1impl"><td colspan="2" onclick="javascript:dynsection.toggleInherit('pub_methods_classsclx_1_1generic__task_1_1impl')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classsclx_1_1generic__task_1_1impl.html">sclx::generic_task::impl</a></td></tr>
+<tr class="memitem:abc3701c817b3e4456f6726aae61db9fd inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_abc3701c817b3e4456f6726aae61db9fd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#abc3701c817b3e4456f6726aae61db9fd">impl</a> ()</td></tr>
+<tr class="separator:abc3701c817b3e4456f6726aae61db9fd inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a32eed83ca93f13999098e543f4c6d821 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_a32eed83ca93f13999098e543f4c6d821"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#a32eed83ca93f13999098e543f4c6d821">impl</a> (<a class="el" href="classsclx_1_1generic__task_1_1impl.html">impl</a> &amp;&amp;) <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">noexcept</a>=<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">default</a></td></tr>
 <tr class="separator:a32eed83ca93f13999098e543f4c6d821 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab424ea74015110f7cdd61e53b5322089 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_ab424ea74015110f7cdd61e53b5322089"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#ab424ea74015110f7cdd61e53b5322089">operator=</a> (<a class="el" href="classsclx_1_1generic__task_1_1impl.html">impl</a> &amp;&amp;) <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">noexcept</a> -&gt; <a class="el" href="classsclx_1_1generic__task_1_1impl.html">impl</a> &amp;=<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">default</a></td></tr>
@@ -140,12 +140,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a248a0dee46889448151b517acf70f861 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ea1ce6c87423ff7edb78f4a35b9539d inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_a5ea1ce6c87423ff7edb78f4a35b9539d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">auto</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#a5ea1ce6c87423ff7edb78f4a35b9539d">operator=</a> (<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a> <a class="el" href="classsclx_1_1generic__task_1_1impl.html">impl</a> &amp;) -&gt; <a class="el" href="classsclx_1_1generic__task_1_1impl.html">impl</a> &amp;=<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">delete</a></td></tr>
 <tr class="separator:a5ea1ce6c87423ff7edb78f4a35b9539d inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac5c9e1901ea62534b8d390f5549d10a4 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_ac5c9e1901ea62534b8d390f5549d10a4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#ac5c9e1901ea62534b8d390f5549d10a4">decrease_dependency_count</a> () <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a></td></tr>
+<tr class="separator:ac5c9e1901ea62534b8d390f5549d10a4 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5a518d200abbe223635aca10fe473d4 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_ac5a518d200abbe223635aca10fe473d4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">virtual</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#ac5a518d200abbe223635aca10fe473d4">~impl</a> ()</td></tr>
 <tr class="separator:ac5a518d200abbe223635aca10fe473d4 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c28daffc30fc2b20f01870178ab8664 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_a7c28daffc30fc2b20f01870178ab8664"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#a7c28daffc30fc2b20f01870178ab8664">impl</a> ()=<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">default</a></td></tr>
-<tr class="separator:a7c28daffc30fc2b20f01870178ab8664 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a87538c2e7954796c3056394ac3280c30 inherit pub_methods_classsclx_1_1generic__task_1_1impl" id="r_a87538c2e7954796c3056394ac3280c30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">void</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#a87538c2e7954796c3056394ac3280c30">decrease_dependency_count</a> (<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a> std::shared_ptr&lt; <a class="el" href="structsclx_1_1generic__task_1_1task__metadata.html">task_metadata</a> &gt; &amp;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">metadata</a>) <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">const</a></td></tr>
-<tr class="separator:a87538c2e7954796c3056394ac3280c30 inherit pub_methods_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -155,10 +153,13 @@ Static Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:adf7c7331bf95f92ee87ad8956c532bd6" id="r_adf7c7331bf95f92ee87ad8956c532bd6"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; std::packaged_task&lt; <a class="el" href="#a2877ebafb906ae04529baf4b32628b11">function_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adf7c7331bf95f92ee87ad8956c532bd6">task_</a></td></tr>
+<tr class="memitem:adf7c7331bf95f92ee87ad8956c532bd6" id="r_adf7c7331bf95f92ee87ad8956c532bd6"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; std::packaged_task&lt; <a class="el" href="#a427ebd7d5c94b6f9bbed03117a6bd08e">function_type</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adf7c7331bf95f92ee87ad8956c532bd6">task_</a></td></tr>
 <tr class="separator:adf7c7331bf95f92ee87ad8956c532bd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4bb6d61bc9b5958f96cf276f3e0f4076" id="r_a4bb6d61bc9b5958f96cf276f3e0f4076"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; std::tuple&lt; std::remove_reference_t&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">Args</a> &gt;... &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4bb6d61bc9b5958f96cf276f3e0f4076">args_ptr_</a></td></tr>
 <tr class="separator:a4bb6d61bc9b5958f96cf276f3e0f4076"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pub_attribs_classsclx_1_1generic__task_1_1impl"><td colspan="2" onclick="javascript:dynsection.toggleInherit('pub_attribs_classsclx_1_1generic__task_1_1impl')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="classsclx_1_1generic__task_1_1impl.html">sclx::generic_task::impl</a></td></tr>
+<tr class="memitem:a02f95006bd1b31f5df4487b103fa6c22 inherit pub_attribs_classsclx_1_1generic__task_1_1impl" id="r_a02f95006bd1b31f5df4487b103fa6c22"><td class="memItemLeft" align="right" valign="top"><a class="el" href="classsclx_1_1concurrent__guard.html">concurrent_guard</a>&lt; <a class="el" href="structsclx_1_1generic__task_1_1impl_1_1task__metadata.html">task_metadata</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classsclx_1_1generic__task_1_1impl.html#a02f95006bd1b31f5df4487b103fa6c22">metadata_</a></td></tr>
+<tr class="separator:a02f95006bd1b31f5df4487b103fa6c22 inherit pub_attribs_classsclx_1_1generic__task_1_1impl"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -166,8 +167,8 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:a01ab59188838a6f121bca047f3cc1fc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a2877ebafb906ae04529baf4b32628b11" name="a2877ebafb906ae04529baf4b32628b11"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2877ebafb906ae04529baf4b32628b11">&#9670;&#160;</a></span>function_type</h2>
+<a id="a427ebd7d5c94b6f9bbed03117a6bd08e" name="a427ebd7d5c94b6f9bbed03117a6bd08e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a427ebd7d5c94b6f9bbed03117a6bd08e">&#9670;&#160;</a></span>function_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -177,7 +178,7 @@ template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1
 template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">using</a> <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::function_type = <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(Args...)</td>
+          <td class="memname"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">using</a> <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::function_type = std::conditional_t&lt;sizeof...(<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">Args</a>) == 0, <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(), <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>(Args...)&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -297,8 +298,8 @@ template&lt;std::uint8_t N = 0, <a class="el" href="namespacesclx.html#a87db8d80
 
 </div>
 </div>
-<a id="afa9d1b0bc008aff3f4dceb38dab4f663" name="afa9d1b0bc008aff3f4dceb38dab4f663"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afa9d1b0bc008aff3f4dceb38dab4f663">&#9670;&#160;</a></span>async_execute()</h2>
+<a id="aca5261d700d2e0f3c71f8e505f0289b8" name="aca5261d700d2e0f3c71f8e505f0289b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca5261d700d2e0f3c71f8e505f0289b8">&#9670;&#160;</a></span>async_execute()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,7 +314,7 @@ template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1
         <tr>
           <td class="memname"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">void</a> <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::async_execute </td>
           <td>(</td>
-          <td class="paramtype">std::shared_ptr&lt; <a class="el" href="structsclx_1_1generic__task_1_1task__metadata.html">task_metadata</a> &gt;</td>          <td class="paramname"><span class="paramname"><em>metadata</em></span></td><td>)</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -324,36 +325,7 @@ template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1
 </table>
 </div><div class="memdoc">
 
-<p>Implements <a class="el" href="classsclx_1_1generic__task_1_1impl.html#aa18e114721ff94ad0b54a55b4740793f">sclx::generic_task::impl</a>.</p>
-
-</div>
-</div>
-<a id="a9d17bb1586618a84cf841f87a0a42da2" name="a9d17bb1586618a84cf841f87a0a42da2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d17bb1586618a84cf841f87a0a42da2">&#9670;&#160;</a></span>get_future()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt; </div>
-<div class="memtemplate">
-template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">auto</a> <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::get_future </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"></span></td><td>)</td>
-          <td> const -&gt; std::future&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a>&gt; </td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
+<p>Implements <a class="el" href="classsclx_1_1generic__task_1_1impl.html#a6db3e5e5d23812ecd6da4471a2657e0a">sclx::generic_task::impl</a>.</p>
 
 </div>
 </div>
@@ -413,7 +385,7 @@ template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1
 template&lt;<a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">class</a> <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">std::shared_ptr&lt;std::packaged_task&lt;<a class="el" href="#a2877ebafb906ae04529baf4b32628b11">function_type</a>&gt; &gt; <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::task_</td>
+          <td class="memname">std::shared_ptr&lt;std::packaged_task&lt;<a class="el" href="#a427ebd7d5c94b6f9bbed03117a6bd08e">function_type</a>&gt; &gt; <a class="el" href="classsclx_1_1typed__task.html">sclx::typed_task</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;<a class="el" href="#a8e91f284463ca9dc7ef623bec886b5f5">::typed_impl</a>&lt; <a class="el" href="namespacesclx.html#a87db8d80fd27903ea56e864df8f1c72b">R</a> &gt;::task_</td>
         </tr>
       </table>
 </div><div class="memdoc">
