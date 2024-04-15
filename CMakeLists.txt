@@ -61,7 +61,11 @@ add_library(
   source/detail/page_data.cpp
   include/scalix/detail/page_data.hpp
   source/accessor.cpp
-  include/scalix/accessor.hpp)
+  include/scalix/accessor.hpp
+  source/buffer.cpp
+  include/scalix/buffer.hpp
+  source/access_anchor.cpp
+  include/scalix/access_anchor.hpp)
 add_library(Scalix::scalix ALIAS scalix)
 
 # ---- This handles SYCL stuffs ----

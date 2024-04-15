@@ -50,7 +50,8 @@ using index64_t   = std::int64_t;
 using uint64_t    = std::uint64_t;
 using uint32_t    = std::uint32_t;
 
-using page_size_t = std::uint32_t;
+using page_size_t = std::int32_t;
+using byte_offset = page_size_t;
 using page_ptr_t  = byte*;
 using valid_bit_t = std::atomic<bool>;
 // On any system with less than 8TiB of memory and a 4KB page size,
@@ -59,13 +60,13 @@ using valid_bit_t = std::atomic<bool>;
 // of memory, you may need to define SCLX_PAGE_INDEX_TYPE to a 64-bit
 // unsigned integer type.
 #ifndef SCLX_USE_LONG_PAGE_INDEX
-using page_index_t = std::uint32_t;
+using page_index_t = std::int32_t;
 using page_diff_t  = std::int32_t;
-using page_count_t = std::uint32_t;
+using page_count_t = std::int32_t;
 #else
-using page_index_t = std::uint64_t;
+using page_index_t = std::int64_t;
 using page_diff_t  = std::int64_t;
-using page_count_t = std::uint64_t;
+using page_count_t = std::int64_t;
 #endif
 
 constexpr page_index_t invalid_page = std::numeric_limits<page_index_t>::max();
@@ -77,6 +78,7 @@ using sycl::access_mode;
 using sycl::device;
 using sycl::event;
 using sycl::id;
+using sycl::range;
 
 // additional sycl-like types
 using device_id_t                    = std::uint32_t;

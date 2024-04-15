@@ -27,6 +27,8 @@ configure_target_for_scalix(tests)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain Scalix::scalix)
 catch_discover_tests(tests)
 
+add_executable(exploratory source/exploratory.cpp)
+
 # ---- End-of-file commands ----
 
 add_folders(Test)
