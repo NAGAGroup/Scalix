@@ -1,7 +1,6 @@
-//------------------------------------------------------------------------------
 // BSD 3-Clause License
 //
-// Copyright (c) 2023 Jack Myers
+// Copyright (c) 2024 Jack Myers
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,5 +28,45 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//------------------------------------------------------------------------------
-#include <scalix/detail/device_page_table.hpp>  // NOLINT(misc-include-cleaner)
+#include <catch2/catch_test_macros.hpp>
+#include <scalix/detail/page_data.hpp>
+
+TEST_CASE("page_data") {
+    const auto data_ptr1
+        = std::make_shared<sclx::byte[]>(sclx::default_page_size);
+    const sclx::detail::page_data<sclx::default_page_size> page_data1{
+        data_ptr1.get(),
+        data_ptr1
+    };
+    using data_type = std::int32_t;
+    constexpr sclx::page_size_t floats_per_page
+        = sclx::default_page_size / sizeof(data_type);
+    for (sclx::page_size_t i = 0; i < floats_per_page; ++i) {
+        reinterpret_cast<data_type*>(data_ptr1.get())[i]
+            = static_cast<data_type>(i);
+    }
+
+    const auto data_ptr2
+        = std::make_shared<sclx::byte[]>(sclx::default_page_size);
+    sclx::detail::page_data<sclx::default_page_size> page_data2{
+        data_ptr2.get(),
+        data_ptr2
+    };
+    page_data1.copy_to(page_data2);
+
+    const auto data_ptr3
+        = std::make_shared<sclx::byte[]>(sclx::default_page_size);
+    const sclx::detail::page_data<sclx::default_page_size> page_data3{
+        data_ptr3.get(),
+        data_ptr3
+    };
+    page_data2.copy_to(data_ptr3.get());
+
+    const auto page_data3_raw
+        = reinterpret_cast<const data_type*>(page_data3.page_address());
+    const auto page_data1_raw
+        = reinterpret_cast<const data_type*>(page_data1.page_address());
+    for (sclx::page_size_t i = 0; i < floats_per_page; ++i) {
+        REQUIRE(page_data3_raw[i] == page_data1_raw[i]);
+    }
+}

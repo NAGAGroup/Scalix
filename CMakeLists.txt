@@ -57,7 +57,11 @@ add_library(
   include/scalix/typed_task.hpp
   source/typed_task.cpp
   include/scalix/concurrent_guard.hpp
-  source/concurrent_guard.cpp)
+  source/concurrent_guard.cpp
+  source/detail/page_data.cpp
+  include/scalix/detail/page_data.hpp
+  source/accessor.cpp
+  include/scalix/accessor.hpp)
 add_library(Scalix::scalix ALIAS scalix)
 
 # ---- This handles SYCL stuffs ----

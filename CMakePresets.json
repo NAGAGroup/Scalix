@@ -86,7 +86,7 @@
       "name": "clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy.py;--header-filter=${sourceDir}/include/.*;--config-file=${sourceDir}/.clang-tidy",
+        "CMAKE_CXX_CLANG_TIDY": "python;${sourceDir}/scripts/clang-tidy.py;--config-file=${sourceDir}/.clang-tidy",
         "CMAKE_CXX_CLANG_TIDY_EXPORT_FIXES_DIR": "${sourceDir}/clang-tidy-fixes",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }

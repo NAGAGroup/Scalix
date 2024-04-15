@@ -28,4 +28,18 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#include <scalix/detail/concurrent_guard.hpp>  // NOLINT(misc-include-cleaner)
+#pragma once
+#include <scalix/defines.hpp>
+
+namespace sclx {
+template<class T, access_mode Mode>
+class accessor {
+  public:
+    using value_type = T;
+    using reference_type
+        = std::conditional_t<Mode == access_mode::read, const T&, T&>;
+
+    [[nodiscard]] auto operator()[]
+};
+
+}  // namespace sclx

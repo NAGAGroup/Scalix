@@ -31,6 +31,7 @@
 #pragma once
 #include <memory>
 #include <mutex>
+#include <scalix/defines.hpp>
 #include <shared_mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -41,8 +42,6 @@ namespace sclx {
 template<class T>
     requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard;
-
-enum class access_mode { read, write };
 
 template<class T>
 class concurrent_view {
@@ -85,9 +84,8 @@ class concurrent_view {
         std::shared_ptr<std::shared_mutex> mutex
     )
         : ptr_(std::move(ptr)),
-          mutex_(std::move(mutex)) {
-        lock_ = lock_type(*mutex_);
-    }
+          mutex_(mutex),
+          lock_(*mutex) {}
 
     std::shared_ptr<T> ptr_;
     std::shared_ptr<std::shared_mutex> mutex_;
@@ -95,10 +93,21 @@ class concurrent_view {
 };
 
 template<class T, access_mode Mode>
-using concurrent_view_t = std::conditional_t<
-    Mode == access_mode::read,
-    concurrent_view<const T>,
-    concurrent_view<T>>;
+struct concurrent_view_type_get {
+    using type = std::conditional_t<Mode == access_mode::read, const T, T>;
+
+    static_assert(
+        !(Mode == access_mode::discard_write
+          || Mode == access_mode::discard_read_write
+          || Mode == access_mode::atomic),
+        "Invalid access mode for concurrent_view by using deprecated access "
+        "mode"
+    );
+};
+
+template<class T, access_mode Mode>
+using concurrent_view_t
+    = concurrent_view<typename concurrent_view_type_get<T, Mode>::type>;
 
 template<class T>
     requires std::is_same_v<T, std::decay_t<T>>
@@ -115,7 +124,7 @@ class concurrent_guard {
     concurrent_guard(concurrent_guard&&)                    = default;
     auto operator=(concurrent_guard&&) -> concurrent_guard& = default;
 
-    template<access_mode Mode = sclx::access_mode::read>
+    template<access_mode Mode = access_mode::read>
     [[nodiscard]] auto get_view() const -> concurrent_view_t<T, Mode> {
         return get_view_generic<
             typename concurrent_view_t<T, Mode>::value_type>();
@@ -123,12 +132,20 @@ class concurrent_guard {
 
     [[nodiscard]] auto valid() const -> bool { return ptr_ != nullptr; }
 
+    [[nodiscard]] auto unsafe_access() const -> T& {
+        if (!valid()) {
+            throw std::runtime_error("concurrent_guard does not hold valid data"
+            );
+        }
+        return *ptr_;
+    }
+
     ~concurrent_guard() = default;
 
   private:
     template<class U>
-    [[nodiscard]] [[nodiscard]] auto get_view_generic() const
-        -> concurrent_view<U> {
+    [[nodiscard]] auto
+    get_view_generic() const -> concurrent_view<U> {
         if (!valid()) {
             throw std::runtime_error("concurrent_guard does not hold valid data"
             );

@@ -52,7 +52,7 @@ TEST_CASE("concurrent_guard") {  // NOLINT(*-function-cognitive-complexity)
     std::mutex order_mutex;
     std::vector<task_tag> order;
     auto fut1 = std::async(std::launch::async, [&] {
-        auto view     = guard.get_view<sclx::access_mode::write>();
+        const auto view     = guard.get_view<sclx::access_mode::write>();
         view.access() = 1;
         order.push_back(task_tag::A);
     });
@@ -75,7 +75,7 @@ TEST_CASE("concurrent_guard") {  // NOLINT(*-function-cognitive-complexity)
     auto fut3 = std::async(std::launch::async, [&] {
         B_future.wait();
         C_future.wait();
-        auto view     = guard.get_view<sclx::access_mode::write>();
+        const auto view     = guard.get_view<sclx::access_mode::write>();
         view.access() = 2;
         order.push_back(task_tag::A);
     });

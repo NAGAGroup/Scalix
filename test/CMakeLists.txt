@@ -21,6 +21,7 @@ include(Catch)
 
 add_executable(tests source/typed_task.cpp
   source/concurrent_guard.cpp
+  source/page_data.cpp
 )
 configure_target_for_scalix(tests)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain Scalix::scalix)

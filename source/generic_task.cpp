@@ -42,8 +42,8 @@ generic_task::generic_task(std::unique_ptr<impl> impl)
     : impl_{std::move(impl)} {}
 
 void generic_task::add_dependent_task(const generic_task& dependent_task) {
-    auto metadata = impl_->metadata_.get_view<access_mode::write>();
-    auto dependent_metadata
+    const auto metadata = impl_->metadata_.get_view<access_mode::write>();
+    const auto dependent_metadata
         = dependent_task.impl_->metadata_.get_view<access_mode::write>();
     if (metadata.access().has_completed) {
         return;
@@ -56,7 +56,7 @@ void generic_task::add_dependent_task(const generic_task& dependent_task) {
 
 void generic_task::launch() {
     {
-        auto metadata = impl_->metadata_.get_view<access_mode::write>();
+        const auto metadata = impl_->metadata_.get_view<access_mode::write>();
 
         if (metadata.access().has_launched) {
             throw std::runtime_error{"Task has already been launched"};
