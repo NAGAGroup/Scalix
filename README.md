@@ -1,4 +1,47 @@
 # Welcome to SCALIX!
+---
+**Note**: This proof-of-concept version of Scalix has reached EOL and will no longer receive
+updates/fixes, except potentially on an as-needed basis for current research that depends on this
+version. The insights gained since starting this project, both through active development and
+real-world use in a non-trivial codebase, have been incredibly invaluable. With those insights,
+development on a much improved version written in SYCL instead of CUDA has begun on the sycl
+branch. This version will be better in nearly every way, some of the improvements include:
+
+- SYCL is a more modern API, using ISO compliant C++ instead of an extended C-like language with
+  some C++ support like CUDA. Not only does this enable the nice-to-haves of modern C++, but the
+  new implementation will be platform agnostic, enabling a wider range of hardware, and likely
+  even more added hardware support in the future with no added development of Scalix
+- Using the SYCL specification as a guide, Scalix will use the buffer/accessor model, rather
+  than relying on CUDA's Unified Memory(UM)/On-demand page migration. This will allow the Scalix
+  runtime to maintain a dependency graph and explicitly manage data in an optimal way defined by
+  that dependency graph. While Scalix currently scales well with relatively simple access patterns,
+  the UM driver heuristics really break down for more complex problems leading to inefficient data
+  transfers that tank performance
+- Way simpler API that is both easier to use and to maintain/test. If you know SYCL, you'll feel right
+  at home with Scalix
+- Much better thread management. Currently, Scalix spawns three or four nested threads for a single kernel, which
+  is already pretty bad, but the threads are spawned via `std::async` instead of a dedicated threadpool. While the
+  true cost of this is unclear, it is a pretty bad implementation that has a lot of room for improvement and makes
+  profiling incredibly difficult in NSight as the number of CUDA streams balloons very quickly. Going forward,
+  Scalix will internally use a multi-threading approach that is akin to an actor model and we have been able to
+  avoid spawning any threads until absolutely necessary, completely avoiding any need for async tasks to spin in
+  some thread waiting on a set of dependent futures before proceeeding. It also enables a stateless implementation
+  where the dependency graph is implicitly defined via shared/unique locks around protected data.
+  Additionally, we will likely be incorporating a threadpool for even better thread management.
+- Well-thought out API/system design and proper unit-testing, static analysis, etc from the start. With the first
+  attempt at Scalix, it was being developed in parallel with a research project, and often times getting something
+  that worked, even if not ideal, was priortized over well-thought out solutions. Well, that version of Scalix works
+  well enough for the research project, at least until the first working release of SYCL-Scalix, so we can take
+  our time. This should give more confidence to future users that the project is properly handled, and will make
+  getting started with the software much easier.
+- More opportunities for optimization, some implicit, some explicit:
+    - We will enforce that only the minimally-required memory to keep data valid will be used unless explicitly declared by the user.
+    - The way memory is handled will have very clear, documented behavior, allowing users to fine-tune their code for these rules.
+    - Only the memory locations being accessed on each device will be allocated, where these accesses are specified by either a few
+      simple but commonly used strategies or a more flexible strategy where the user provides a custom command that defines accessed indices.
+    - In terms of optimization of compute resources, Scalix development will be focused on providing default and user-defined "knobs"
+      that can be tweaked to find the optimal balance of resources
+---
 
 Scalix is a data parallel computing framework designed to provide an easy-to-use
 interface for designing data parallel applications that automatically scale to
