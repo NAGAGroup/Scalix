@@ -28,35 +28,30 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#include <iostream>
-#include <memory>
-
-template<int I, int J>
-struct impl {
-    virtual void say() = 0;
-    virtual ~impl()    = default;
-};
-
-struct type_erased_hello {
-    template<int I, int J>
-    struct hello : impl<I, J> {
-        void say() override {
-            std::cout << "Hello, World! My type has I=" << I << " and J=" << J
-                      << std::endl;
+#include <scalix/access_anchor.hpp>
+int main() {
+    sclx::queue q;
+    std::vector<sycl::queue> device_queues;
+    auto device_list = sycl::device::get_devices();
+    for (auto& device : device_list) {
+        if (device.is_cpu()) {
+            device_queues.emplace_back(device);
         }
-    };
-
-    template <int I, int J>
-    std::unique_ptr<impl<I, J>> make() {
-        return std::make_unique<hello<I, J>>();
     }
-};
-
-struct caster {
-    template <class DerivedImpl>
-    caster(DerivedImpl&& type_erased_impl) : type_erased_impl_(std::make_shared<DerivedImpl>(std::forward<DerivedImpl>(type_erased_impl_))) {}
-
-    std::shared_ptr<void> type_erased_impl_;
-};
-
-int main() {}
+    q.device_queues_ = std::move(device_queues);
+    auto num_devices = q.device_queues_.size();
+    std::vector<double> device_weights;
+    std::transform(
+        q.device_queues_.begin(),
+        q.device_queues_.end(), std::back_inserter(device_weights), [&](const sycl::queue& device_queue) {
+            return 1.0 / static_cast<double>(num_devices);
+        });
+    q.device_weights_ = std::move(device_weights);
+    sclx::buffer<float, 1> buffer{10 * num_devices};
+    q.submit([&](sclx::handler& cgh) {
+        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(cgh, sclx::default_access_strategy{});
+        cgh.parallel_for(sycl::range<1>{10 * num_devices}, [=](sycl::id<1> idx) {
+            buffer_acc[idx] = static_cast<float>(idx[0]);
+        });
+    });
+}

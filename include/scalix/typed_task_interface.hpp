@@ -44,6 +44,7 @@ class typed_task : public generic_task {
 
   public:
     auto get_future() -> std::future<R>;
+    operator generic_task();
 
   private:
     template<class...>
@@ -52,7 +53,7 @@ class typed_task : public generic_task {
     template<class... Args>
     explicit typed_task(std::unique_ptr<typed_impl<Args...>> impl);
 
-    std::future<R> future_{};
+    std::future<R>* future_ptr_{};
 };
 
 template<class F, class... Args>

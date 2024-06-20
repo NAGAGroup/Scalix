@@ -57,6 +57,8 @@ class generic_task::impl {
 
     void decrease_dependency_count() const;
 
+    [[nodiscard]] auto has_completed() const -> bool;
+
     virtual void async_execute() const = 0;
 
     virtual ~impl();

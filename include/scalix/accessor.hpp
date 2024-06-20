@@ -29,8 +29,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
-#include <cstdint>
+#include <limits>
 #include <scalix/defines.hpp>
+#include <sycl/sycl.hpp>
 #include <type_traits>
 
 namespace sclx {
@@ -43,16 +44,16 @@ size_t linearize_id(
     const range<Dimensions>& range,
     size_t multiplier = 1
 ) {
-    if constexpr (Iter == Dimensions - 1) {
+    if constexpr (Iter == Dimensions) {
         return 0;
+    } else {
+        return linearize_id<Dimensions, Iter + 1>(
+                   index,
+                   range,
+                   multiplier * range[Dimensions - Iter - 1]
+               )
+             + index[Dimensions - Iter - 1] * multiplier;
     }
-
-    return linearize_id<Dimensions, Iter + 1>(
-               index,
-               range,
-               multiplier * range[Dimensions - Iter - 1]
-           )
-         + index[Dimensions - Iter - 1] * multiplier;
 }
 
 template<class T>
@@ -115,8 +116,8 @@ class accessor {
     accessor& operator=(const accessor&) = default;
     accessor& operator=(accessor&&)      = default;
 
-    [[nodiscard]] auto operator[](const size_t index) const
-        -> std::enable_if_t<(Dimensions > 1), reference_type> {
+    [[nodiscard]] auto operator[](const size_t index
+    ) const -> std::enable_if_t<(Dimensions == 1), reference_type> {
         static T bad_value{};
 
         const auto page_index = detail::map_index_to_page<T>(page_size_, index);
@@ -126,32 +127,38 @@ class accessor {
 
         const auto byte_offset
             = detail::map_index_to_byte_offset<T>(page_size_, index);
-        value_type* page = reinterpret_cast<value_type*>(
+        auto* page = reinterpret_cast<value_type*>(
             pages_[page_index] + byte_offset
         );  // NOLINT(*-pro-type-reinterpret-cast)
         return static_cast<reference_type>(*page);
     }
 
-    [[nodiscard]] auto operator[](id<Dimensions> index) const
-        -> reference_type {
+    [[nodiscard]] auto operator[](id<Dimensions> index
+    ) const -> reference_type {
         return this->operator[](detail::linearize_id(index, range_));
     }
 
     ~accessor() = default;
 
   private:
-    const page_ptr_t* pages_;
+    using access_marker     = signed char;
+    using access_marker_ptr = access_marker*;
+
+    page_ptr_t* pages_;
     range<Dimensions> range_;
     page_size_t page_size_;
+    access_marker_ptr* access_markers_;
 
     accessor(
-        const page_ptr_t* pages,
-        const range<Dimensions>& range,
-        const page_size_t page_size
+        page_ptr_t* pages,
+        range<Dimensions> range,
+        page_size_t page_size,
+        access_marker_ptr* access_markers
     )
         : pages_(pages),
           range_(range),
-          page_size_(page_size) {}
+          page_size_(page_size),
+          access_markers_(access_markers) {}
 };
 
 }  // namespace sclx

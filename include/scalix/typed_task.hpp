@@ -36,25 +36,14 @@
 #include <future>
 #include <memory>
 #include <scalix/concurrent_guard.hpp>
+#include <scalix/defines.hpp>
+#include <sycl/sycl.hpp>
 #include <thread>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
 namespace sclx {
-
-template<class R>
-auto typed_task<R>::get_future() -> std::future<R> {
-    return std::move(future_);
-}
-
-template<class R>
-template<class... Args>
-typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
-    : generic_task{std::move(impl)} {
-    future_ = std::move(static_cast<decltype(impl.get())>(this->impl_.get())
-                            ->task_->get_future());
-}
 
 template<class R>
 template<class... Args>
@@ -66,9 +55,10 @@ class typed_task<R>::typed_impl final : public impl {
     template<class F>
     explicit typed_impl(F&& func)  // cppcheck-suppress // NOLINT
         : task_{std::make_shared<std::packaged_task<function_type>>(
-            std::forward<F>(func)
-        )},
+              std::forward<F>(func)
+          )},
           args_ptr_{std::make_shared<std::tuple<>>()} {
+        future_ = std::move(task_->get_future());
         static_assert(
             !std::is_base_of_v<impl, F>,
             "task cannot be constructed from another task"
@@ -82,14 +72,15 @@ class typed_task<R>::typed_impl final : public impl {
     template<class F, class PassedArg1, class... PassedArgs>
     typed_impl(F&& func, PassedArg1&& arg1, PassedArgs&&... args)
         : args_ptr_{std::make_shared<std::tuple<
-            std::remove_reference_t<PassedArg1>,
-            std::remove_reference_t<PassedArgs>...>>(
-            std::forward<PassedArg1>(arg1),
-            std::forward<PassedArgs>(args)...
-        )},
+              std::remove_reference_t<PassedArg1>,
+              std::remove_reference_t<PassedArgs>...>>(
+              std::forward<PassedArg1>(arg1),
+              std::forward<PassedArgs>(args)...
+          )},
           task_{std::make_shared<std::packaged_task<function_type>>(
               std::forward<F>(func)
           )} {
+        future_ = std::move(task_->get_future());
         static_assert(
             sizeof...(PassedArgs) + 1 == sizeof...(Args),
             "provided task arguments in constructor do not match task signature"
@@ -97,20 +88,43 @@ class typed_task<R>::typed_impl final : public impl {
     }
 
     void async_execute() const override {
-        auto& args_ptr = args_ptr_;
-        auto& task     = task_;
-        auto metadata  = metadata_.get_view<access_mode::write>();
-        std::thread exec_thread{
-            [metadata = std::move(metadata), args_ptr, task] {
-                typed_impl::apply(*task, *args_ptr);
-                for (const auto& dependent_task :
-                     metadata.access().dependent_tasks) {
-                    dependent_task.impl_->decrease_dependency_count();
-                }
-                metadata.access().has_completed = true;
+        auto& args_ptr      = args_ptr_;
+        auto& task          = task_;
+        auto metadata_guard = metadata_;
+
+        typed_impl::apply(*task, *args_ptr);
+        {
+            auto metadata
+                = metadata_guard.template get_view<access_mode::write>();
+            metadata.access().has_completed = true;
+        }
+        {
+            auto metadata
+                = metadata_guard.template get_view<access_mode::read>();
+            for (const auto& dependent_task :
+                 metadata.access().dependent_tasks) {
+                dependent_task.impl_->decrease_dependency_count();
             }
-        };
-        exec_thread.detach();
+        }
+        //        std::thread exec_thread{
+        //            [metadata_guard, args_ptr, task] {
+        //                typed_impl::apply(*task, *args_ptr);
+        //                {
+        //                    auto metadata = metadata_guard.template
+        //                    get_view<access_mode::write>();
+        //                    metadata.access().has_completed = true;
+        //                }
+        //                {
+        //                    auto metadata = metadata_guard.template
+        //                    get_view<access_mode::read>(); for (const auto&
+        //                    dependent_task :
+        //                         metadata.access().dependent_tasks) {
+        //                        dependent_task.impl_->decrease_dependency_count();
+        //                    }
+        //                }
+        //            }
+        //        };
+        //        exec_thread.detach();
     }
 
     template<std::uint8_t N = 0, class Task, class Tuple, class... OArgs>
@@ -144,6 +158,7 @@ class typed_task<R>::typed_impl final : public impl {
     std::shared_ptr<std::tuple<std::remove_reference_t<Args>...>> args_ptr_;
     static constexpr auto is_rvalue_ref_args_
         = std::make_tuple(std::is_rvalue_reference_v<Args>...);
+    std::future<R> future_{};
 };
 
 struct task_factory {
@@ -159,6 +174,24 @@ struct task_factory {
         )};
     }
 };
+
+template<class R>
+auto typed_task<R>::get_future() -> std::future<R> {
+    return std::move(*future_ptr_);
+}
+
+template<class R>
+template<class... Args>
+typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
+    : generic_task{std::move(impl)},
+      future_ptr_(&static_cast<decltype(impl.get())>(this->impl_.get())->future_
+      ) {}
+
+
+template<class R>
+typed_task<R>::operator generic_task() {
+    return {impl_};
+}
 
 template<class F, class... Args>
 auto create_task(F&& func, Args&&... args)

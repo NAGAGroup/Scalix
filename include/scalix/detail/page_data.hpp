@@ -29,16 +29,16 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
-#include <future>
-#include <memory>
 #include <algorithm>
+#include <future>
+#include <sycl/sycl.hpp>
+#include <memory>
 #include <scalix/concurrent_guard.hpp>
 #include <scalix/defines.hpp>
 #include <utility>
 
 namespace sclx::detail {
 
-template<page_size_t>
 class page_data_interface {
   public:
     page_data_interface() = default;
@@ -76,7 +76,7 @@ class page_data_interface {
 };
 
 template<page_size_t PageSize>
-class page_data final : public page_data_interface<PageSize> {
+class page_data final : public page_data_interface {
   public:
     using alloc_handle_t            = std::shared_ptr<void>;
     static constexpr auto page_size = PageSize;
@@ -88,7 +88,7 @@ class page_data final : public page_data_interface<PageSize> {
         : data_{data},
           alloc_handle_{std::move(alloc_handle)} {}
 
-    auto copy_to(page_data_interface<page_size>& other) const
+    auto copy_to(page_data_interface& other) const
         -> std::future<void> override {
         return other.copy_from(data_.get_view<access_mode::read>());
     }
@@ -106,6 +106,7 @@ class page_data final : public page_data_interface<PageSize> {
 
     auto copy_from(concurrent_view<const page_ptr_t>&& source)
         -> std::future<void> override {
+        float const blah = 0;
         return std::async([*this, source = std::move(source)] {
             if (source.access() == nullptr || !data_.valid()
                 || check_if_same_page(source.access())) {
@@ -129,12 +130,12 @@ class page_data final : public page_data_interface<PageSize> {
         return data_.unsafe_access() == other;
     }
 
-    [[nodiscard]] auto operator==(const page_data_interface<page_size>& other
+    [[nodiscard]] auto operator==(const page_data_interface& other
     ) const -> bool override {
         return other.check_if_same_page(data_.unsafe_access());
     }
 
-    [[nodiscard]] auto operator!=(const page_data_interface<page_size>& other
+    [[nodiscard]] auto operator!=(const page_data_interface& other
     ) const -> bool override {
         return !(*this == other);
     }

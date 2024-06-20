@@ -47,12 +47,14 @@ class generic_task {
 
     void add_dependent_task(const generic_task& dependent_task);
 
+    [[nodiscard]] auto has_completed() const -> bool;
+
     ~generic_task() = default;
 
   private:
     class impl;
 
-    explicit generic_task(std::unique_ptr<impl> impl);
+    explicit generic_task(std::shared_ptr<impl> impl);
 
     std::shared_ptr<impl> impl_;
 };

@@ -54,7 +54,7 @@
       "cacheVariables": {
         "CMAKE_EXE_LINKER_FLAGS": "-Wl",
         "CMAKE_SHARED_LINKER_FLAGS": "-Wl",
-        "CMAKE_CXX_FLAGS": "-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Werror=float-equal -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast",
+        "CMAKE_CXX_FLAGS": "-fPIC -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Wcast-qual -Wformat=2 -Wundef -Werror=float-equal -Wshadow -Wcast-align -Wunused -Wnull-dereference -Wdouble-promotion -Wimplicit-fallthrough -Wextra-semi -Woverloaded-virtual -Wnon-virtual-dtor -Wold-style-cast",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_CXX_EXTENSIONS": "OFF"
       }
@@ -76,7 +76,7 @@
         "ci-linux-base"
       ],
       "cacheVariables": {
-        "AdaptiveCpp_DIR": "$env{PIXI_PROJECT_ROOT}/.pixi/envs/$env{PIXI_ENVIRONMENT_NAME}/lib/cmake/AdaptiveCpp/",
+        "AdaptiveCpp_DIR": "/usr/local/lib/cmake/AdaptiveCpp",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_C_COMPILER": "clang",
         "SCALIX_SYCL_TARGETS": "generic"
@@ -167,7 +167,6 @@
       "name": "ci-test-acpp",
       "inherits": [
         "ci-test-base",
-        "clang-tidy",
         "ci-linux-acpp"
       ]
     }

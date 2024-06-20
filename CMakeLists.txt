@@ -73,27 +73,27 @@ configure_target_for_scalix(scalix)
 
 # ---- Configure library ----
 
-# This ensures clang-tidy runs on all source files, including headers
-if(NOT BUILD_SHARED_LIBS)
-  get_target_property(TARGET_SOURCES scalix SOURCES)
-  get_target_property(TARGET_COMPILE_FLAGS scalix COMPILE_FLAGS)
-  set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE CXX)
-  foreach(source_file ${TARGET_SOURCES})
-    if(source_file MATCHES ".*\\.hpp")
-      set_source_files_properties(${source_file} PROPERTIES HEADER_FILE_ONLY
-                                                            FALSE)
-    endif()
-  endforeach()
-else()
-  # Developer warning that indicates full clang-tidy checks are not run when
-  # building shared libraries
-  message(
-    AUTHOR_WARNING
-      "Clang-tidy checks are not run on header files when building shared libraries. "
-      "Header files included in source files are still checked, but clang-tidy doesn't "
-      "run all checks on includes that it does on source files. This is really only a problem for templated code."
-  )
-endif()
+## This ensures clang-tidy runs on all source files, including headers
+#if(NOT BUILD_SHARED_LIBS)
+#  get_target_property(TARGET_SOURCES scalix SOURCES)
+#  get_target_property(TARGET_COMPILE_FLAGS scalix COMPILE_FLAGS)
+#  set_source_files_properties(${TARGET_SOURCES} PROPERTIES LANGUAGE CXX)
+#  foreach(source_file ${TARGET_SOURCES})
+#    if(source_file MATCHES ".*\\.hpp")
+#      set_source_files_properties(${source_file} PROPERTIES HEADER_FILE_ONLY
+#                                                            FALSE)
+#    endif()
+#  endforeach()
+#else()
+#  # Developer warning that indicates full clang-tidy checks are not run when
+#  # building shared libraries
+#  message(
+#    AUTHOR_WARNING
+#      "Clang-tidy checks are not run on header files when building shared libraries. "
+#      "Header files included in source files are still checked, but clang-tidy doesn't "
+#      "run all checks on includes that it does on source files. This is really only a problem for templated code."
+#  )
+#endif()
 
 if(DEFINED "CUDAToolkit_FOUND")
   target_include_directories(scalix SYSTEM PUBLIC ${CUDAToolkit_INCLUDE_DIRS})

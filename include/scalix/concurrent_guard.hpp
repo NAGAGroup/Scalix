@@ -29,6 +29,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
+#include <sycl/sycl.hpp>
 #include <memory>
 #include <mutex>
 #include <scalix/defines.hpp>
@@ -65,6 +66,12 @@ class concurrent_view {
         };
     }
 
+    concurrent_view(const concurrent_view&) = delete;
+    auto operator=(const concurrent_view&) -> concurrent_view& = delete;
+
+    concurrent_view(concurrent_view&&) = default;
+    auto operator=(concurrent_view&&) -> concurrent_view& = default;
+
     [[nodiscard]] auto access() const& -> T& {
         if (!lock_.owns_lock()) {
             throw std::runtime_error("concurrent_view has been unlocked");
@@ -97,9 +104,9 @@ struct concurrent_view_type_get {
     using type = std::conditional_t<Mode == access_mode::read, const T, T>;
 
     static_assert(
-        !(Mode == access_mode::discard_write
-          || Mode == access_mode::discard_read_write
-          || Mode == access_mode::atomic),
+        Mode != access_mode::discard_write
+          && Mode != access_mode::discard_read_write
+          && Mode != access_mode::atomic,
         "Invalid access mode for concurrent_view by using deprecated access "
         "mode"
     );
@@ -117,6 +124,9 @@ class concurrent_guard {
 
     explicit concurrent_guard(T value)
         : ptr_(std::make_shared<T>(std::move(value))) {}
+
+    explicit concurrent_guard(std::shared_ptr<T> ptr)
+        : ptr_(std::move(ptr)) {}
 
     concurrent_guard(const concurrent_guard&)                    = default;
     auto operator=(const concurrent_guard&) -> concurrent_guard& = default;

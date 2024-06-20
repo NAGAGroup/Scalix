@@ -32,8 +32,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 #include <future>
+#include <sycl/sycl.hpp>
 #include <mutex>
 #include <scalix/concurrent_guard.hpp>
+#include <scalix/defines.hpp>
 #include <vector>
 
 namespace concurrent_guard_test {

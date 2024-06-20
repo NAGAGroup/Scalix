@@ -29,8 +29,10 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#include <sycl/sycl.hpp>
 #include <memory>
 #include <scalix/concurrent_guard.hpp>
+#include <scalix/defines.hpp>
 #include <scalix/detail/generic_task.hpp>
 #include <scalix/generic_task.hpp>
 #include <stdexcept>
@@ -38,7 +40,7 @@
 
 namespace sclx {
 
-generic_task::generic_task(std::unique_ptr<impl> impl)
+generic_task::generic_task(std::shared_ptr<impl> impl)
     : impl_{std::move(impl)} {}
 
 void generic_task::add_dependent_task(const generic_task& dependent_task) {
@@ -52,6 +54,10 @@ void generic_task::add_dependent_task(const generic_task& dependent_task) {
     metadata.access().dependent_tasks.push_back(dependent_task);
 
     dependent_metadata.access().dependency_count++;
+}
+
+auto generic_task::has_completed() const -> bool {
+    return impl_->has_completed();
 }
 
 void generic_task::launch() {
@@ -82,6 +88,11 @@ void generic_task::impl::decrease_dependency_count() const {
         metadata.unlock();
         this->async_execute();
     }
+}
+
+auto generic_task::impl::has_completed() const -> bool {
+    auto metadata = metadata_.get_view<access_mode::read>();
+    return metadata.access().has_completed;
 }
 
 }  // namespace sclx

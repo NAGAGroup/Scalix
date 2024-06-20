@@ -29,6 +29,9 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
+#include <memory>
+#include <scalix/defines.hpp>
 #include <scalix/detail/page_data.hpp>
 
 TEST_CASE("page_data") {
@@ -62,9 +65,9 @@ TEST_CASE("page_data") {
     };
     page_data2.copy_to(data_ptr3.get());
 
-    const auto page_data3_raw
+    const auto *const page_data3_raw
         = reinterpret_cast<const data_type*>(page_data3.page_address());
-    const auto page_data1_raw
+    const auto *const page_data1_raw
         = reinterpret_cast<const data_type*>(page_data1.page_address());
     for (sclx::page_size_t i = 0; i < floats_per_page; ++i) {
         REQUIRE(page_data3_raw[i] == page_data1_raw[i]);
