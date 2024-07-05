@@ -29,12 +29,13 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
-#include <sycl/sycl.hpp>
 #include <memory>
 #include <mutex>
 #include <scalix/defines.hpp>
 #include <shared_mutex>
+#include <source_location>
 #include <stdexcept>
+#include <sycl/sycl.hpp>
 #include <type_traits>
 #include <utility>
 
@@ -66,10 +67,10 @@ class concurrent_view {
         };
     }
 
-    concurrent_view(const concurrent_view&) = delete;
+    concurrent_view(const concurrent_view&)                    = delete;
     auto operator=(const concurrent_view&) -> concurrent_view& = delete;
 
-    concurrent_view(concurrent_view&&) = default;
+    concurrent_view(concurrent_view&&)                    = default;
     auto operator=(concurrent_view&&) -> concurrent_view& = default;
 
     [[nodiscard]] auto access() const& -> T& {
@@ -85,18 +86,33 @@ class concurrent_view {
 
     void lock() { lock_.lock(); }
 
+    ~concurrent_view() {
+        if (source_location_ == nullptr) {
+            return;
+        }
+        static constexpr auto access_mode
+            = std::is_const_v<T> ? "read" : "write";
+        std::cout << "concurrent " << access_mode
+                  << " access from view created at " << *source_location_
+                  << " has been released" << std::endl;
+    }
+
   private:
     concurrent_view(
         std::shared_ptr<T> ptr,
-        std::shared_ptr<std::shared_mutex> mutex
+        std::shared_ptr<std::shared_mutex> mutex,
+        std::shared_ptr<std::string> source_location = nullptr
     )
         : ptr_(std::move(ptr)),
           mutex_(mutex),
-          lock_(*mutex) {}
+          lock_(*mutex),
+          source_location_(std::move(source_location)) {
+    }
 
     std::shared_ptr<T> ptr_;
     std::shared_ptr<std::shared_mutex> mutex_;
     lock_type lock_;
+    std::shared_ptr<std::string> source_location_;
 };
 
 template<class T, access_mode Mode>
@@ -105,8 +121,8 @@ struct concurrent_view_type_get {
 
     static_assert(
         Mode != access_mode::discard_write
-          && Mode != access_mode::discard_read_write
-          && Mode != access_mode::atomic,
+            && Mode != access_mode::discard_read_write
+            && Mode != access_mode::atomic,
         "Invalid access mode for concurrent_view by using deprecated access "
         "mode"
     );
@@ -125,8 +141,7 @@ class concurrent_guard {
     explicit concurrent_guard(T value)
         : ptr_(std::make_shared<T>(std::move(value))) {}
 
-    explicit concurrent_guard(std::shared_ptr<T> ptr)
-        : ptr_(std::move(ptr)) {}
+    explicit concurrent_guard(std::shared_ptr<T> ptr) : ptr_(std::move(ptr)) {}
 
     concurrent_guard(const concurrent_guard&)                    = default;
     auto operator=(const concurrent_guard&) -> concurrent_guard& = default;
@@ -138,6 +153,27 @@ class concurrent_guard {
     [[nodiscard]] auto get_view() const -> concurrent_view_t<T, Mode> {
         return get_view_generic<
             typename concurrent_view_t<T, Mode>::value_type>();
+    }
+
+    template<access_mode Mode = access_mode::read>
+    [[nodiscard]] auto get_view(const std::source_location& loc
+    ) const -> concurrent_view_t<T, Mode> {
+        auto code_location =
+            std::string{"filename: "} + loc.file_name()
+            + " line: " + std::to_string(loc.line()) + " -- (guarded value ID: "
+            + std::to_string(reinterpret_cast<std::uintptr_t>(ptr_.get()))
+            + ")";
+
+        static constexpr auto access_mode
+            = Mode == access_mode::read ? "read" : "write";
+        std::cout << "concurrent " << access_mode << " access requested at "
+                  << code_location << std::endl;
+        return get_view_generic<
+            typename concurrent_view_t<T, Mode>::value_type>(
+            std::make_shared<std::string>(
+                code_location
+            )
+        );
     }
 
     [[nodiscard]] auto valid() const -> bool { return ptr_ != nullptr; }
@@ -154,14 +190,15 @@ class concurrent_guard {
 
   private:
     template<class U>
-    [[nodiscard]] auto
-    get_view_generic() const -> concurrent_view<U> {
+    [[nodiscard]] auto get_view_generic(
+        std::shared_ptr<std::string> source_location = nullptr
+    ) const -> concurrent_view<U> {
         if (!valid()) {
             throw std::runtime_error("concurrent_guard does not hold valid data"
             );
         }
 
-        return {ptr_, mutex_};
+        return {ptr_, mutex_, std::move(source_location)};
     }
     std::shared_ptr<T> ptr_ = std::make_shared<T>();
     std::shared_ptr<std::shared_mutex> mutex_

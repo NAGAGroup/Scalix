@@ -44,6 +44,7 @@
 #include <scalix/defines.hpp>
 #include <scalix/generic_task.hpp>
 #include <scalix/pointers.hpp>
+#include <source_location>
 #include <stdexcept>
 #include <sycl/sycl.hpp>
 #include <unordered_map>
@@ -61,10 +62,14 @@ class object_id {
     void* id_{nullptr};
 };
 
+struct access_anchor;
+
 struct access_strategy_interface {
     enum access_locale : std::uint8_t { host, device };
     using access_marker     = signed char;
     using access_marker_ptr = access_marker*;
+
+    virtual auto get_anchor() const -> const access_anchor& = 0;
 
     virtual void init_anchor_for_device(
         page_count_t page_count,
@@ -106,12 +111,21 @@ struct buffer_helper_interface {
     [[nodiscard]] virtual auto get_page_size() const -> page_size_t         = 0;
     virtual auto allocate_page(sycl::device device
     ) -> shared_ptr<detail::page_data_interface>                            = 0;
+    virtual void register_anchor(const access_anchor& anchor)               = 0;
     virtual ~buffer_helper_interface() = default;
+};
+
+template<class T, int Dimensions>
+struct host_accessor {
+    std::vector<std::remove_const_t<T>> data_;
+    std::shared_ptr<void> buffer_handle_;
 };
 
 template<class T, int Dimensions>
 struct buffer_helper_base : buffer_helper_interface {
     virtual auto range() const -> const range<Dimensions>& = 0;
+
+    virtual auto get_host_access() const -> host_accessor<T, Dimensions> = 0;
 };
 
 template<class T, int Dimensions, page_size_t PageSize>
@@ -132,14 +146,18 @@ struct buffer_helper : buffer_helper_base<T, Dimensions> {
 
     auto allocate_page(sycl::device device
     ) -> shared_ptr<detail::page_data_interface> override {
-        auto page_ptr = make_shared<std::byte[]>(
-            sycl::queue{device},
+        auto device_queue = sycl::queue{device};
+        auto page_ptr     = make_shared<std::byte[]>(
+            device_queue,
             sycl::usm::alloc::device,
             elements_per_page * element_size
         );
         return std::make_shared<detail::page_data<page_size>>(
             page_ptr.get(),
-            page_ptr
+            std::reinterpret_pointer_cast<
+                typename detail::page_data<page_size>::alloc_handle_t>(page_ptr
+            ),
+            device_queue
         );
     }
 };
@@ -179,6 +197,10 @@ struct access_anchor {
 
 struct access_strategy_common : access_strategy_interface {
     access_anchor anchor_;
+
+    auto get_anchor() const -> const access_anchor& override {
+        return anchor_;
+    }
 
     void init_anchor_for_device(
         page_count_t page_count,
@@ -271,27 +293,28 @@ struct access_strategy_common : access_strategy_interface {
                     buffer_helper->allocate_page(primary_device)
                 );
                 auto fut = device_anchor.pages_[page_idx]->copy_to(
-                    *peer_data.back().second
+                    peer_data.back().second
                 );
                 copy_futures.push_back(fut.share());
             }
         }
 
         auto event = primary_queue.submit([&](sycl::handler& cgh) {
-            cgh.hipSYCL_enqueue_custom_operation(
+            cgh.AdaptiveCpp_enqueue_custom_operation(
                 [copy_futures](sycl::interop_handle& h) mutable {
                     std::transform(
                         copy_futures.begin(),
                         copy_futures.end(),
                         copy_futures.begin(),
                         [](auto& fut) {
-                            fut.wait();
+                            fut.get();
                             return fut;
                         }
                     );
                 }
             );
         });
+        event.wait_and_throw();
         events.push_back(event);
 
         // copy the pointers to the page data and the access markers
@@ -390,27 +413,22 @@ struct access_strategy_common : access_strategy_interface {
                     = anchor_.info_->device_anchors_[peer_data_pair.first];
                 auto source_page      = peer_data_list.front().second;
                 auto destination_page = peer_device_anchor.pages_[page_idx];
-                event = primary_queue.submit([&](sycl::handler& cgh) {
-                    cgh.depends_on(page_events);
-                    cgh.hipSYCL_enqueue_custom_operation(
-                        [source_page, destination_page](sycl::interop_handle& h
-                        ) { source_page->copy_to(*destination_page).wait(); }
+                auto fut = source_page->copy_to(destination_page).share();
+                event    = primary_queue.submit([&](sycl::handler& cgh) {
+                    cgh.depends_on(event);
+                    cgh.AdaptiveCpp_enqueue_custom_operation(
+                        [fut](sycl::interop_handle& h) { fut.get(); }
                     );
                 });
                 page_events.push_back(event);
             }
-
-            std::transform(
-                page_events.begin(),
-                page_events.end(),
-                std::back_inserter(events),
-                [](const auto& event) { return event; }
-            );
         }
 
-        return primary_queue.submit([&events](sycl::handler& cgh) {
+        auto event_prim = primary_queue.submit([&events](sycl::handler& cgh) {
             cgh.depends_on(events);
         });
+        event_prim.wait_and_throw();
+        return event_prim;
     }
 };
 
@@ -425,7 +443,9 @@ struct handler {
     auto get_parallel_for_config(const sycl::range<RangeDimensions>& range
     ) const -> const parallel_for_config<RangeDimensions>& {
         auto global_metadata
-            = metadata_->global_metadata_.get_view<access_mode::write>();
+            = metadata_->global_metadata_.get_view<access_mode::write>(
+                std::source_location::current()
+            );
         if (global_metadata.access().command_config_ != nullptr) {
             return *std::static_pointer_cast<
                 parallel_for_config<RangeDimensions>>(
@@ -465,7 +485,7 @@ struct handler {
     }
 
     template<int RangeDimensions = 1, class Kernel>
-    void parallel_for(sycl::range<RangeDimensions> range, Kernel&& kernel) {
+    void parallel_for(sycl::range<RangeDimensions> range, Kernel kernel) {
         const auto& meta    = metadata_;
         auto& launch_config = get_parallel_for_config(range);
         auto local_range    = launch_config.local_ranges_[meta->device_idx_];
@@ -475,15 +495,13 @@ struct handler {
         auto command_submit_future_ptr
             = new std::future<void>{command_submit_promise.get_future()};
         auto command_submit_task = create_task(
-            [](std::promise<void>&& prom) {
-                prom.set_value(); },
+            [](std::promise<void>&& prom) { prom.set_value(); },
             std::move(command_submit_promise)
         );
 
         std::vector<generic_task> command_tasks;
-        auto global_metadata
-            = meta->global_metadata_.get_view<access_mode::write>();
-        for (auto& [unused, strategy] : global_metadata.access().strategies_) {
+        auto global_metadata = meta->global_metadata_.unsafe_access();
+        for (auto& [unused, strategy] : global_metadata.strategies_) {
             auto task = strategy->ready_accessor(
                 meta->device_queue_,
                 command_submit_task,
@@ -498,13 +516,15 @@ struct handler {
 
         sycl::buffer<void*> command_submit_future_buffer{sycl::range{1}};
         {
-            auto acsr = command_submit_future_buffer.get_access<sycl::access_mode::discard_write>();
+            auto acsr = command_submit_future_buffer
+                            .get_access<sycl::access_mode::discard_write>();
             acsr[0] = command_submit_future_ptr;
         }
         sycl::event command_submit_event
             = sycl::queue{}.submit([&](sycl::handler& cgh) {
-                  auto acsr = command_submit_future_buffer.get_access<sycl::access_mode::read>();
-                  cgh.hipSYCL_enqueue_custom_operation(
+                  auto acsr = command_submit_future_buffer
+                                  .get_access<sycl::access_mode::read>();
+                  cgh.AdaptiveCpp_enqueue_custom_operation(
                       [=](sycl::interop_handle& h) {
                           auto fut_ptr = acsr[0];
                           static_cast<std::future<void>*>(fut_ptr)->wait();
@@ -513,17 +533,22 @@ struct handler {
                   );
               });
         auto command_task = create_task(
-            [meta, command_submit_event, &kernel, &local_range, &range_offset]() {
-                meta->device_queue_.submit([&](sycl::handler& cgh) {
-                    cgh.depends_on(command_submit_event);
-                    cgh.parallel_for(
-                        local_range,
-                        [=](sycl::id<RangeDimensions> idx) {
-                            kernel(idx + range_offset);
-                        }
-                    );
-                }).wait_and_throw();
-            }
+            [command_submit_event, &kernel, &local_range, &range_offset](
+                decltype(meta) meta
+            ) {
+                meta->device_queue_
+                    .submit([&](sycl::handler& cgh) {
+                        cgh.depends_on(command_submit_event);
+                        cgh.parallel_for(
+                            local_range,
+                            [=](sycl::id<RangeDimensions> idx) {
+                                kernel(idx + range_offset);
+                            }
+                        );
+                    })
+                    .wait_and_throw();
+            },
+            meta
         );
         command_tasks.push_back(command_task);
 
@@ -538,19 +563,22 @@ struct handler {
 
         sycl::buffer<void*> fut_buffer{sycl::range{1}};
         {
-            auto acsr = fut_buffer.get_access<sycl::access_mode::discard_write>();
+            auto acsr
+                = fut_buffer.get_access<sycl::access_mode::discard_write>();
             acsr[0] = fut;
         }
         auto command_event = sycl::queue{}.submit([&](sycl::handler& cgh) {
             auto acsr = fut_buffer.get_access<sycl::access_mode::read>();
-            cgh.hipSYCL_enqueue_custom_operation(
-                [=](sycl::interop_handle& h) {
-                    auto fut_ptr = acsr[0];
-                    static_cast<std::future<void>*>(fut_ptr)->wait();
-                    delete static_cast<std::future<void>*>(fut_ptr);
-                }
-            );
+            cgh.AdaptiveCpp_enqueue_custom_operation([=](sycl::interop_handle& h
+                                                     ) {
+                auto fut_ptr = acsr[0];
+                static_cast<std::future<void>*>(fut_ptr)->wait();
+                delete static_cast<std::future<void>*>(fut_ptr);
+            });
         });
+
+        command_submit_event.wait_and_throw();
+        command_event.wait_and_throw();
 
         metadata_->command_event_ = std::move(command_event);
     }
@@ -560,15 +588,22 @@ struct handler {
         std::shared_ptr<access_strategy_interface> strategy
     ) {
         auto global_metadata
-            = metadata_->global_metadata_.get_view<access_mode::write>();
+            = metadata_->global_metadata_.get_view<access_mode::write>(
+                std::source_location::current()
+            );
         global_metadata.access().strategies_[buffer_ptr] = std::move(strategy);
     }
 
     auto get_buffer_access_strategy(void* buffer_ptr
-    ) const -> std::shared_ptr<access_strategy_interface>& {
+    ) const -> std::shared_ptr<access_strategy_interface> {
         auto global_metadata
-            = metadata_->global_metadata_.get_view<access_mode::write>();
-        return global_metadata.access().strategies_[buffer_ptr];
+            = metadata_->global_metadata_.get_view<access_mode::read>(
+                std::source_location::current()
+            );
+        if (global_metadata.access().strategies_.count(buffer_ptr) == 0) {
+            return {nullptr};
+        }
+        return global_metadata.access().strategies_.at(buffer_ptr);
     }
 
     [[nodiscard]] auto get_command_event() const -> sycl::event {
@@ -606,6 +641,10 @@ struct buffer {
         std::vector<access_anchor> anchors_;
         range<Dimensions> range_;
 
+        void register_anchor(const access_anchor& anchor) override {
+            anchors_.push_back(anchor);
+        }
+
         void make_pages_valid(
             std::vector<shared_ptr<detail::page_data_interface>>& pages
         ) override {
@@ -619,10 +658,45 @@ struct buffer {
                     if (page == nullptr) {
                         return new_page;
                     }
-                    page->copy_to(*new_page).wait();
+                    page->copy_to(*new_page).get();
                     return new_page;
                 }
             );
+        }
+
+        auto get_host_access() const -> host_accessor<T, Dimensions> override {
+            auto num_elements      = range_.size();
+            auto elements_per_page = this->get_elements_per_page();
+            auto num_pages
+                = (num_elements + elements_per_page - 1) / elements_per_page;
+            auto page_size = this->get_page_size();
+            host_accessor<T, Dimensions> accessor;
+            accessor.data_.resize(num_elements);
+            for (auto& page_ptr : this->pages_) {
+                auto page_ptr_locked = page_ptr.lock();
+                if (page_ptr.expired()) {
+                    continue;
+                }
+                sycl::queue page_queue{page_ptr_locked->device_queue()};
+                auto host_page_ptr = ::sclx::make_unique<byte[]>(
+                    page_queue,
+                    usm::alloc::host,
+                    page_size
+                );
+                page_ptr_locked->copy_to(page_queue, host_page_ptr.get()).get();
+                auto host_page_ptr_cast = reinterpret_cast<T*>(host_page_ptr.get());
+
+                auto page_idx = std::distance(&this->pages_.front(), &page_ptr);
+                auto element_idx = page_idx * elements_per_page;
+                std::memcpy(
+                    accessor.data_.data() + element_idx,
+                    host_page_ptr.get(),
+                    std::min(elements_per_page, num_elements - element_idx)
+                        * this->get_element_size()
+                );
+            }
+
+            return accessor;
         }
 
         [[nodiscard]] auto range() const -> const range<Dimensions>& override {
@@ -649,15 +723,17 @@ struct buffer {
                     events.push_back(event.share());
                 }
             }
-            return sycl::queue{}.submit([&events](sycl::handler& cgh) {
-                cgh.hipSYCL_enqueue_custom_operation(
+            auto event = sycl::queue{}.submit([&events](sycl::handler& cgh) {
+                cgh.AdaptiveCpp_enqueue_custom_operation(
                     [events](sycl::interop_handle& h) {
                         for (auto& event : events) {
-                            event.wait();
+                            event.get();
                         }
                     }
                 );
             });
+            event.wait_and_throw();
+            return event;
         }
 
         [[nodiscard]] auto
@@ -667,6 +743,33 @@ struct buffer {
     };
     concurrent_guard<buffer_helper_interface> impl_{std::shared_ptr<impl<4096>>{
     }};
+
+    template<access_mode AccessMode = access_mode::read_write>
+    auto get_access() const
+        -> host_accessor<
+            std::conditional_t<AccessMode == access_mode::read, const T, T>,
+            Dimensions> {
+        static constexpr auto mode = AccessMode;
+        using view_type_param      = std::conditional_t<
+                 mode == access_mode::read,
+                 const buffer_helper_interface,
+                 buffer_helper_interface>;
+        auto view = impl_.get_view<AccessMode>(std::source_location::current());
+        auto view_ptr
+            = std::make_shared<concurrent_view<view_type_param>>(std::move(view)
+            );
+        using upcast_type = std::conditional_t<
+            mode == access_mode::read,
+            const buffer_helper_base<T, Dimensions>,
+            buffer_helper_base<T, Dimensions>>;
+        auto acsr
+            = static_cast<upcast_type&>(view_ptr->access()).get_host_access();
+        acsr.buffer_handle_ = view_ptr;
+
+        return reinterpret_cast<host_accessor<
+            std::conditional_t<AccessMode == access_mode::read, const T, T>,
+            Dimensions>&>(acsr);
+    }
 
     explicit buffer(range<Dimensions> range)
         : impl_{std::static_pointer_cast<buffer_helper_interface>(
@@ -697,6 +800,7 @@ struct buffer {
             impl_.unsafe_access().get_number_of_pages(),
             cgh.metadata_->device_queue_
         );
+        impl_.unsafe_access().register_anchor(strategy_ptr->get_anchor());
         auto page_ptrs = strategy_ptr->get_page_ptrs(
             cgh.device(),
             access_strategy_interface::access_locale::device
@@ -737,31 +841,40 @@ struct queue {
             command_events.push_back(handler.get_command_event());
         }
 
-        auto global_command_event = device_queues_.front().submit(
-            [&command_events, command_handlers](sycl::handler& cgh) {
-                cgh.depends_on(command_events);
-//                auto primary_handler = command_handlers.front();
-//                cgh.hipSYCL_enqueue_custom_operation(
-//                    [primary_handler
-//                     = std::move(primary_handler)](sycl::interop_handle& h) {
-//                        std::vector<sycl::event> finalization_events;
-//                        auto global_metadata
-//                            = primary_handler.metadata_->global_metadata_
-//                                  .get_view<access_mode::read>();
-//                        for (auto& [unused, strategy] :
-//                             global_metadata.access().strategies_) {
-//                            finalization_events.push_back(
-//                                strategy->make_shared_pages_consistent()
-//                            );
-//                        }
-//
-//                        for (auto& event : finalization_events) {
-//                            event.wait_and_throw();
-//                        }
-//                    }
-//                );
-            }
+        auto global_command_task = create_task(
+            [](handler primary_handler,
+               sycl::queue primary_queue,
+               std::vector<sycl::event> cmd_events) {
+                for (auto& event : cmd_events) {
+                    event.wait_and_throw();
+                }
+                std::vector<sycl::event> finalization_events;
+                auto global_metadata
+                    = primary_handler.metadata_->global_metadata_.unsafe_access(
+                    );
+                for (auto& [unused, strategy] : global_metadata.strategies_) {
+                    finalization_events.push_back(
+                        strategy->make_shared_pages_consistent()
+                    );
+                }
+
+                return finalization_events;
+            },
+            command_handlers.front(),
+            device_queues_.front(),
+            command_events
         );
+        auto fut = global_command_task.get_future();
+        global_command_task.launch();
+        auto finalization_events = fut.get();
+
+        auto global_command_event
+            = sycl::queue{}.submit([&finalization_events](sycl::handler& cgh) {
+                  cgh.depends_on(finalization_events);
+                  cgh.AdaptiveCpp_enqueue_custom_operation(
+                      [](const sycl::interop_handle& h) {}
+                  );
+              });
 
         return global_command_event;
     }
@@ -775,7 +888,8 @@ struct default_access_strategy {
     struct impl : access_strategy_common {
         using buffer_view_t = std::decay_t<
             decltype(std::declval<concurrent_guard<buffer_helper_interface>>()
-                         .get_view<AccessMode>())>;
+                         .get_view<AccessMode>(std::source_location::current())
+            )>;
         auto ready_accessor(
             sycl::queue device_queue,
             generic_task command_task,
@@ -785,12 +899,13 @@ struct default_access_strategy {
         ) -> generic_task override {
             if (shared_view_ == nullptr) {
                 shared_view_ = std::make_shared<buffer_view_t>(
-                    std::move(buffer_helper_.get_view<AccessMode>())
+                    std::move(buffer_helper_.get_view<AccessMode>(
+                        std::source_location::current()
+                    ))
                 );
             }
             auto& shared_view = shared_view_;
-            auto prepare_task
-                = create_task([]() {});
+            auto prepare_task = create_task([]() {});
 
             auto buffer_ptr = &(shared_view.get()->access());
             std::vector<std::shared_ptr<detail::page_data_interface>> pages(
@@ -928,13 +1043,19 @@ struct default_access_strategy {
             }
             std::promise<sycl::event> promise;
             auto future = promise.get_future();
-            auto task
-                = create_task([*this, promise = std::move(promise)] mutable {
-                      auto event = this->make_shared_pages_consistent_impl(
-                          &(this->shared_view_.get()->access())
-                      );
-                      promise.set_value(event);
-                  });
+            auto task   = create_task(
+                [](std::decay_t<decltype(*this)> this_strategy,
+                   std::promise<sycl::event> promise_in) mutable {
+                    auto event
+                        = this_strategy.make_shared_pages_consistent_impl(
+                            &(this_strategy.shared_view_.get()->access())
+                        );
+                    event.wait_and_throw();
+                    promise_in.set_value(event);
+                },
+                *this,
+                std::move(promise)
+            );
             task.launch();
             return future.get();
         }

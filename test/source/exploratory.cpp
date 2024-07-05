@@ -34,7 +34,7 @@ int main() {
     std::vector<sycl::queue> device_queues;
     auto device_list = sycl::device::get_devices();
     for (auto& device : device_list) {
-        if (device.is_cpu()) {
+        if (device.is_gpu()) {
             device_queues.emplace_back(device);
         }
     }
@@ -43,15 +43,36 @@ int main() {
     std::vector<double> device_weights;
     std::transform(
         q.device_queues_.begin(),
-        q.device_queues_.end(), std::back_inserter(device_weights), [&](const sycl::queue& device_queue) {
+        q.device_queues_.end(),
+        std::back_inserter(device_weights),
+        [&](const sycl::queue& device_queue) {
             return 1.0 / static_cast<double>(num_devices);
-        });
+        }
+    );
     q.device_weights_ = std::move(device_weights);
-    sclx::buffer<float, 1> buffer{10 * num_devices};
+    sclx::buffer<double, 1> buffer{10 * num_devices};
+    auto shared_data = sclx::make_unique<double[]>(q.device_queues_[0], sycl::usm::alloc::shared, 10);
     q.submit([&](sclx::handler& cgh) {
-        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(cgh, sclx::default_access_strategy{});
-        cgh.parallel_for(sycl::range<1>{10 * num_devices}, [=](sycl::id<1> idx) {
-            buffer_acc[idx] = static_cast<float>(idx[0]);
-        });
-    });
+        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
+            cgh,
+            sclx::default_access_strategy{}
+        );
+        auto shared_data_ptr = shared_data.get();
+        cgh.parallel_for(
+            sycl::range<1>{10 * num_devices},
+            [=](sycl::id<1> idx) {
+                buffer_acc[idx] = static_cast<double>(idx[0]);
+                shared_data_ptr[idx[0]] = buffer_acc[idx];
+            }
+        );
+    }).wait_and_throw();
+
+    for (int i = 0; i < 10; ++i) {
+        std::cout << shared_data[i] << std::endl;
+    }
+
+    auto acsr = buffer.get_access<sclx::access_mode::read>();
+    for (auto& val : acsr.data_) {
+        std::cout << val << std::endl;
+    }
 }

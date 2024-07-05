@@ -88,43 +88,37 @@ class typed_task<R>::typed_impl final : public impl {
     }
 
     void async_execute() const override {
-        auto& args_ptr      = args_ptr_;
-        auto& task          = task_;
-        auto metadata_guard = metadata_;
-
-        typed_impl::apply(*task, *args_ptr);
-        {
-            auto metadata
-                = metadata_guard.template get_view<access_mode::write>();
-            metadata.access().has_completed = true;
-        }
-        {
-            auto metadata
-                = metadata_guard.template get_view<access_mode::read>();
-            for (const auto& dependent_task :
-                 metadata.access().dependent_tasks) {
-                dependent_task.impl_->decrease_dependency_count();
-            }
-        }
-        //        std::thread exec_thread{
-        //            [metadata_guard, args_ptr, task] {
-        //                typed_impl::apply(*task, *args_ptr);
-        //                {
-        //                    auto metadata = metadata_guard.template
-        //                    get_view<access_mode::write>();
-        //                    metadata.access().has_completed = true;
-        //                }
-        //                {
-        //                    auto metadata = metadata_guard.template
-        //                    get_view<access_mode::read>(); for (const auto&
-        //                    dependent_task :
-        //                         metadata.access().dependent_tasks) {
-        //                        dependent_task.impl_->decrease_dependency_count();
-        //                    }
-        //                }
-        //            }
-        //        };
-        //        exec_thread.detach();
+        using task_type     = std::decay_t<decltype(task_)>;
+        using args_ptr_type = std::decay_t<decltype(args_ptr_)>;
+        using metadata_type = std::decay_t<decltype(metadata_)>;
+        std::thread exec_thread(
+            [](task_type task,
+               args_ptr_type args_ptr,
+               metadata_type metadata_guard) {
+                typed_impl::apply(*task, *args_ptr);
+                {
+                    auto metadata
+                        = metadata_guard.template get_view<access_mode::write>(
+                            std::source_location::current()
+                        );
+                    metadata.access().has_completed = true;
+                }
+                {
+                    auto metadata
+                        = metadata_guard.template get_view<access_mode::read>(
+                            std::source_location::current()
+                        );
+                    for (const auto& dependent_task :
+                         metadata.access().dependent_tasks) {
+                        dependent_task.impl_->decrease_dependency_count();
+                    }
+                }
+            },
+            task_,
+            args_ptr_,
+            metadata_
+        );
+        exec_thread.detach();
     }
 
     template<std::uint8_t N = 0, class Task, class Tuple, class... OArgs>
@@ -186,7 +180,6 @@ typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
     : generic_task{std::move(impl)},
       future_ptr_(&static_cast<decltype(impl.get())>(this->impl_.get())->future_
       ) {}
-
 
 template<class R>
 typed_task<R>::operator generic_task() {

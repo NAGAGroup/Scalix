@@ -63,7 +63,7 @@ TEST_CASE("page_data") {
         data_ptr3.get(),
         data_ptr3
     };
-    page_data2.copy_to(data_ptr3.get());
+    page_data2.copy_to(sycl::queue(), data_ptr3.get());
 
     const auto *const page_data3_raw
         = reinterpret_cast<const data_type*>(page_data3.page_address());

@@ -31,10 +31,11 @@
 #pragma once
 #include <algorithm>
 #include <future>
-#include <sycl/sycl.hpp>
 #include <memory>
 #include <scalix/concurrent_guard.hpp>
 #include <scalix/defines.hpp>
+#include <scalix/pointers.hpp>
+#include <sycl/sycl.hpp>
 #include <utility>
 
 namespace sclx::detail {
@@ -46,31 +47,80 @@ class page_data_interface {
     page_data_interface(const page_data_interface&) = default;
     page_data_interface(page_data_interface&&)      = default;
 
-    auto operator=(const page_data_interface&)
-        -> page_data_interface&                                   = default;
+    static void copy(
+        sycl::queue source_queue,
+        page_ptr_t source,
+        sycl::queue dest_queue,
+        page_ptr_t destination,
+        page_size_t page_size
+    ) {
+        if (source == nullptr || destination == nullptr) {
+            return;
+        }
+//        if (source == destination) {
+//            return;
+//        }
+
+        auto source_type
+            = sycl::get_pointer_type(source, source_queue.get_context());
+        auto dest_type
+            = sycl::get_pointer_type(destination, dest_queue.get_context());
+
+//        if (source_queue.get_device() == dest_queue.get_device()
+//            && source_type != usm::alloc::unknown
+//            && dest_type != usm::alloc::unknown) {
+//            dest_queue.memcpy(destination, source, page_size).wait_and_throw();
+//            return;
+//        }
+
+        page_ptr_t host_ptr = nullptr;
+        ::sclx::unique_ptr<byte[]> host_ptr_owner;
+        if (dest_type == usm::alloc::host) {
+            host_ptr = source;
+        } else if (source_type == usm::alloc::host) {
+            host_ptr = destination;
+        } else {
+            host_ptr_owner = ::sclx::make_unique<byte[]>(
+                source_queue,
+                usm::alloc::host,
+                page_size
+            );
+            host_ptr = host_ptr_owner.get();
+            source_queue.memcpy(host_ptr, source, page_size).wait_and_throw();
+        }
+
+        dest_queue.memcpy(destination, host_ptr, page_size).wait_and_throw();
+    }
+
+    auto
+    operator=(const page_data_interface&) -> page_data_interface& = default;
     auto operator=(page_data_interface&&) -> page_data_interface& = default;
 
     virtual auto copy_to(page_data_interface& other) const -> std::future<void>
-        = 0;
-    virtual auto copy_to(page_ptr_t destination) const -> std::future<void> = 0;
+                                                              = 0;
+    virtual auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
+        -> std::future<void> = 0;
 
-    virtual auto copy_from(concurrent_view<const page_ptr_t>&& source)
-        -> std::future<void>
-        = 0;
+    [[nodiscard]] virtual auto
+    copy_to(std::shared_ptr<page_data_interface> other
+    ) const -> std::future<void> = 0;
+
+    virtual auto
+    copy_from(sycl::queue source_queue, concurrent_guard<page_ptr_t> source)
+        -> std::future<void> = 0;
+
+    virtual auto device_queue() const -> sycl::queue = 0;
 
     [[nodiscard]] virtual auto page_address() const -> const byte* = 0;
 
-    [[nodiscard]] virtual auto check_if_same_page(page_ptr_t other) const
-        -> bool
-        = 0;
+    [[nodiscard]] virtual auto check_if_same_page(page_ptr_t other
+    ) const -> bool = 0;
 
     [[nodiscard]] virtual auto operator==(const page_data_interface& other
-    ) const -> bool
-        = 0;
+    ) const -> bool = 0;
 
     [[nodiscard]] virtual auto operator!=(const page_data_interface& other
-    ) const -> bool
-        = 0;
+    ) const -> bool = 0;
 
     virtual ~page_data_interface() = default;
 };
@@ -84,46 +134,65 @@ class page_data final : public page_data_interface {
     page_data() = default;
 
     // ReSharper disable once CppParameterMayBeConst
-    page_data(page_ptr_t data, alloc_handle_t alloc_handle)
+    page_data(page_ptr_t data, alloc_handle_t alloc_handle, sycl::queue queue)
         : data_{data},
-          alloc_handle_{std::move(alloc_handle)} {}
+          alloc_handle_{std::move(alloc_handle)},
+          queue_{std::move(queue)} {}
 
-    auto copy_to(page_data_interface& other) const
-        -> std::future<void> override {
-        return other.copy_from(data_.get_view<access_mode::read>());
+    auto copy_to(page_data_interface& other
+    ) const -> std::future<void> override {
+        return other.copy_from(device_queue(), data_);
     }
 
-    auto copy_to(page_ptr_t destination) const -> std::future<void> override {
-        return std::async([*this, destination] {
-            if (!data_.valid() || destination == nullptr
-                || check_if_same_page(destination)) {
-                return;
-            }
-            const auto source = data_.get_view<access_mode::read>();
-            std::copy_n(source.access(), page_size, destination);
+    auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
+        -> std::future<void> override {
+        auto data = data_.get_view<access_mode::read>();
+        page_data_interface::copy(
+            queue_,
+            data.access(),
+            dest_queue,
+            destination,
+            page_size
+        );
+        return std::async([] {
         });
     }
 
-    auto copy_from(concurrent_view<const page_ptr_t>&& source)
-        -> std::future<void> override {
-        float const blah = 0;
-        return std::async([*this, source = std::move(source)] {
-            if (source.access() == nullptr || !data_.valid()
-                || check_if_same_page(source.access())) {
-                return;
-            }
-            const auto data = data_.get_view<access_mode::write>();
-            std::copy_n(source.access(), page_size, data.access());
+    auto copy_to(std::shared_ptr<page_data_interface> other
+    ) const -> std::future<void> override {
+        return copy_to(*other);
+    }
+
+    auto copy_from(
+        sycl::queue source_queue,
+        concurrent_guard<page_ptr_t> source_guard
+    ) -> std::future<void> override {
+        if (source_guard.unsafe_access() == data_.unsafe_access()) {
+            return std::async([] {
+            });
+        }
+        auto source = source_guard.get_view<access_mode::read>();
+        auto dest   = data_.get_view<access_mode::write>();
+        page_data_interface::copy(
+            source_queue,
+            source.access(),
+            queue_,
+            dest.access(),
+            page_size
+        );
+        return std::async([] {
         });
     }
+
+    auto device_queue() const -> sycl::queue override { return queue_; }
 
     [[nodiscard]] auto page_address() const -> const byte* override {
         return data_.unsafe_access();
     }
 
     // ReSharper disable once CppParameterMayBeConst
-    [[nodiscard]] auto check_if_same_page(page_ptr_t other) const
-        -> bool override {
+    [[nodiscard]] auto check_if_same_page(page_ptr_t other
+    ) const -> bool override {
         if (!data_.valid() || other == nullptr) {
             return false;
         }
@@ -143,6 +212,7 @@ class page_data final : public page_data_interface {
   private:
     concurrent_guard<page_ptr_t> data_{nullptr};
     alloc_handle_t alloc_handle_;
+    sycl::queue queue_;
 };
 
 }  // namespace sclx::detail
