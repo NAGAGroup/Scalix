@@ -58,6 +58,6 @@ class typed_task : public generic_task {
 
 template<class F, class... Args>
 auto create_task(F&& func, Args&&... args)
-    -> typed_task<std::invoke_result_t<F, Args...>>;
+    -> typed_task<std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>>;
 
 }  // namespace sclx

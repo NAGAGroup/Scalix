@@ -64,6 +64,27 @@ class object_id {
 
 struct access_anchor;
 
+auto future_to_event(sycl::queue queue, std::future<void>& fut) -> sycl::event {
+    sycl::buffer<int, 1> buffer{1};
+    std::promise<void> buffer_capture_promise;
+    auto buffer_capture_future = buffer_capture_promise.get_future();
+    std::thread t{[buffer,
+                   buffer_capture_promise = std::move(buffer_capture_promise),
+                   fut                    = fut.share()]() mutable {
+        auto acsr = buffer.get_access<sycl::access_mode::read>();
+        buffer_capture_promise.set_value();
+        fut.wait();
+    }};
+    t.detach();
+
+    buffer_capture_future.wait();
+    auto event = queue.submit([=](sycl::handler& cgh) mutable {
+        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(cgh);
+        cgh.single_task([=]() { buffer_acc[0] = 0; });
+    });
+    return event;
+}
+
 struct access_strategy_interface {
     enum access_locale : std::uint8_t { host, device };
     using access_marker     = signed char;
@@ -173,7 +194,7 @@ struct access_anchor {
             std::vector<unique_ptr<access_strategy_interface::access_marker[]>>
                 host_page_access_markers_;
             unique_ptr<access_strategy_interface::access_marker_ptr[]>
-                shared_page_access_markers_;
+                device_page_access_markers_;
         };
 
         std::unordered_map<sycl::device, device_anchor> device_anchors_;
@@ -193,7 +214,7 @@ struct access_anchor {
 
     [[nodiscard]] auto get_shared_page_access_markers(const sycl::device& device
     ) const -> access_strategy_interface::access_marker_ptr* {
-        return info_->device_anchors_[device].shared_page_access_markers_.get();
+        return info_->device_anchors_[device].device_page_access_markers_.get();
     }
 };
 
@@ -221,7 +242,7 @@ struct access_strategy_common : access_strategy_interface {
             page_count
         ));
         device_anchor.host_page_access_markers_.resize(page_count);
-        device_anchor.shared_page_access_markers_
+        device_anchor.device_page_access_markers_
             = make_unique<access_marker_ptr[]>(
                 device_queue,
                 usm::alloc::device,
@@ -344,7 +365,6 @@ struct access_strategy_common : access_strategy_interface {
             }
 
             // update primary page with data from peers
-
             primary_queue
                 .submit([&](sycl::handler& cgh) {
                     cgh.depends_on(peer_access_info_events);
@@ -412,11 +432,8 @@ struct access_strategy_common : access_strategy_interface {
 
         auto combined_event = primary_queue.submit([&](sycl::handler& cgh) {
             cgh.depends_on(events);
-            cgh.AdaptiveCpp_enqueue_custom_operation([](sycl::interop_handle&) {
-
-            });
+            cgh.single_task([] {});
         });
-        combined_event.wait_and_throw();
         return combined_event;
     }
 };
@@ -474,18 +491,27 @@ struct handler {
     }
 
     template<int RangeDimensions = 1, class Kernel>
-    void parallel_for(sycl::range<RangeDimensions> range, Kernel kernel) {
+    void parallel_for(sycl::range<RangeDimensions> range, Kernel&& kernel) {
         const auto& meta    = metadata_;
         auto& launch_config = get_parallel_for_config(range);
         auto local_range    = launch_config.local_ranges_[meta->device_idx_];
         auto range_offset   = launch_config.range_offsets_[meta->device_idx_];
 
-        auto command_submit_promise = std::promise<void>{};
-        auto command_submit_future_ptr
-            = new std::future<void>{command_submit_promise.get_future()};
-        auto command_submit_task = create_task(
-            [](std::promise<void>&& prom) { prom.set_value(); },
-            std::move(command_submit_promise)
+        auto command_task = create_task(
+            [kernel, local_range, range_offset](
+                decltype(meta) meta
+            ) {
+                return meta->device_queue_
+                    .submit([&](sycl::handler& cgh) {
+                        cgh.parallel_for(
+                            local_range,
+                            [=](sycl::id<RangeDimensions> idx) {
+                                kernel(idx + range_offset);
+                            }
+                        );
+                    });
+            },
+            meta
         );
 
         std::vector<generic_task> command_tasks;
@@ -493,7 +519,7 @@ struct handler {
         for (auto& [unused, strategy] : global_metadata.strategies_) {
             auto task = strategy->ready_accessor(
                 meta->device_queue_,
-                command_submit_task,
+                command_task,
                 range,
                 local_range,
                 range_offset
@@ -501,74 +527,10 @@ struct handler {
             command_tasks.push_back(task);
         }
 
-        command_submit_task.launch();
-
-        sycl::buffer<void*> command_submit_future_buffer{sycl::range{1}};
-        {
-            auto acsr = command_submit_future_buffer
-                            .get_access<sycl::access_mode::discard_write>();
-            acsr[0] = command_submit_future_ptr;
-        }
-        sycl::event command_submit_event
-            = this->metadata_->device_queue_.submit([&](sycl::handler& cgh) {
-                  auto acsr = command_submit_future_buffer
-                                  .get_access<sycl::access_mode::read>();
-                  cgh.AdaptiveCpp_enqueue_custom_operation(
-                      [=](sycl::interop_handle& h) {
-                          auto fut_ptr = acsr[0];
-                          static_cast<std::future<void>*>(fut_ptr)->wait();
-                          delete fut_ptr;
-                      }
-                  );
-              });
-        auto command_task = create_task(
-            [command_submit_event, &kernel, &local_range, &range_offset](
-                decltype(meta) meta
-            ) {
-                meta->device_queue_
-                    .submit([&](sycl::handler& cgh) {
-                        cgh.depends_on(command_submit_event);
-                        cgh.parallel_for(
-                            local_range,
-                            [=](sycl::id<RangeDimensions> idx) {
-                                kernel(idx + range_offset);
-                            }
-                        );
-                    })
-                    .wait_and_throw();
-            },
-            meta
-        );
-        command_tasks.push_back(command_task);
-
-        auto dummy_task = create_task([] {});
-        for (auto& task : command_tasks) {
-            task.add_dependent_task(dummy_task);
-        }
-        void* fut = new std::future<void>{dummy_task.get_future()};
-
+        auto command_event_fut = command_task.get_future();
         command_task.launch();
-        dummy_task.launch();
 
-        sycl::buffer<void*> fut_buffer{sycl::range{1}};
-        {
-            auto acsr
-                = fut_buffer.get_access<sycl::access_mode::discard_write>();
-            acsr[0] = fut;
-        }
-        auto command_event
-            = this->metadata_->device_queue_.submit([&](sycl::handler& cgh) {
-                  auto acsr = fut_buffer.get_access<sycl::access_mode::read>();
-                  cgh.AdaptiveCpp_enqueue_custom_operation(
-                      [=](sycl::interop_handle& h) {
-                          auto fut_ptr = acsr[0];
-                          static_cast<std::future<void>*>(fut_ptr)->wait();
-                          delete static_cast<std::future<void>*>(fut_ptr);
-                      }
-                  );
-              });
-
-        metadata_->command_event_ = command_event;
+        metadata_->command_event_ = command_event_fut.get();
     }
 
     void assign_strategy(
@@ -728,12 +690,13 @@ struct buffer {
                     events.push_back(event);
                 }
             }
-            auto event = page->device_queue().submit([&events](sycl::handler& cgh) {
-                cgh.depends_on(events);
-                cgh.AdaptiveCpp_enqueue_custom_operation(
-                    [](const sycl::interop_handle& h) {}
-                );
-            });
+            auto event
+                = page->device_queue().submit([&events](sycl::handler& cgh) {
+                      cgh.depends_on(events);
+                      cgh.AdaptiveCpp_enqueue_custom_operation(
+                          [](const sycl::interop_handle& h) {}
+                      );
+                  });
             event.wait_and_throw();
             return event;
         }
@@ -774,7 +737,7 @@ struct buffer {
     }
 
     explicit buffer(range<Dimensions> range)
-        : impl_{ std::make_shared<impl<4096>>()} {
+        : impl_{std::make_shared<impl<4096>>()} {
         static_cast<impl<4096>&>(impl_.unsafe_access()).range_ = range;
         auto elements_per_page = impl_.unsafe_access().get_elements_per_page();
         auto num_elements      = range.size();
@@ -868,23 +831,14 @@ struct queue {
         global_command_task.launch();
         auto finalization_events = fut.get();
 
-        auto global_command_event
-            = device_queues_.front().submit([&finalization_events](sycl::handler& cgh) {
-                  cgh.depends_on(finalization_events);
-                  cgh.AdaptiveCpp_enqueue_custom_operation(
-                      [](const sycl::interop_handle& h) {}
-                  );
-              });
-
-//        auto task = create_task([](sycl::event event, std::vector<handler> handlers) {
-//            event.wait();
-//            for (auto& handler : handlers) {
-//                for (auto& strategy : handler.metadata_->global_metadata_.unsafe_access().strategies_) {
-//                    strategy.second->release();
-//                }
-//            }
-//        }, global_command_event, command_handlers);
-//        task.launch();
+        auto global_command_event = device_queues_.front().submit(
+            [&finalization_events](sycl::handler& cgh) {
+                cgh.depends_on(finalization_events);
+                cgh.AdaptiveCpp_enqueue_custom_operation(
+                    [](const sycl::interop_handle& h) {}
+                );
+            }
+        );
 
         return global_command_event;
     }
@@ -901,9 +855,7 @@ struct default_access_strategy {
                          .get_view<AccessMode>(std::source_location::current())
             )>;
 
-        void release() {
-            shared_view_.reset();
-        }
+        void release() override { shared_view_.reset(); }
 
         auto ready_accessor(
             sycl::queue device_queue,
@@ -1000,7 +952,7 @@ struct default_access_strategy {
             );
             device_queue
                 .memcpy(
-                    device_anchor.shared_page_access_markers_.get(),
+                    device_anchor.device_page_access_markers_.get(),
                     raw_markers.data(),
                     raw_markers.size() * sizeof(access_marker_ptr)
                 )
@@ -1013,40 +965,28 @@ struct default_access_strategy {
             if constexpr (AccessMode == access_mode::read) {
                 return prepare_task;
             }
-            auto finalization_task = create_task([]() {
-                //                auto buffer_ptr =
-                //                &shared_view.get()->access(); auto&
-                //                device_anchor
-                //                    = this->anchor_->info_
-                //                          ->device_anchors_[device_queue.get_device()];
-                //                std::vector<sycl::event> update_events;
-                //                for (auto& page : device_anchor.pages_) {
-                //                    auto page_index =
-                //                    static_cast<page_index_t>(
-                //                        std::distance(&device_anchor.pages_.front(),
-                //                        &page)
-                //                    );
-                //                    auto event
-                //                        =
-                //                        buffer_ptr->update_page_data_for(page_index,
-                //                        page);
-                //                    update_events.push_back(event);
-                //                }
-                //                for (auto& event : update_events) {
-                //                    event.wait_and_throw();
-                //                }
-            });
-            std::vector<sycl::event> update_events;
-            for (auto& page : device_anchor.pages_) {
-                auto page_index = static_cast<page_index_t>(
-                    std::distance(&device_anchor.pages_.front(), &page)
-                );
-                auto event = buffer_ptr->update_page_data_for(page_index, page);
-                update_events.push_back(event);
-            }
-            for (auto& event : update_events) {
-                event.wait_and_throw();
-            }
+            auto finalization_task = create_task(
+                [](std::decay_t<decltype(device_anchor)>* device_anchor_ptr,
+                   decltype(buffer_ptr)& buffer_ptr) -> void {
+                    auto& device_anchor = *device_anchor_ptr;
+                    std::vector<sycl::event> update_events;
+                    for (auto& page : device_anchor.pages_) {
+                        auto page_index = static_cast<page_index_t>(
+                            std::distance(&device_anchor.pages_.front(), &page)
+                        );
+                        auto event = buffer_ptr->update_page_data_for(
+                            page_index,
+                            page
+                        );
+                        update_events.push_back(event);
+                    }
+                    for (auto& event : update_events) {
+                        event.wait_and_throw();
+                    }
+                },
+                &device_anchor,
+                buffer_ptr
+            );
             prepare_task.add_dependent_task(finalization_task);
             finalization_task.launch();
             return finalization_task;

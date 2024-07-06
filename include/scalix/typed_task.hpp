@@ -72,8 +72,8 @@ class typed_task<R>::typed_impl final : public impl {
     template<class F, class PassedArg1, class... PassedArgs>
     typed_impl(F&& func, PassedArg1&& arg1, PassedArgs&&... args)
         : args_ptr_{std::make_shared<std::tuple<
-              std::remove_reference_t<PassedArg1>,
-              std::remove_reference_t<PassedArgs>...>>(
+              std::decay_t<PassedArg1>,
+              std::decay_t<PassedArgs>...>>(
               std::forward<PassedArg1>(arg1),
               std::forward<PassedArgs>(args)...
           )},
@@ -150,17 +150,23 @@ class typed_task<R>::typed_impl final : public impl {
     }
 
     std::shared_ptr<std::packaged_task<function_type>> task_;
-    std::shared_ptr<std::tuple<std::remove_reference_t<Args>...>> args_ptr_;
+    std::shared_ptr<std::tuple<std::decay_t<Args>...>> args_ptr_;
     static constexpr auto is_rvalue_ref_args_
         = std::make_tuple(std::is_rvalue_reference_v<Args>...);
     std::future<R> future_{};
 };
 
+template<class R>
+typed_task<R>::operator generic_task() {
+    return {impl_};
+}
+
 struct task_factory {
     template<class F, class... Args>
     static auto create_task(F&& func, Args&&... args)
-        -> typed_task<std::invoke_result_t<F, Args...>> {
-        using task_t       = typed_task<std::invoke_result_t<F, Args...>>;
+        -> typed_task<
+            std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>> {
+        using task_t       = typed_task<std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>>;
         using typed_impl_t = typename task_t::template typed_impl<
             decltype(std::forward<Args>(args))...>;
         return task_t{std::make_unique<typed_impl_t>(
@@ -182,14 +188,10 @@ typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
       future_ptr_(&static_cast<decltype(impl.get())>(this->impl_.get())->future_
       ) {}
 
-template<class R>
-typed_task<R>::operator generic_task() {
-    return {impl_};
-}
-
 template<class F, class... Args>
 auto create_task(F&& func, Args&&... args)
-    -> typed_task<std::invoke_result_t<F, Args...>> {
+    -> typed_task<
+        std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>> {
     return task_factory::create_task(
         std::forward<F>(func),
         std::forward<Args>(args)...
