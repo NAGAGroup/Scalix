@@ -47,7 +47,7 @@ class page_data_interface {
     page_data_interface(const page_data_interface&) = default;
     page_data_interface(page_data_interface&&)      = default;
 
-    static void copy(
+    static sycl::event copy(
         sycl::queue source_queue,
         page_ptr_t source,
         sycl::queue dest_queue,
@@ -57,24 +57,29 @@ class page_data_interface {
         if (source == nullptr || destination == nullptr) {
             return;
         }
-//        if (source == destination) {
-//            return;
-//        }
+        if (source == destination) {
+            return;
+        }
 
         auto source_type
             = sycl::get_pointer_type(source, source_queue.get_context());
         auto dest_type
             = sycl::get_pointer_type(destination, dest_queue.get_context());
 
-//        if (source_queue.get_device() == dest_queue.get_device()
-//            && source_type != usm::alloc::unknown
-//            && dest_type != usm::alloc::unknown) {
-//            dest_queue.memcpy(destination, source, page_size).wait_and_throw();
-//            return;
-//        }
+        if (source_type == usm::alloc::unknown
+            || dest_type == usm::alloc::unknown) {
+            throw std::invalid_argument{"Unknown USM type"};
+        }
+
+        if (source_queue.get_device() == dest_queue.get_device()) {
+            auto event = dest_queue.memcpy(destination, source, page_size);
+//            event.wait_and_throw();
+            return event;
+        }
 
         page_ptr_t host_ptr = nullptr;
         ::sclx::unique_ptr<byte[]> host_ptr_owner;
+        sycl::event host_copy_event;
         if (dest_type == usm::alloc::host) {
             host_ptr = source;
         } else if (source_type == usm::alloc::host) {
@@ -86,28 +91,30 @@ class page_data_interface {
                 page_size
             );
             host_ptr = host_ptr_owner.get();
-            source_queue.memcpy(host_ptr, source, page_size).wait_and_throw();
+            host_copy_event = source_queue.memcpy(host_ptr, source, page_size);
         }
 
-        dest_queue.memcpy(destination, host_ptr, page_size).wait_and_throw();
+        auto event = dest_queue.memcpy(destination, host_ptr, page_size, host_copy_event);
+//        event.wait_and_throw();
+        return event;
     }
 
     auto
     operator=(const page_data_interface&) -> page_data_interface& = default;
     auto operator=(page_data_interface&&) -> page_data_interface& = default;
 
-    virtual auto copy_to(page_data_interface& other) const -> std::future<void>
+    virtual auto copy_to(page_data_interface& other) const -> sycl::event
                                                               = 0;
     virtual auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
-        -> std::future<void> = 0;
+        -> sycl::event = 0;
 
     [[nodiscard]] virtual auto
     copy_to(std::shared_ptr<page_data_interface> other
-    ) const -> std::future<void> = 0;
+    ) const -> sycl::event = 0;
 
     virtual auto
     copy_from(sycl::queue source_queue, concurrent_guard<page_ptr_t> source)
-        -> std::future<void> = 0;
+        -> sycl::event = 0;
 
     virtual auto device_queue() const -> sycl::queue = 0;
 
@@ -140,48 +147,43 @@ class page_data final : public page_data_interface {
           queue_{std::move(queue)} {}
 
     auto copy_to(page_data_interface& other
-    ) const -> std::future<void> override {
+    ) const -> sycl::event override {
         return other.copy_from(device_queue(), data_);
     }
 
     auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
-        -> std::future<void> override {
+        -> sycl::event override {
         auto data = data_.get_view<access_mode::read>();
-        page_data_interface::copy(
+        return page_data_interface::copy(
             queue_,
             data.access(),
             dest_queue,
             destination,
             page_size
         );
-        return std::async([] {
-        });
     }
 
     auto copy_to(std::shared_ptr<page_data_interface> other
-    ) const -> std::future<void> override {
+    ) const -> sycl::event override {
         return copy_to(*other);
     }
 
     auto copy_from(
         sycl::queue source_queue,
         concurrent_guard<page_ptr_t> source_guard
-    ) -> std::future<void> override {
+    ) -> sycl::event override {
         if (source_guard.unsafe_access() == data_.unsafe_access()) {
-            return std::async([] {
-            });
+            return {};
         }
         auto source = source_guard.get_view<access_mode::read>();
         auto dest   = data_.get_view<access_mode::write>();
-        page_data_interface::copy(
+        return page_data_interface::copy(
             source_queue,
             source.access(),
             queue_,
             dest.access(),
             page_size
         );
-        return std::async([] {
-        });
     }
 
     auto device_queue() const -> sycl::queue override { return queue_; }

@@ -65,14 +65,9 @@ int main() {
                 shared_data_ptr[idx[0]] = buffer_acc[idx];
             }
         );
-    }).wait_and_throw();
+    });
 
     for (int i = 0; i < 10; ++i) {
         std::cout << shared_data[i] << std::endl;
-    }
-
-    auto acsr = buffer.get_access<sclx::access_mode::read>();
-    for (auto& val : acsr.data_) {
-        std::cout << val << std::endl;
     }
 }

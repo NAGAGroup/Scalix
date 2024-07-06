@@ -113,6 +113,7 @@ class typed_task<R>::typed_impl final : public impl {
                         dependent_task.impl_->decrease_dependency_count();
                     }
                 }
+                args_ptr.reset();
             },
             task_,
             args_ptr_,
