@@ -97,14 +97,14 @@ class typed_task<R>::typed_impl final : public impl {
                 {
                     auto metadata
                         = metadata_guard.template get_view<access_mode::write>(
-                            std::source_location::current()
+
                         );
                     metadata.access().has_completed = true;
                 }
                 {
                     auto metadata
                         = metadata_guard.template get_view<access_mode::read>(
-                            std::source_location::current()
+
                         );
                     for (const auto& dependent_task :
                          metadata.access().dependent_tasks) {

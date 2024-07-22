@@ -55,10 +55,10 @@ class page_data_interface {
         page_size_t page_size
     ) {
         if (source == nullptr || destination == nullptr) {
-            return;
+            return {};
         }
         if (source == destination) {
-            return;
+            return {};
         }
 
         auto source_type
@@ -73,7 +73,7 @@ class page_data_interface {
 
         if (source_queue.get_device() == dest_queue.get_device()) {
             auto event = dest_queue.memcpy(destination, source, page_size);
-//            event.wait_and_throw();
+            //            event.wait_and_throw();
             return event;
         }
 
@@ -90,12 +90,14 @@ class page_data_interface {
                 usm::alloc::host,
                 page_size
             );
-            host_ptr = host_ptr_owner.get();
+            host_ptr        = host_ptr_owner.get();
             host_copy_event = source_queue.memcpy(host_ptr, source, page_size);
         }
 
-        auto event = dest_queue.memcpy(destination, host_ptr, page_size, host_copy_event);
-//        event.wait_and_throw();
+        auto event
+            = dest_queue
+                  .memcpy(destination, host_ptr, page_size, host_copy_event);
+        //        event.wait_and_throw();
         return event;
     }
 
@@ -103,14 +105,14 @@ class page_data_interface {
     operator=(const page_data_interface&) -> page_data_interface& = default;
     auto operator=(page_data_interface&&) -> page_data_interface& = default;
 
-    virtual auto copy_to(page_data_interface& other) const -> sycl::event
-                                                              = 0;
-    virtual auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
-        -> sycl::event = 0;
+    virtual auto copy_to(page_data_interface& other) const -> sycl::event = 0;
+    virtual auto
+    copy_to(sycl::queue dest_queue, page_ptr_t destination) const -> sycl::event
+                                                                     = 0;
 
     [[nodiscard]] virtual auto
-    copy_to(std::shared_ptr<page_data_interface> other
-    ) const -> sycl::event = 0;
+    copy_to(std::shared_ptr<page_data_interface> other) const -> sycl::event
+                                                                 = 0;
 
     virtual auto
     copy_from(sycl::queue source_queue, concurrent_guard<page_ptr_t> source)
@@ -146,8 +148,7 @@ class page_data final : public page_data_interface {
           alloc_handle_{std::move(alloc_handle)},
           queue_{std::move(queue)} {}
 
-    auto copy_to(page_data_interface& other
-    ) const -> sycl::event override {
+    auto copy_to(page_data_interface& other) const -> sycl::event override {
         return other.copy_from(device_queue(), data_);
     }
 

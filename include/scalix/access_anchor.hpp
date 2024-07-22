@@ -239,7 +239,7 @@ struct access_strategy_common : access_strategy_interface {
         const sycl::queue& device_queue
     ) override {
         auto anchor = anchor_.get_view<access_mode::write>(
-            std::source_location::current()
+
         );
         if (anchor->info_ == nullptr) {
             anchor->info_ = std::make_unique<access_anchor::anchor_info>();
@@ -266,7 +266,7 @@ struct access_strategy_common : access_strategy_interface {
     get_page_ptrs(const sycl::device& device, access_locale locale) const
         -> page_ptr_t* override {
         auto anchor = anchor_.get_view<access_mode::read>(
-            std::source_location::current()
+
         );
         return anchor->get_page_ptrs(device, locale);
     }
@@ -274,21 +274,21 @@ struct access_strategy_common : access_strategy_interface {
     [[nodiscard]] auto get_device_page_access_markers(const sycl::device& device
     ) const -> access_marker_ptr* override {
         auto anchor = anchor_.get_view<access_mode::read>(
-            std::source_location::current()
+
         );
         return anchor->get_device_page_access_markers(device);
     }
 
     auto get_primary_queue() const -> sycl::queue {
         auto anchor = anchor_.get_view<access_mode::read>(
-            std::source_location::current()
+
         );
         return sycl::queue{anchor->info_->device_anchors_.begin()->first};
     }
 
     auto get_primary_device() const -> const sycl::device& {
         auto anchor = anchor_.get_view<access_mode::read>(
-            std::source_location::current()
+
         );
         return anchor->info_->device_anchors_.begin()->first;
     }
@@ -451,7 +451,7 @@ struct access_strategy_common : access_strategy_interface {
         //            // copy the updated primary page back to the peers
         //            std::vector<sycl::event> primary_to_peer_events;
         //            auto anchor = anchor_.get_view<access_mode::read>(
-        //                std::source_location::current()
+        //
         //            );
         //            for (int peer_idx = 1; peer_idx < number_of_peers;
         //            ++peer_idx) {
@@ -591,7 +591,7 @@ struct handler {
         auto& global_metadata       = *metadata_->global_metadata_;
         auto unprotected_buffer_ptr = &buffer_guard.unsafe_access();
         auto buffer_view = buffer_guard.template get_view<access_mode::write>(
-            std::source_location::current()
+
         );
         if (global_metadata.strategies_.count(unprotected_buffer_ptr) == 0) {
             using strategy_type = std::unique_ptr<access_strategy_interface>;
@@ -764,7 +764,7 @@ struct buffer {
             std::conditional_t<AccessMode == access_mode::read, const T, T>,
             Dimensions> {
         auto view = impl_.template get_view<AccessMode>(
-            std::source_location::current()
+
         );
         auto acsr_generic = view->get_host_access();
         using acsr_type   = host_accessor<
@@ -948,8 +948,7 @@ struct default_access_strategy {
     struct impl : access_strategy_common {
         using buffer_view_t = std::decay_t<
             decltype(std::declval<concurrent_guard<buffer_helper_interface>>()
-                         .get_view<AccessMode>(std::source_location::current())
-            )>;
+                         .get_view<AccessMode>())>;
 
         std::vector<generic_task> accessor_ready_tasks_;
         std::vector<generic_task> post_command_tasks_;
@@ -1005,7 +1004,7 @@ struct default_access_strategy {
                 buffer_locked_future.get();
                 auto& buffer_ptr = *locked_buffer_view_.get();
                 auto anchor      = anchor_.get_view<access_mode::read>(
-                    std::source_location::current()
+
                 );
                 auto& device_anchor
                     = anchor->info_->device_anchors_[device_queue.get_device()];
@@ -1092,7 +1091,7 @@ struct default_access_strategy {
 
             auto finalization_task = create_task([=, this]() mutable {
                 auto anchor = anchor_.get_view<access_mode::read>(
-                    std::source_location::current()
+
                 );
                 auto& buffer_ptr = *locked_buffer_view_.get();
                 auto& device_anchor
