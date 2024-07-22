@@ -34,8 +34,9 @@ int main() {
     std::vector<sycl::queue> device_queues;
     auto device_list = sycl::device::get_devices();
     for (auto& device : device_list) {
-        if (device.is_gpu()) {
+        if (device.is_cpu()) {
             device_queues.emplace_back(device);
+            break;
         }
     }
     q.device_queues_ = std::move(device_queues);
@@ -51,23 +52,32 @@ int main() {
     );
     q.device_weights_ = std::move(device_weights);
     sclx::buffer<double, 1> buffer{10 * num_devices};
-    auto shared_data = sclx::make_unique<double[]>(q.device_queues_[0], sycl::usm::alloc::shared, 10);
+    auto shared_data = sclx::make_unique<double[]>(q.device_queues_[0], sycl::usm::alloc::shared, 10 * num_devices);
     q.submit([&](sclx::handler& cgh) {
-        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
-            cgh,
-            sclx::default_access_strategy{}
-        );
-        auto shared_data_ptr = shared_data.get();
-        cgh.parallel_for(
-            sycl::range<1>{10 * num_devices},
-            [=](sycl::id<1> idx) {
-                buffer_acc[idx] = static_cast<double>(idx[0]);
-                shared_data_ptr[idx[0]] = buffer_acc[idx];
-            }
-        );
-    });
+         auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
+             cgh,
+             sclx::default_access_strategy{}
+         );
+         auto shared_data_ptr = shared_data.get();
+         cgh.parallel_for(
+             sycl::range<1>{10 * num_devices},
+             [=](sycl::id<1> idx) {
+                 buffer_acc[idx] = static_cast<double>(idx[0]);
+                 shared_data_ptr[idx[0]] = buffer_acc[idx];
+             }
+         );
+     }).wait_and_throw();
 
-    for (int i = 0; i < 10; ++i) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto host_acsr = buffer.get_access<sycl::access_mode::write>();
+    for (auto& val : host_acsr.data_) {
+        std::cout << val << std::endl;
+    }
+
+    for (int i = 0; i < 10 * num_devices; ++i) {
         std::cout << shared_data[i] << std::endl;
     }
+
+    return 0;
 }

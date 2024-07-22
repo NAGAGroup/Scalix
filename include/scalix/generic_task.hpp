@@ -43,9 +43,9 @@ class generic_task {
     generic_task(generic_task&&)                    = default;
     auto operator=(generic_task&&) -> generic_task& = default;
 
-    void launch();
+    void launch() const;
 
-    void add_dependent_task(const generic_task& dependent_task);
+    void add_dependent_task(const generic_task& dependent_task) const;
 
     [[nodiscard]] auto has_completed() const -> bool;
 

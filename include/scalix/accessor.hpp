@@ -97,6 +97,8 @@ map_index_to_byte_offset(const page_size_t page_size, const IndexType index) {
 template<class, int>
 class buffer;
 
+class handler;
+
 template<
     class T,
     int Dimensions,
@@ -109,6 +111,7 @@ class accessor {
         = std::conditional_t<AccessMode == access_mode::read, const T&, T&>;
 
     friend class buffer<T, Dimensions>;
+    friend class handler;
 
     accessor(const accessor&) = default;
     accessor(accessor&&)      = default;

@@ -43,7 +43,7 @@ namespace sclx {
 generic_task::generic_task(std::shared_ptr<impl> impl)
     : impl_{std::move(impl)} {}
 
-void generic_task::add_dependent_task(const generic_task& dependent_task) {
+void generic_task::add_dependent_task(const generic_task& dependent_task) const {
     const auto metadata = impl_->metadata_.get_view<access_mode::write>();
     const auto dependent_metadata
         = dependent_task.impl_->metadata_.get_view<access_mode::write>();
@@ -60,7 +60,7 @@ auto generic_task::has_completed() const -> bool {
     return impl_->has_completed();
 }
 
-void generic_task::launch() {
+void generic_task::launch() const {
     {
         const auto metadata = impl_->metadata_.get_view<access_mode::write>();
 

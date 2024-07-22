@@ -80,6 +80,8 @@ class concurrent_view {
         return *ptr_;
     }
 
+    auto operator->() const -> T* { return &access(); }
+
     auto access() && -> T& = delete;
 
     void unlock() { lock_.unlock(); }
@@ -92,9 +94,14 @@ class concurrent_view {
         }
         static constexpr auto access_mode
             = std::is_const_v<T> ? "read" : "write";
+        auto ptr = reinterpret_cast<std::uintptr_t>(ptr_.get());
+        if (ptr == std::uintptr_t{20304304}) {
+            std::cout << "how?" << std::endl;
+        }
         std::cout << "concurrent " << access_mode
                   << " access from view created at " << *source_location_
                   << " has been released" << std::endl;
+        lock_.unlock();
     }
 
   private:
@@ -104,10 +111,9 @@ class concurrent_view {
         std::shared_ptr<std::string> source_location = nullptr
     )
         : ptr_(std::move(ptr)),
-          mutex_(mutex),
-          lock_(*mutex),
-          source_location_(std::move(source_location)) {
-    }
+          mutex_(std::move(mutex)),
+          lock_(lock_type(*mutex_)),
+          source_location_(std::move(source_location)) {}
 
     std::shared_ptr<T> ptr_;
     std::shared_ptr<std::shared_mutex> mutex_;
@@ -136,6 +142,15 @@ template<class T>
     requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard {
   public:
+    template<class U>
+        requires std::is_same_v<U, std::decay_t<U>>
+    friend class concurrent_guard;
+
+    template<class U>
+    concurrent_guard(const concurrent_guard<U>& other)
+        : ptr_(other.ptr_),
+          mutex_(other.mutex_) {}
+
     concurrent_guard() : ptr_(std::make_shared<T>()) {}
 
     explicit concurrent_guard(T value)
@@ -158,8 +173,8 @@ class concurrent_guard {
     template<access_mode Mode = access_mode::read>
     [[nodiscard]] auto get_view(const std::source_location& loc
     ) const -> concurrent_view_t<T, Mode> {
-        auto code_location =
-            std::string{"filename: "} + loc.file_name()
+        auto code_location
+            = std::string{"filename: "} + loc.file_name()
             + " line: " + std::to_string(loc.line()) + " -- (guarded value ID: "
             + std::to_string(reinterpret_cast<std::uintptr_t>(ptr_.get()))
             + ")";
@@ -170,9 +185,26 @@ class concurrent_guard {
                   << code_location << std::endl;
         return get_view_generic<
             typename concurrent_view_t<T, Mode>::value_type>(
-            std::make_shared<std::string>(
-                code_location
-            )
+            std::make_shared<std::string>(code_location)
+        );
+    }
+
+    template<access_mode Mode = access_mode::read>
+    [[nodiscard]] auto get_view_ptr(const std::source_location& loc
+    ) const -> std::shared_ptr<concurrent_view_t<T, Mode>> {
+        auto code_location
+            = std::string{"filename: "} + loc.file_name()
+            + " line: " + std::to_string(loc.line()) + " -- (guarded value ID: "
+            + std::to_string(reinterpret_cast<std::uintptr_t>(ptr_.get()))
+            + ")";
+
+        static constexpr auto access_mode
+            = Mode == access_mode::read ? "read" : "write";
+        std::cout << "concurrent " << access_mode << " access requested at "
+                  << code_location << std::endl;
+        return get_view_generic_ptr<
+            typename concurrent_view_t<T, Mode>::value_type>(
+            std::make_shared<std::string>(code_location)
         );
     }
 
@@ -198,7 +230,20 @@ class concurrent_guard {
             );
         }
 
-        return {ptr_, mutex_, std::move(source_location)};
+        return concurrent_view<U>{ptr_, mutex_, std::move(source_location)};
+    }
+    template<class U>
+    [[nodiscard]] auto get_view_generic_ptr(
+        std::shared_ptr<std::string> source_location = nullptr
+    ) const -> std::shared_ptr<concurrent_view<U>> {
+        if (!valid()) {
+            throw std::runtime_error("concurrent_guard does not hold valid data"
+            );
+        }
+
+        return std::unique_ptr<concurrent_view<U>>{
+            new concurrent_view<U>{ptr_, mutex_, std::move(source_location)}
+        };
     }
     std::shared_ptr<T> ptr_ = std::make_shared<T>();
     std::shared_ptr<std::shared_mutex> mutex_

@@ -92,9 +92,7 @@ class typed_task<R>::typed_impl final : public impl {
         using args_ptr_type = std::decay_t<decltype(args_ptr_)>;
         using metadata_type = std::decay_t<decltype(metadata_)>;
         std::thread exec_thread(
-            [](task_type task,
-               args_ptr_type args_ptr,
-               metadata_type metadata_guard) {
+            [task = task_, args_ptr = args_ptr_, metadata_guard = metadata_]() {
                 typed_impl::apply(*task, *args_ptr);
                 {
                     auto metadata
@@ -113,11 +111,7 @@ class typed_task<R>::typed_impl final : public impl {
                         dependent_task.impl_->decrease_dependency_count();
                     }
                 }
-                args_ptr.reset();
-            },
-            task_,
-            args_ptr_,
-            metadata_
+            }
         );
         exec_thread.detach();
     }
@@ -164,9 +158,12 @@ typed_task<R>::operator generic_task() {
 struct task_factory {
     template<class F, class... Args>
     static auto create_task(F&& func, Args&&... args)
-        -> typed_task<
-            std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>> {
-        using task_t       = typed_task<std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>>;
+        -> typed_task<std::invoke_result_t<
+            std::decay_t<F>,
+            decltype(std::forward<Args>(args))...>> {
+        using task_t       = typed_task<std::invoke_result_t<
+                  std::decay_t<F>,
+                  decltype(std::forward<Args>(args))...>>;
         using typed_impl_t = typename task_t::template typed_impl<
             decltype(std::forward<Args>(args))...>;
         return task_t{std::make_unique<typed_impl_t>(
@@ -190,8 +187,9 @@ typed_task<R>::typed_task(std::unique_ptr<typed_impl<Args...>> impl)
 
 template<class F, class... Args>
 auto create_task(F&& func, Args&&... args)
-    -> typed_task<
-        std::invoke_result_t<std::decay_t<F>, decltype(std::forward<Args>(args))...>> {
+    -> typed_task<std::invoke_result_t<
+        std::decay_t<F>,
+        decltype(std::forward<Args>(args))...>> {
     return task_factory::create_task(
         std::forward<F>(func),
         std::forward<Args>(args)...
