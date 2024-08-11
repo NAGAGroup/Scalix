@@ -1122,10 +1122,10 @@ struct default_access_strategy {
             );
         }
 
-        ~impl() { std::cout << "destroyed\n"; }
+        ~impl() override = default;
 
-        impl(concurrent_guard<buffer_helper_interface> buffer_helper)
-            : buffer_helper_{buffer_helper} {}
+        explicit impl(concurrent_guard<buffer_helper_interface> buffer_helper)
+            : buffer_helper_{std::move(buffer_helper)} {}
 
         impl(const impl&)                    = delete;
         impl(impl&&)                         = default;
