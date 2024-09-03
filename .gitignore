@@ -18,3 +18,4 @@ conan_cache_*.tgz
 .clion.source.upload.marker
 clang-tidy-fixes/
 .cache/clangd/index
+.pixi/envs/default
