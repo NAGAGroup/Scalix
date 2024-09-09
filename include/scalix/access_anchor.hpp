@@ -39,6 +39,7 @@
 #include <hipSYCL/sycl/event.hpp>
 #include <hipSYCL/sycl/queue.hpp>
 #include <memory>
+#include <mutex>
 #include <scalix/accessor.hpp>
 #include <scalix/concurrent_guard.hpp>
 #include <scalix/defines.hpp>
@@ -132,17 +133,17 @@ struct access_strategy_interface {
 struct buffer_helper_interface {
     virtual auto update_page_data_for(
         page_index_t page_index,
-        shared_ptr<detail::page_data_interface> page
+        shared_ptr<detail::partition_interface> page
     ) -> sycl::event = 0;
     virtual void
-    make_pages_valid(std::vector<shared_ptr<detail::page_data_interface>>& pages
+    make_pages_valid(std::vector<shared_ptr<detail::partition_interface>>& pages
     )                                                                       = 0;
     [[nodiscard]] virtual auto get_number_of_pages() const -> page_count_t  = 0;
     [[nodiscard]] virtual auto get_elements_per_page() const -> std::size_t = 0;
     [[nodiscard]] virtual auto get_element_size() const -> std::size_t      = 0;
     [[nodiscard]] virtual auto get_page_size() const -> page_size_t         = 0;
     virtual auto allocate_page(sycl::queue queue
-    ) const -> shared_ptr<detail::page_data_interface>                      = 0;
+    ) const -> shared_ptr<detail::partition_interface>                      = 0;
     virtual void register_anchor(std::shared_ptr<access_anchor> anchor)     = 0;
     virtual ~buffer_helper_interface() = default;
 };
@@ -177,7 +178,7 @@ struct buffer_helper : buffer_helper_base<T, Dimensions> {
     }
 
     auto allocate_page(sycl::queue queue
-    ) const -> shared_ptr<detail::page_data_interface> override {
+    ) const -> shared_ptr<detail::partition_interface> override {
         auto& device_queue = queue;
         auto page_ptr      = make_shared<std::byte[]>(
             device_queue,
@@ -197,7 +198,7 @@ struct buffer_helper : buffer_helper_base<T, Dimensions> {
 struct access_anchor {
     struct anchor_info {
         struct device_anchor {
-            std::vector<shared_ptr<detail::page_data_interface>> pages_;
+            std::vector<shared_ptr<detail::partition_interface>> pages_;
             std::vector<page_ptr_t> host_page_ptrs_;
             unique_ptr<page_ptr_t[]> device_page_ptrs_;
             std::vector<unique_ptr<access_strategy_interface::access_marker[]>>
@@ -590,9 +591,7 @@ struct handler {
         }
         auto& global_metadata       = *metadata_->global_metadata_;
         auto unprotected_buffer_ptr = &buffer_guard.unsafe_access();
-        auto buffer_view = buffer_guard.template get_view<access_mode::write>(
-
-        );
+        auto buffer_view = buffer_guard.template get_view<access_mode::read>();
         if (global_metadata.strategies_.count(unprotected_buffer_ptr) == 0) {
             using strategy_type = std::unique_ptr<access_strategy_interface>;
             strategy_type strategy_impl
@@ -637,7 +636,7 @@ template<class T, int Dimensions>
 struct buffer {
     template<page_size_t PageSize>
     struct impl : buffer_helper<T, Dimensions, PageSize> {
-        std::vector<std::weak_ptr<detail::page_data_interface>> pages_;
+        std::vector<std::weak_ptr<detail::partition_interface>> pages_;
         std::vector<std::shared_ptr<access_anchor>> anchors_;
         range<Dimensions> range_;
 
@@ -646,7 +645,7 @@ struct buffer {
         }
 
         void make_pages_valid(
-            std::vector<shared_ptr<detail::page_data_interface>>& pages
+            std::vector<shared_ptr<detail::partition_interface>>& pages
         ) override {
             std::vector<sycl::event> events;
             std::transform(
@@ -671,7 +670,7 @@ struct buffer {
                     if (new_page == nullptr) {
                         return weak_page;
                     }
-                    return std::weak_ptr<detail::page_data_interface>{new_page};
+                    return std::weak_ptr<detail::partition_interface>{new_page};
                 }
             );
             for (auto& event : events) {
@@ -726,7 +725,7 @@ struct buffer {
 
         auto update_page_data_for(
             page_index_t page_index,
-            shared_ptr<detail::page_data_interface> page
+            shared_ptr<detail::partition_interface> page
         ) -> sycl::event override {
             auto page_data
                 = std::static_pointer_cast<detail::page_data<PageSize>>(page);
@@ -969,41 +968,14 @@ struct default_access_strategy {
             sycl::range<1> local_range,
             sycl::id<1> range_offset
         ) override {
-            std::promise<void> lock_task_started;
-            auto lock_task_started_future = lock_task_started.get_future();
-            std::promise<void> buffer_locked_promise;
-            auto buffer_locked_future = buffer_locked_promise.get_future();
-            auto lock_task            = create_task([&lock_task_started,
-                                          buffer_locked_promise
-                                          = std::move(buffer_locked_promise),
-                                          this]() mutable {
-                auto is_locked = is_locked_.exchange(true);
-                if (!is_locked) {
-                    lock_task_started.set_value();
-                    locked_buffer_view_ = std::make_unique<buffer_view_t>(
-                        buffer_helper_.template get_view<AccessMode>()
-                    );
-                    is_locking_.exchange(false);
-                } else {
-                    lock_task_started.set_value();
-                }
-                while (is_locking_.load()) {
-                    std::this_thread::yield();
-                }
-                auto buffer_view = locked_buffer_view_;
-                buffer_locked_promise.set_value();
-                while (buffer_view.use_count() > 1) {}
-                std::cout << "Made it here!\n";
-            });
-            lock_task.launch();
-            lock_task_started_future.wait();
+            auto buffer_view
+                = buffer_helper_.get_view<access_mode::write>(std::defer_lock);
             auto prepare_task = create_task([=,
-                                             buffer_locked_future
-                                             = std::move(buffer_locked_future),
+                                             buffer_view
+                                             = std::move(buffer_view),
                                              this]() mutable {
-                buffer_locked_future.get();
-                auto& buffer_ptr = *locked_buffer_view_.get();
-                auto anchor      = anchor_.get_view<access_mode::read>(
+                buffer_view.lock();
+                auto anchor = anchor_.get_view<access_mode::read>(
 
                 );
                 auto& device_anchor
@@ -1014,10 +986,10 @@ struct default_access_strategy {
                     pages.end(),
                     pages.begin(),
                     [&](auto& page) {
-                        return buffer_ptr->allocate_page(device_queue);
+                        return buffer_view->allocate_page(device_queue);
                     }
                 );
-                buffer_ptr->make_pages_valid(pages);
+                buffer_view->make_pages_valid(pages);
                 std::transform(
                     pages.begin(),
                     pages.end(),
@@ -1044,7 +1016,7 @@ struct default_access_strategy {
                         auto page_markers = make_unique<access_marker[]>(
                             device_queue,
                             usm::alloc::device,
-                            buffer_ptr->get_elements_per_page()
+                            buffer_view->get_elements_per_page()
                         );
                         return std::move(page_markers);
                     }
@@ -1061,7 +1033,7 @@ struct default_access_strategy {
                                 markers.get(),
                                 0,
                                 sizeof(access_marker)
-                                    * buffer_ptr->get_elements_per_page()
+                                    * buffer_view->get_elements_per_page()
                             );
                         }
                     );
@@ -1081,6 +1053,7 @@ struct default_access_strategy {
                             * sizeof(access_marker_ptr)
                     )
                     .wait_and_throw();
+                buffer_view.unlock();
             });
 
             this->accessor_ready_tasks_.push_back(prepare_task);
@@ -1090,10 +1063,11 @@ struct default_access_strategy {
             }
 
             auto finalization_task = create_task([=, this]() mutable {
+                auto buffer_view = this->buffer_helper_
+                                       .template get_view<access_mode::write>();
                 auto anchor = anchor_.get_view<access_mode::read>(
 
                 );
-                auto& buffer_ptr = *locked_buffer_view_.get();
                 auto& device_anchor
                     = anchor->info_->device_anchors_[device_queue.get_device()];
                 std::vector<sycl::event> update_events;
@@ -1102,12 +1076,13 @@ struct default_access_strategy {
                         std::distance(&device_anchor.pages_.front(), &page)
                     );
                     auto event
-                        = buffer_ptr->update_page_data_for(page_index, page);
+                        = buffer_view->update_page_data_for(page_index, page);
                     update_events.push_back(event);
                 }
                 for (auto& event : update_events) {
                     event.wait_and_throw();
                 }
+                std::cout << "Finalizationt task complete!" << std::endl;
             });
             prepare_task.add_dependent_task(finalization_task);
             this->post_command_tasks_.push_back(finalization_task);
@@ -1117,9 +1092,8 @@ struct default_access_strategy {
             if constexpr (AccessMode == access_mode::read) {
                 return {};
             }
-            return make_shared_pages_consistent_impl(
-                &locked_buffer_view_->access()
-            );
+            auto buffer_view = buffer_helper_.get_view<access_mode::write>();
+            return make_shared_pages_consistent_impl(&buffer_view.access());
         }
 
         ~impl() override = default;
@@ -1134,7 +1108,6 @@ struct default_access_strategy {
 
         std::atomic<bool> is_locking_{true};
         std::atomic<bool> is_locked_{false};
-        std::shared_ptr<buffer_view_t> locked_buffer_view_;
         concurrent_guard<buffer_helper_interface> buffer_helper_{nullptr};
     };
 

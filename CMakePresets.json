@@ -25,16 +25,13 @@
       "name": "vcpkg",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
     },
     {
       "name": "dev-mode",
       "hidden": true,
-      "inherits": [
-        "cmake-pedantic",
-        "vcpkg"
-      ],
+      "inherits": ["cmake-pedantic", "vcpkg"],
       "cacheVariables": {
         "SCALIX_DEVELOPER_MODE": "ON"
       }
@@ -61,9 +58,7 @@
     },
     {
       "name": "ci-linux-llvm-sycl",
-      "inherits": [
-        "ci-linux-base"
-      ],
+      "inherits": ["ci-linux-base"],
       "cacheVariables": {
         "SCALIX_SYCL_TARGETS": "nvptx64-nvidia-cuda,spir64_x86_64,spir64_fpga",
         "SCALIX_EXTRA_SYCL_ARGS": "",
@@ -72,13 +67,12 @@
     },
     {
       "name": "ci-linux-acpp",
-      "inherits": [
-        "ci-linux-base"
-      ],
+      "inherits": ["ci-linux-base"],
       "cacheVariables": {
-        "AdaptiveCpp_DIR": "/usr/local/lib/cmake/AdaptiveCpp",
+        "AdaptiveCpp_DIR": "/usr/local/acpp/lib/cmake/AdaptiveCpp",
         "CMAKE_CXX_COMPILER": "clang++",
         "CMAKE_C_COMPILER": "clang",
+        "ACPP_EXTRA_COMPILE_OPTIONS": "--acpp-cpu-cxx=clang++",
         "SCALIX_SYCL_TARGETS": "generic"
       }
     },
@@ -93,9 +87,7 @@
     },
     {
       "name": "coverage-linux-base",
-      "inherits": [
-        "dev-mode"
-      ],
+      "inherits": ["dev-mode"],
       "hidden": true,
       "cacheVariables": {
         "ENABLE_COVERAGE": "ON",
@@ -108,25 +100,16 @@
     },
     {
       "name": "ci-coverage-llvm-sycl",
-      "inherits": [
-        "coverage-linux-base",
-        "ci-linux-llvm-sycl"
-      ]
+      "inherits": ["coverage-linux-base", "ci-linux-llvm-sycl"]
     },
     {
       "name": "ci-coverage-acpp",
-      "inherits": [
-        "coverage-linux-base",
-        "ci-linux-acpp"
-      ]
+      "inherits": ["coverage-linux-base", "ci-linux-acpp"]
     },
     {
       "name": "ci-sanitize-base",
       "hidden": true,
-      "inherits": [
-        "ci-linux-base",
-        "dev-mode"
-      ],
+      "inherits": ["ci-linux-base", "dev-mode"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Sanitize",
         "CMAKE_CXX_FLAGS_SANITIZE": "-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-common",
@@ -135,40 +118,24 @@
     },
     {
       "name": "ci-sanitize-llvm-sycl",
-      "inherits": [
-        "ci-sanitize-base",
-        "ci-linux-llvm-sycl"
-      ]
+      "inherits": ["ci-sanitize-base", "ci-linux-llvm-sycl"]
     },
     {
       "name": "ci-sanitize-acpp",
-      "inherits": [
-        "ci-sanitize-base",
-        "ci-linux-acpp"
-      ]
+      "inherits": ["ci-sanitize-base", "ci-linux-acpp"]
     },
     {
       "name": "ci-test-base",
       "hidden": true,
-      "inherits": [
-        "cppcheck",
-        "dev-mode"
-      ]
+      "inherits": ["dev-mode"]
     },
     {
       "name": "ci-test-llvm-sycl",
-      "inherits": [
-        "ci-test-base",
-        "clang-tidy",
-        "ci-linux-llvm-sycl"
-      ]
+      "inherits": ["ci-test-base", "clang-tidy", "ci-linux-llvm-sycl"]
     },
     {
       "name": "ci-test-acpp",
-      "inherits": [
-        "ci-test-base",
-        "ci-linux-acpp"
-      ]
+      "inherits": ["ci-test-base", "ci-linux-acpp"]
     }
   ]
 }

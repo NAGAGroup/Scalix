@@ -52,21 +52,26 @@ int main() {
     );
     q.device_weights_ = std::move(device_weights);
     sclx::buffer<double, 1> buffer{10 * num_devices};
-    auto shared_data = sclx::make_unique<double[]>(q.device_queues_[0], sycl::usm::alloc::shared, 10 * num_devices);
-    q.submit([&](sclx::handler& cgh) {
-         auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
-             cgh,
-             sclx::default_access_strategy{}
-         );
-         auto shared_data_ptr = shared_data.get();
-         cgh.parallel_for(
-             sycl::range<1>{10 * num_devices},
-             [=](sycl::id<1> idx) {
-                 buffer_acc[idx] = static_cast<double>(idx[0]);
-                 shared_data_ptr[idx[0]] = buffer_acc[idx];
-             }
-         );
-     }).wait_and_throw();
+    auto shared_data = sclx::make_unique<double[]>(
+        q.device_queues_[0],
+        sycl::usm::alloc::shared,
+        10 * num_devices
+    );
+    auto event = q.submit([&](sclx::handler& cgh) {
+        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
+            cgh,
+            sclx::default_access_strategy{}
+        );
+        auto shared_data_ptr = shared_data.get();
+        cgh.parallel_for(
+            sycl::range<1>{10 * num_devices},
+            [=](sycl::id<1> idx) {
+                buffer_acc[idx]         = static_cast<double>(idx[0]);
+                shared_data_ptr[idx[0]] = buffer_acc[idx];
+            }
+        );
+    });
+    event.wait_and_throw();
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 

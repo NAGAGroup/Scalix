@@ -40,12 +40,12 @@
 
 namespace sclx::detail {
 
-class page_data_interface {
+class partition_interface {
   public:
-    page_data_interface() = default;
+    partition_interface() = default;
 
-    page_data_interface(const page_data_interface&) = default;
-    page_data_interface(page_data_interface&&)      = default;
+    partition_interface(const partition_interface&) = default;
+    partition_interface(partition_interface&&)      = default;
 
     static sycl::event copy(
         sycl::queue source_queue,
@@ -102,16 +102,16 @@ class page_data_interface {
     }
 
     auto
-    operator=(const page_data_interface&) -> page_data_interface& = default;
-    auto operator=(page_data_interface&&) -> page_data_interface& = default;
+    operator=(const partition_interface&) -> partition_interface& = default;
+    auto operator=(partition_interface&&) -> partition_interface& = default;
 
-    virtual auto copy_to(page_data_interface& other) const -> sycl::event = 0;
+    virtual auto copy_to(partition_interface& other) const -> sycl::event = 0;
     virtual auto
     copy_to(sycl::queue dest_queue, page_ptr_t destination) const -> sycl::event
                                                                      = 0;
 
     [[nodiscard]] virtual auto
-    copy_to(std::shared_ptr<page_data_interface> other) const -> sycl::event
+    copy_to(std::shared_ptr<partition_interface> other) const -> sycl::event
                                                                  = 0;
 
     virtual auto
@@ -125,17 +125,17 @@ class page_data_interface {
     [[nodiscard]] virtual auto check_if_same_page(page_ptr_t other
     ) const -> bool = 0;
 
-    [[nodiscard]] virtual auto operator==(const page_data_interface& other
+    [[nodiscard]] virtual auto operator==(const partition_interface& other
     ) const -> bool = 0;
 
-    [[nodiscard]] virtual auto operator!=(const page_data_interface& other
+    [[nodiscard]] virtual auto operator!=(const partition_interface& other
     ) const -> bool = 0;
 
-    virtual ~page_data_interface() = default;
+    virtual ~partition_interface() = default;
 };
 
 template<page_size_t PageSize>
-class page_data final : public page_data_interface {
+class page_data final : public partition_interface {
   public:
     using alloc_handle_t            = std::shared_ptr<void>;
     static constexpr auto page_size = PageSize;
@@ -148,14 +148,14 @@ class page_data final : public page_data_interface {
           alloc_handle_{std::move(alloc_handle)},
           queue_{std::move(queue)} {}
 
-    auto copy_to(page_data_interface& other) const -> sycl::event override {
+    auto copy_to(partition_interface& other) const -> sycl::event override {
         return other.copy_from(device_queue(), data_);
     }
 
     auto copy_to(sycl::queue dest_queue, page_ptr_t destination) const
         -> sycl::event override {
         auto data = data_.get_view<access_mode::read>();
-        return page_data_interface::copy(
+        return partition_interface::copy(
             queue_,
             data.access(),
             dest_queue,
@@ -164,7 +164,7 @@ class page_data final : public page_data_interface {
         );
     }
 
-    auto copy_to(std::shared_ptr<page_data_interface> other
+    auto copy_to(std::shared_ptr<partition_interface> other
     ) const -> sycl::event override {
         return copy_to(*other);
     }
@@ -178,7 +178,7 @@ class page_data final : public page_data_interface {
         }
         auto source = source_guard.get_view<access_mode::read>();
         auto dest   = data_.get_view<access_mode::write>();
-        return page_data_interface::copy(
+        return partition_interface::copy(
             source_queue,
             source.access(),
             queue_,
@@ -202,12 +202,12 @@ class page_data final : public page_data_interface {
         return data_.unsafe_access() == other;
     }
 
-    [[nodiscard]] auto operator==(const page_data_interface& other
+    [[nodiscard]] auto operator==(const partition_interface& other
     ) const -> bool override {
         return other.check_if_same_page(data_.unsafe_access());
     }
 
-    [[nodiscard]] auto operator!=(const page_data_interface& other
+    [[nodiscard]] auto operator!=(const partition_interface& other
     ) const -> bool override {
         return !(*this == other);
     }

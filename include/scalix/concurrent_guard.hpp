@@ -40,6 +40,20 @@
 
 namespace sclx {
 
+namespace detail {
+
+struct access_queue {
+    using tag_t     = std::unique_ptr<unsigned char>;
+    using raw_tag_t = unsigned char*;
+    std::deque<raw_tag_t> view_tags;
+    std::mutex mtx;
+    static auto create_tag() -> tag_t {
+        return std::make_unique<unsigned char>();
+    }
+};
+
+}  // namespace detail
+
 template<class T>
     requires std::is_same_v<T, std::decay_t<T>>
 class concurrent_guard;
@@ -54,17 +68,6 @@ class concurrent_view {
 
   public:
     using value_type = T;
-
-    explicit operator concurrent_view<const T>() {
-        if constexpr (!std::is_const_v<T>) {
-            unlock();
-        }
-        return concurrent_view<const T>{
-            ptr_,
-            mutex_,
-            concurrent_view<const T>::lock_type(*mutex_, std::defer_lock)
-        };
-    }
 
     concurrent_view(const concurrent_view&)                    = delete;
     auto operator=(const concurrent_view&) -> concurrent_view& = delete;
@@ -85,22 +88,70 @@ class concurrent_view {
 
     void unlock() { lock_.unlock(); }
 
-    void lock() { lock_.lock(); }
+    void lock() {
+        enqueue_access();
+        bool can_access = false;
+        while (!can_access) {
+            detail::access_queue::raw_tag_t tag_front = nullptr;
+            {
+                std::lock_guard lock{access_queue_->mtx};
+                tag_front = access_queue_->view_tags.front();
+            }
+            can_access = (tag_front == tag_.get());
+        }
+        std::lock_guard lock{access_queue_->mtx};
+        access_queue_->view_tags.pop_front();
+        lock_.lock();
+    }
 
     ~concurrent_view() = default;
 
   private:
     concurrent_view(
         std::shared_ptr<T> ptr,
-        std::shared_ptr<std::shared_mutex> mutex
+        std::shared_ptr<std::shared_mutex> mutex,
+        std::shared_ptr<detail::access_queue> access_queue,
+        std::defer_lock_t defer_lock
     )
         : ptr_(std::move(ptr)),
-          mutex_(std::move(mutex)),
-          lock_(lock_type(*mutex_)) {}
+          mutex_(mutex),
+          lock_(lock_type(*mutex, defer_lock)),
+          access_queue_(std::move(access_queue)) {
+        enqueue_access();
+    }
 
+    concurrent_view(
+        std::shared_ptr<T> ptr,
+        std::shared_ptr<std::shared_mutex> mutex,
+        std::shared_ptr<detail::access_queue> access_queue
+    )
+        : concurrent_view(
+              std::move(ptr),
+              std::move(mutex),
+              std::move(access_queue),
+              std::defer_lock
+          ) {
+        lock();
+    }
+
+    void enqueue_access() {
+        {
+            std::lock_guard lock{access_queue_->mtx};
+            if (std::find(
+                    access_queue_->view_tags.begin(),
+                    access_queue_->view_tags.end(),
+                    tag_.get()
+                )
+                == access_queue_->view_tags.end()) {
+                access_queue_->view_tags.push_back(tag_.get());
+            }
+        }
+    }
     std::shared_ptr<T> ptr_;
     std::shared_ptr<std::shared_mutex> mutex_;
     lock_type lock_;
+    std::shared_ptr<detail::access_queue> access_queue_;
+    detail::access_queue::tag_t tag_ = detail::access_queue::create_tag();
 };
 
 template<class T, access_mode Mode>
@@ -153,10 +204,10 @@ class concurrent_guard {
     }
 
     template<access_mode Mode = access_mode::read>
-    [[nodiscard]] auto
-    get_view_ptr() const -> std::shared_ptr<concurrent_view_t<T, Mode>> {
-        return get_view_generic_ptr<
-            typename concurrent_view_t<T, Mode>::value_type>();
+    [[nodiscard]] auto get_view(std::defer_lock_t defer_lock
+    ) const -> concurrent_view_t<T, Mode> {
+        return get_view_generic<
+            typename concurrent_view_t<T, Mode>::value_type>(defer_lock);
     }
 
     [[nodiscard]] auto valid() const -> bool { return ptr_ != nullptr; }
@@ -180,11 +231,23 @@ class concurrent_guard {
             );
         }
 
-        return {ptr_, mutex_};
+        return {ptr_, mutex_, access_queue_};
+    }
+    template<class U>
+    [[nodiscard]] [[nodiscard]] auto
+    get_view_generic(std::defer_lock_t defer_lock) const -> concurrent_view<U> {
+        if (!valid()) {
+            throw std::runtime_error("concurrent_guard does not hold valid data"
+            );
+        }
+
+        return {ptr_, mutex_, access_queue_, defer_lock};
     }
     std::shared_ptr<T> ptr_ = std::make_shared<T>();
     std::shared_ptr<std::shared_mutex> mutex_
         = std::make_shared<std::shared_mutex>();
+    std::shared_ptr<detail::access_queue> access_queue_
+        = std::make_shared<detail::access_queue>();
 };
 
 }  // namespace sclx

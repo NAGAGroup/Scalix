@@ -73,7 +73,7 @@ configure_target_for_scalix(scalix)
 
 # ---- Configure library ----
 
-## This ensures clang-tidy runs on all source files, including headers
+# # This ensures clang-tidy runs on all source files, including headers
 #if(NOT BUILD_SHARED_LIBS)
 #  get_target_property(TARGET_SOURCES scalix SOURCES)
 #  get_target_property(TARGET_COMPILE_FLAGS scalix COMPILE_FLAGS)
@@ -132,7 +132,7 @@ target_include_directories(
   scalix SYSTEM PUBLIC "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/export>")
 
 # ---- Dependencies ----
-target_link_libraries(scalix PUBLIC cpptrace::cpptrace)
+# target_link_libraries(scalix PUBLIC cpptrace::cpptrace)
 
 # ---- Install rules ----
 
