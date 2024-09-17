@@ -52,7 +52,7 @@ class partition_interface {
         page_ptr_t source,
         sycl::queue dest_queue,
         page_ptr_t destination,
-        page_size_t page_size
+        partition_size_t page_size
     ) {
         if (source == nullptr || destination == nullptr) {
             return {};
@@ -134,7 +134,7 @@ class partition_interface {
     virtual ~partition_interface() = default;
 };
 
-template<page_size_t PageSize>
+template<partition_size_t PageSize>
 class page_data final : public partition_interface {
   public:
     using alloc_handle_t            = std::shared_ptr<void>;

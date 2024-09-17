@@ -32,6 +32,10 @@
 #include <memory>
 
 namespace sclx {
+
+template<class R>
+class typed_task;
+
 class generic_task {
     template<class R>
     friend class typed_task;
@@ -42,6 +46,12 @@ class generic_task {
 
     generic_task(generic_task&&)                    = default;
     auto operator=(generic_task&&) -> generic_task& = default;
+
+    [[nodiscard]] auto operator==(const generic_task& other) const -> bool;
+    [[nodiscard]] auto operator!=(const generic_task& other) const -> bool;
+
+    template<class R>
+    explicit generic_task(typed_task<R> task);
 
     void launch() const;
 

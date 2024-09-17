@@ -42,6 +42,7 @@ vcpkg-tool = ">=2023.3.14,<2024"
 catch2 = ">=3.7.0,<4"
 vcpkg = ">=2023.4.15,<2024"
 libstdcxx = "13.*"
+nvtop = ">=3.1.0,<4"
 
 [pypi-dependencies]
 cmake-init = ">=0.40.7, <0.41"

@@ -150,11 +150,6 @@ class typed_task<R>::typed_impl final : public impl {
     std::future<R> future_{};
 };
 
-template<class R>
-typed_task<R>::operator generic_task() {
-    return {impl_};
-}
-
 struct task_factory {
     template<class F, class... Args>
     static auto create_task(F&& func, Args&&... args)

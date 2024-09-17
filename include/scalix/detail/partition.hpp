@@ -30,9 +30,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 #include <algorithm>
-#include <future>
-#include <hipSYCL/sycl/event.hpp>
-#include <hipSYCL/sycl/handler.hpp>
+#include <hipSYCL/sycl/info/event.hpp>
 #include <hipSYCL/sycl/queue.hpp>
 #include <memory>
 #include <scalix/concurrent_guard.hpp>
@@ -43,11 +41,13 @@
 
 namespace sclx::detail {
 
-class partition_interface {
+struct partition_interface {
 
-  protected:
+    // protected:
 
   public:
+    using write_bit_t = unsigned char;
+
     partition_interface() = default;
 
     partition_interface(const partition_interface&)                    = delete;
@@ -55,6 +55,7 @@ class partition_interface {
     partition_interface(partition_interface&&)                    = default;
     auto operator=(partition_interface&&) -> partition_interface& = default;
 
+    virtual void allocate()                 = 0;
     virtual void allocate(usm::alloc alloc) = 0;
 
     virtual auto copy_to(std::shared_ptr<partition_interface> dst
@@ -63,6 +64,10 @@ class partition_interface {
     virtual auto copy_from(partition_interface* src) -> sycl::event = 0;
 
     [[nodiscard]] virtual auto pointer() -> void* = 0;
+
+    [[nodiscard]] virtual auto write_bits_pointer() -> write_bit_t* = 0;
+
+    [[nodiscard]] virtual auto queue() const -> sycl::queue = 0;
 
     [[nodiscard]] virtual auto operator==(const partition_interface& other
     ) const -> bool = 0;
@@ -74,13 +79,15 @@ class partition_interface {
 };
 
 template<class T>
-class typed_partition : partition_interface {
+struct typed_partition : public partition_interface {
     struct copy_events_t {
         std::vector<sycl::event> read_events;
-        std::unique_ptr<sycl::event> latest_write_event{nullptr};
+        std::vector<sycl::event> write_events;
     };
 
   public:
+    using partition_interface::write_bit_t;
+
     typed_partition() = default;
 
     typed_partition(const typed_partition&)                    = delete;
@@ -88,71 +95,52 @@ class typed_partition : partition_interface {
     typed_partition(typed_partition&&)                         = default;
     auto operator=(typed_partition&&) -> typed_partition&      = default;
 
+    void allocate() override { this->allocate(usm::alloc::device); }
+
     void allocate(usm::alloc alloc) override {
-        if (part_ptr_ != nullptr) {
+        if (data_ != nullptr) {
             return;
         }
-        part_ptr_ = sclx::make_unique<T[]>(assoc_queue_, alloc, part_elements_);
+        data_ = sclx::make_unique<T[]>(assoc_queue_, alloc, part_elements_);
+        write_bits_ = sclx::make_unique<write_bit_t[]>(
+            assoc_queue_,
+            alloc,
+            part_elements_
+        );
     }
 
-    auto copy_to(std::shared_ptr<typed_partition> dst) -> sycl::event override {
-        return dst->copy_from(this);
-    }
-    auto copy_from(typed_partition* src) -> sycl::event override {
-        if (src->pointer() == this->pointer()) {
-            return assoc_queue_.submit([](sycl::handler& cgh) {
-                cgh.single_task([] {});
-            });
-        }
-        sycl::event event;
-        {
-            auto this_events_view
-                = copy_events_.template get_view<access_mode::write>();
-            auto src_events_view
-                = src->copy_events_.template get_view<access_mode::write>();
-
-            // when adding dependent events from the dest partition, we can
-            // move/reset the read events because the write event created from
-            // this call will depend on them
-            std::vector<sycl::event> dep_events(
-                std::move(this_events_view->read_events)
-            );
-            if (this_events_view->write_event != nullptr) {
-                dep_events.push_back(*this_events_view->write_event);
-            } else {
-                this_events_view->write_event = std::unique_ptr<sycl::event>();
-            }
-
-            // for the source partition, we don't care about read events
-            if (src_events_view->write_event != nullptr) {
-                dep_events.push_back(*src_events_view->write_event);
-            }
-
-            event
-                = assoc_queue_.submit([=, &dep_events, this](sycl::handler& cgh
-                                      ) {
-                      cgh.depends_on(dep_events);
-                      cgh.copy(
-                          static_cast<T*>(src->pointer()),
-                          part_ptr_,
-                          part_elements_
-                      );
-                  });
-
-            *this_events_view->write_event = event;
-
-            src_events_view->read_events.push_back(event);
-        }
-
-        return event;
+    [[nodiscard]] auto queue() const -> sycl::queue override {
+        return assoc_queue_;
     }
 
-    [[nodiscard]] auto pointer() -> void* override { return part_ptr_; }
+    auto copy_to(std::shared_ptr<partition_interface> dst
+    ) -> sycl::event override {
+        return this->copy_to_imp(std::static_pointer_cast<typed_partition>(dst)
+        );
+    }
 
-    [[nodiscard]] auto operator==(const typed_partition& other
+    auto copy_from(partition_interface* src) -> sycl::event override {
+        this->copy_from_imp(static_cast<typed_partition*>(src));
+    }
+    [[nodiscard]] auto pointer() -> void* override { return data_.get(); }
+
+    [[nodiscard]] auto write_bits_pointer() -> write_bit_t* override {
+        return write_bits_.get();
+    }
+
+    [[nodiscard]] auto operator==(const partition_interface& other
     ) const -> bool override {
-        return part_ptr_ == other.part_ptr_
-            && part_elements_ == other.part_elements_;
+        return *this == static_cast<const typed_partition&>(other);
+    }
+
+    [[nodiscard]] auto operator!=(const partition_interface& other
+    ) const -> bool override {
+        return !(*this == other);
+    }
+
+    [[nodiscard]] auto operator==(const typed_partition& other) const -> bool {
+        return data_ == other.data_ && part_elements_ == other.part_elements_
+            && write_bits_ == other.write_bits_;
     }
 
     [[nodiscard]] auto operator!=(const typed_partition& other) const -> bool {
@@ -161,37 +149,148 @@ class typed_partition : partition_interface {
 
     ~typed_partition() override {
         auto copy_events_view
-            = copy_events_.template get_view<access_mode::read>();
+            = copy_events_.template get_view<access_mode::write>();
         for (sycl::event& event : copy_events_view->read_events) {
             event.wait();
         }
-        copy_events_view->write_event->wait();
+        for (sycl::event& event : copy_events_view->write_events) {
+            event.wait();
+        }
     }
 
-  protected:
-    typed_partition(
-        const sycl::queue& assoc_queue,
-        T* part_ptr,
-        size_t part_elements
-    )
+    typed_partition(const sycl::queue& assoc_queue, size_t part_elements)
         : assoc_queue_{assoc_queue},
-          part_ptr_{part_ptr},
           part_elements_{part_elements} {}
 
-  private:
+    // private:
+    auto copy_to_imp(std::shared_ptr<typed_partition> dst) -> sycl::event {
+        return dst->copy_from_imp(this);
+    }
+
+    auto copy_from_imp(typed_partition* src) -> sycl::event {
+        if (src->pointer() == this->pointer()) {
+            return assoc_queue_.submit([](sycl::handler& cgh) {
+                cgh.single_task([] {});
+            });
+        }
+        sycl::event data_event;
+        {
+            auto this_events_view
+                = copy_events_.template get_view<access_mode::write>();
+            std::erase_if(
+                this_events_view->read_events,
+                [](sycl::event& event) {
+                    return event.get_info<
+                               sycl::info::event::command_execution_status>()
+                        == sycl::info::event_command_status::complete;
+                }
+            );
+            std::erase_if(
+                this_events_view->write_events,
+                [](sycl::event& event) {
+                    return event.get_info<
+                               sycl::info::event::command_execution_status>()
+                        == sycl::info::event_command_status::complete;
+                }
+            );
+
+            auto src_events_view
+                = src->copy_events_.template get_view<access_mode::write>();
+            std::erase_if(src_events_view->read_events, [](sycl::event& event) {
+                return event.get_info<
+                           sycl::info::event::command_execution_status>()
+                    == sycl::info::event_command_status::complete;
+            });
+            std::erase_if(
+                src_events_view->write_events,
+                [](sycl::event& event) {
+                    return event.get_info<
+                               sycl::info::event::command_execution_status>()
+                        == sycl::info::event_command_status::complete;
+                }
+            );
+
+            // when adding dependent events from the dest partition, we can
+            // move/reset the read events because the write event created
+            // from this call will depend on them
+            std::vector<sycl::event> dep_events(
+                std::move(this_events_view->read_events)
+            );
+            std::transform(
+                this_events_view->write_events.begin(),
+                this_events_view->write_events.end(),
+                std::back_inserter(dep_events),
+                [](auto& event) { return event; }
+            );
+            this_events_view->write_events.clear();
+
+            // for the source partition, we don't care about read events,
+            // however we can still erase completed events to free up space
+            std::transform(
+                src_events_view->write_events.begin(),
+                src_events_view->write_events.end(),
+                dep_events.begin(),
+                [](auto& event) { return event; }
+            );
+
+            auto data_event
+                = assoc_queue_.submit([=, &dep_events, this](sycl::handler& cgh
+                                      ) {
+                      cgh.depends_on(dep_events);
+                      cgh.copy(
+                          static_cast<T*>(src->pointer()),
+                          data_.get(),
+                          part_elements_
+                      );
+                  });
+            auto write_bits_event
+                = assoc_queue_.submit([=, &dep_events, this](sycl::handler& cgh
+                                      ) {
+                      cgh.depends_on(dep_events);
+                      cgh.copy(
+                          src->write_bits_pointer(),
+                          write_bits_.get(),
+                          part_elements_
+                      );
+                  });
+
+            this_events_view->write_events.push_back(data_event);
+            this_events_view->write_events.push_back(write_bits_event);
+
+            src_events_view->read_events.push_back(data_event);
+            src_events_view->read_events.push_back(write_bits_event);
+
+            data_event = assoc_queue_.submit([&](sycl::handler& cgh) {
+                cgh.depends_on(data_event);
+                cgh.depends_on(write_bits_event);
+                cgh.single_task([]() {});
+            });
+        }
+
+        return data_event;
+    }
+
     sycl::queue assoc_queue_;
-    std::unique_ptr<T*> part_ptr_;
+    ::sclx::unique_ptr<T[]> data_;
+    ::sclx::unique_ptr<write_bit_t[]> write_bits_;
     size_t part_elements_{};
     concurrent_guard<copy_events_t> copy_events_;
 };
 
 template<class T, int Dimensions>
-class nd_partition : typed_partition<T> {
+struct nd_partition : public typed_partition<T> {
 
-  protected:
+    // protected:
     using base = typed_partition<T>;
 
   public:
+    static auto create_empty_partition(
+        const sycl::queue& assoc_queue,
+        sycl::range<Dimensions> shape
+    ) -> std::shared_ptr<nd_partition> {
+        return std::make_shared<nd_partition>(assoc_queue, shape);
+    }
+
     static auto create_empty_partitions(
         const sycl::queue& assoc_queue,
         sycl::range<Dimensions> combined_shape,
@@ -209,10 +308,11 @@ class nd_partition : typed_partition<T> {
             = leading_elements_per_part * elements_per_leading_index;
         std::vector<std::shared_ptr<nd_partition>> part_list;
         for (size_t i = 0; i < combined_shape[0]; i += elements_per_part) {
-            size_t leading_idx_end = (i + elements_per_part > combined_shape)
-                                       ? combined_shape[0]
-                                       : i + elements_per_part;
-            auto leading_elements  = leading_idx_end - i;
+            size_t leading_idx_end
+                = (i + leading_elements_per_part > combined_shape[0])
+                    ? combined_shape[0]
+                    : i + leading_elements_per_part;
+            auto leading_elements = leading_idx_end - i;
             auto num_elements = leading_elements * elements_per_leading_index;
 
             auto part_shape = combined_shape;
@@ -228,12 +328,11 @@ class nd_partition : typed_partition<T> {
         return part_shape_;
     }
 
-  protected:
     nd_partition(const sycl::queue& assoc_queue, sycl::range<Dimensions> shape)
         : base::typed_partition(assoc_queue, shape.size()),
           part_shape_{shape} {}
 
-  private:
+    // private:
     sycl::range<Dimensions> part_shape_{};
 };
 

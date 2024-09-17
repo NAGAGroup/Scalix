@@ -50,10 +50,10 @@ using index64_t   = std::int64_t;
 using uint64_t    = std::uint64_t;
 using uint32_t    = std::uint32_t;
 
-using page_size_t = std::int32_t;
-using byte_offset = page_size_t;
-using page_ptr_t  = byte*;
-using valid_bit_t = std::atomic<bool>;
+using partition_size_t = std::int32_t;
+using byte_offset      = partition_size_t;
+using page_ptr_t       = byte*;
+using valid_bit_t      = std::atomic<bool>;
 // On any system with less than 8TiB of memory and a 4KB page size,
 // a 32-bit page index is sufficient. However, if you are defining
 // buffers with smaller page sizes or on a system with more than 16TiB

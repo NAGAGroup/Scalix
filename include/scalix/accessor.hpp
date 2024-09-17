@@ -57,7 +57,8 @@ size_t linearize_id(
 }
 
 template<class T>
-constexpr page_size_t utilized_bytes_per_page(const page_size_t page_size) {
+constexpr partition_size_t
+utilized_bytes_per_page(const partition_size_t page_size) {
     return page_size / sizeof(T) * sizeof(T);
 }
 
@@ -66,7 +67,7 @@ static constexpr page_index_t bad_page = -1;
 template<class T, class IndexType>
     requires std::is_integral_v<IndexType>
 page_index_t
-map_index_to_page(const page_size_t page_size, const IndexType index) {
+map_index_to_page(const partition_size_t page_size, const IndexType index) {
     if constexpr (std::is_signed_v<IndexType>) {
         if (index < 0) {
             return bad_page;
@@ -85,8 +86,10 @@ map_index_to_page(const page_size_t page_size, const IndexType index) {
 
 template<class T, class IndexType>
     requires std::is_integral_v<IndexType>
-byte_offset
-map_index_to_byte_offset(const page_size_t page_size, const IndexType index) {
+byte_offset map_index_to_byte_offset(
+    const partition_size_t page_size,
+    const IndexType index
+) {
     const auto byte_index     = sizeof(T) * index;
     const auto utilized_bytes = utilized_bytes_per_page<T>(page_size);
     return static_cast<byte_offset>(byte_index % utilized_bytes);
@@ -149,13 +152,13 @@ class accessor {
 
     page_ptr_t* pages_;
     range<Dimensions> range_;
-    page_size_t page_size_;
+    partition_size_t page_size_;
     access_marker_ptr* access_markers_;
 
     accessor(
         page_ptr_t* pages,
         range<Dimensions> range,
-        page_size_t page_size,
+        partition_size_t page_size,
         access_marker_ptr* access_markers
     )
         : pages_(pages),

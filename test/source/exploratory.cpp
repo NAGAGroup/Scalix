@@ -28,60 +28,43 @@
 // CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-#include <scalix/access_anchor.hpp>
+#include <scalix/buffer.hpp>
+#include <scalix/defines.hpp>
 int main() {
-    sclx::queue q;
     std::vector<sycl::queue> device_queues;
     auto device_list = sycl::device::get_devices();
     for (auto& device : device_list) {
-        if (device.is_cpu()) {
+        if (device.is_gpu()) {
             device_queues.emplace_back(device);
             break;
         }
     }
-    q.device_queues_ = std::move(device_queues);
-    auto num_devices = q.device_queues_.size();
-    std::vector<double> device_weights;
-    std::transform(
-        q.device_queues_.begin(),
-        q.device_queues_.end(),
-        std::back_inserter(device_weights),
-        [&](const sycl::queue& device_queue) {
-            return 1.0 / static_cast<double>(num_devices);
-        }
-    );
-    q.device_weights_ = std::move(device_weights);
+    auto num_devices = device_queues.size();
+    std::vector<uint> device_weights{1};
+    sclx::queue dist_queue{device_weights, device_queues};
     sclx::buffer<double, 1> buffer{10 * num_devices};
-    auto shared_data = sclx::make_unique<double[]>(
-        q.device_queues_[0],
-        sycl::usm::alloc::shared,
-        10 * num_devices
-    );
-    auto event = q.submit([&](sclx::handler& cgh) {
-        auto buffer_acc = buffer.get_access<sycl::access_mode::write>(
-            cgh,
-            sclx::default_access_strategy{}
-        );
-        auto shared_data_ptr = shared_data.get();
-        cgh.parallel_for(
-            sycl::range<1>{10 * num_devices},
-            [=](sycl::id<1> idx) {
-                buffer_acc[idx]         = static_cast<double>(idx[0]);
-                shared_data_ptr[idx[0]] = buffer_acc[idx];
-            }
-        );
+    sycl::buffer<double, 1> buffer_host{10 * num_devices};
+
+    dist_queue.submit([&](sclx::command_handler& cgh) {
+        auto acc = buffer.get_access<sclx::access_mode::write>(cgh);
+        cgh.parallel_for(sclx::range<>{10 * num_devices}, [=](sycl::id<> idx) {
+            acc[idx] = idx[0];
+        });
     });
-    event.wait_and_throw();
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    dist_queue.submit([&](sclx::command_handler& cgh) {
+        auto acc
+            = buffer_host.get_access<sycl::access_mode::write>(*cgh.sycl_handler
+            );
+        auto acc_src = buffer.get_access<sclx::access_mode::read>(cgh);
+        cgh.parallel_for(sclx::range<>{10 * num_devices}, [=](sycl::id<> idx) {
+            acc[idx] = acc_src[idx];
+        });
+    });
 
-    auto host_acsr = buffer.get_access<sycl::access_mode::write>();
-    for (auto& val : host_acsr.data_) {
-        std::cout << val << std::endl;
-    }
-
-    for (int i = 0; i < 10 * num_devices; ++i) {
-        std::cout << shared_data[i] << std::endl;
+    auto host_acc = buffer_host.get_access<sycl::access_mode::read>();
+    for (auto& val : host_acc) {
+        std::cout << val << " ";
     }
 
     return 0;

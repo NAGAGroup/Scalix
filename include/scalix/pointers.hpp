@@ -99,20 +99,28 @@ auto make_unique(sycl::queue queue, sycl::usm::alloc alloc, Args&&... args)
         std::memcpy(ptr.get(), host_val.get(), sizeof(T));
         return ptr;
     }
-    queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait_and_throw();
+    queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait();
     return ptr;
 }
 
 template<class T>
 auto make_unique(sycl::queue queue, sycl::usm::alloc alloc, std::size_t size)
-    -> std::enable_if_t<detail::is_unbounded_array_v<T>, sclx::unique_ptr<std::remove_extent_t<T>[]>> {
+    -> std::enable_if_t<
+        detail::is_unbounded_array_v<T>,
+        sclx::unique_ptr<std::remove_extent_t<T>[]>> {
     auto ptr = unique_ptr<T>(
         sycl::malloc<std::remove_extent_t<T>>(size, queue, alloc),
         ::sclx::default_delete<T>{queue}
     );
-    auto host_val = std::make_unique<T>(size);
+    auto host_val = std::unique_ptr<std::remove_extent_t<T>>(
+        new std::remove_extent_t<T>[size]
+    );
     if (alloc == usm::alloc::host) {
-        std::memcpy(ptr.get(), host_val.get(), sizeof(std::remove_extent_t<T>) * size);
+        std::memcpy(
+            ptr.get(),
+            host_val.get(),
+            sizeof(std::remove_extent_t<T>) * size
+        );
         return ptr;
     }
     queue
@@ -121,7 +129,7 @@ auto make_unique(sycl::queue queue, sycl::usm::alloc alloc, std::size_t size)
             host_val.get(),
             sizeof(std::remove_extent_t<T>) * size
         )
-        .wait_and_throw();
+        .wait();
     return ptr;
 }
 
@@ -146,12 +154,11 @@ auto make_shared(sycl::queue queue, sycl::usm::alloc alloc, Args&&... args)
 
 template<class T>
 auto make_shared(sycl::queue queue, sycl::usm::alloc alloc, std::size_t size)
-    -> std::enable_if_t<detail::is_unbounded_array_v<T>, sclx::shared_ptr<std::remove_extent_t<T>[]>> {
+    -> std::enable_if_t<
+        detail::is_unbounded_array_v<T>,
+        sclx::shared_ptr<std::remove_extent_t<T>[]>> {
     auto ptr = make_unique<T>(queue, alloc, size);
-    return shared_ptr<T>(
-        ptr.release(),
-        ::sclx::default_delete<T>{queue}
-    );
+    return shared_ptr<T>(ptr.release(), ::sclx::default_delete<T>{queue});
 }
 
 }  // namespace sclx

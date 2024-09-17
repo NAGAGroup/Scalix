@@ -42,9 +42,9 @@ TEST_CASE("page_data") {
         data_ptr1
     };
     using data_type = std::int32_t;
-    constexpr sclx::page_size_t floats_per_page
+    constexpr sclx::partition_size_t floats_per_page
         = sclx::default_page_size / sizeof(data_type);
-    for (sclx::page_size_t i = 0; i < floats_per_page; ++i) {
+    for (sclx::partition_size_t i = 0; i < floats_per_page; ++i) {
         reinterpret_cast<data_type*>(data_ptr1.get())[i]
             = static_cast<data_type>(i);
     }
@@ -65,11 +65,11 @@ TEST_CASE("page_data") {
     };
     page_data2.copy_to(sycl::queue(), data_ptr3.get());
 
-    const auto *const page_data3_raw
+    const auto* const page_data3_raw
         = reinterpret_cast<const data_type*>(page_data3.page_address());
-    const auto *const page_data1_raw
+    const auto* const page_data1_raw
         = reinterpret_cast<const data_type*>(page_data1.page_address());
-    for (sclx::page_size_t i = 0; i < floats_per_page; ++i) {
+    for (sclx::partition_size_t i = 0; i < floats_per_page; ++i) {
         REQUIRE(page_data3_raw[i] == page_data1_raw[i]);
     }
 }

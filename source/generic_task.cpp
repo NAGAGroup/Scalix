@@ -29,21 +29,33 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#include <sycl/sycl.hpp>
 #include <memory>
 #include <scalix/concurrent_guard.hpp>
 #include <scalix/defines.hpp>
 #include <scalix/detail/generic_task.hpp>
 #include <scalix/generic_task.hpp>
 #include <stdexcept>
+#include <sycl/sycl.hpp>
 #include <utility>
 
 namespace sclx {
 
+template<class R>
+generic_task::generic_task(typed_task<R> task) : impl_(task.impl_) {}
+
 generic_task::generic_task(std::shared_ptr<impl> impl)
     : impl_{std::move(impl)} {}
 
-void generic_task::add_dependent_task(const generic_task& dependent_task) const {
+auto generic_task::operator==(const generic_task& other) const -> bool {
+    return impl_ == other.impl_;
+}
+
+auto generic_task::operator!=(const generic_task& other) const -> bool {
+    return impl_ != other.impl_;
+}
+
+void generic_task::add_dependent_task(const generic_task& dependent_task
+) const {
     const auto metadata = impl_->metadata_.get_view<access_mode::write>();
     const auto dependent_metadata
         = dependent_task.impl_->metadata_.get_view<access_mode::write>();
