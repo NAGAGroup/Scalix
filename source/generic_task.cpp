@@ -40,9 +40,6 @@
 
 namespace sclx {
 
-template<class R>
-generic_task::generic_task(typed_task<R> task) : impl_(task.impl_) {}
-
 generic_task::generic_task(std::shared_ptr<impl> impl)
     : impl_{std::move(impl)} {}
 

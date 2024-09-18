@@ -51,7 +51,7 @@ class generic_task {
     [[nodiscard]] auto operator!=(const generic_task& other) const -> bool;
 
     template<class R>
-    explicit generic_task(typed_task<R> task);
+    explicit generic_task(typed_task<R> task) : impl_(task.impl_) {}
 
     void launch() const;
 

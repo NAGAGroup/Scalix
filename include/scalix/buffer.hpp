@@ -37,7 +37,7 @@
 #include <memory>
 #include <scalix/access_anchor.hpp>
 #include <scalix/concurrent_guard.hpp>
-#include <scalix/generic_task.hpp>
+#include <scalix/detail/generic_task.hpp>
 
 namespace sclx {
 
@@ -138,8 +138,7 @@ struct accessor {
     size_t elements_per_partition_;
 };
 
-inline auto
-future_to_event(sycl::queue queue, const std::shared_future<void>& fut)
+inline auto future_to_event(sycl::queue queue, std::shared_future<void> fut)
     -> sycl::event {
     sycl::buffer<int, 1> buffer{1};
     std::promise<void> buffer_capture_promise;
@@ -174,18 +173,19 @@ struct queue {
         std::vector<uint> sub_command_weights;
         std::vector<sycl::queue> sub_queues;
         std::vector<std::shared_ptr<void>> command_data;
+        std::vector<generic_task> setup_tasks;
         generic_task fetch_wait_task;
         generic_task command_wait_task;
         generic_task push_wait_task;
         std::atomic<int> sub_command_setup_completions;
 
         void notify_sub_command_setup_complete() {
-            auto old = sub_command_setup_completions.fetch_add(1);
-            if (static_cast<uint>(old + 1) == sub_queues.size()) {
-                fetch_wait_task.launch();
-                command_wait_task.launch();
-                push_wait_task.launch();
-            }
+            // auto old = sub_command_setup_completions.fetch_add(1);
+            // if (static_cast<uint>(old + 1) == sub_queues.size()) {
+            //     fetch_wait_task.launch();
+            //     command_wait_task.launch();
+            //     push_wait_task.launch();
+            // }
         }
     };
 
@@ -290,17 +290,15 @@ struct command_handler {
     }
 
     template<class T>
-    void register_command_data(std::shared_ptr<T> ptr) {
-        global_metadata->command_data.push_back(std::move(ptr));
+    void register_command_data(shared_ptr<T> ptr) {
+        global_metadata->command_data.push_back(ptr);
     }
 
     template<class T>
     void register_command_data(std::vector<std::shared_ptr<T>> ptrs) {
-        global_metadata->command_data.insert(
-            global_metadata->command_data.end(),
-            std::make_move_iterator(ptrs.begin()),
-            std::make_move_iterator(ptrs.end())
-        );
+        std::for_each(ptrs.begin(), ptrs.end(), [this](auto& ptr) {
+            register_command_data(ptr);
+        });
     }
 
     queue::global_metadata* global_metadata;
@@ -408,13 +406,13 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
                 partition_size
             );
         auto device_part_data_ptrs
-            = ::sclx::make_shared<raw_partition_data_ptr[]>(
+            = ::sclx::make_shared<raw_partition_data_ptr>(
                 sycl_queue,
                 usm::alloc::device,
                 partitions.size()
             );
         auto device_part_write_bits_ptrs
-            = ::sclx::make_shared<raw_partition_write_bits_ptr[]>(
+            = ::sclx::make_shared<raw_partition_write_bits_ptr>(
                 sycl_queue,
                 usm::alloc::device,
                 partitions.size()
@@ -449,7 +447,7 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
 
         auto fetch_wait_task   = cgh.fetch_wait_task();
         auto command_wait_task = cgh.command_wait_task();
-        auto push_wait_task    = cgh.command_wait_task();
+        auto push_wait_task    = cgh.push_wait_task();
 
         this->configure_task_dependencies<AccessMode>(
             alloc_task,
@@ -461,6 +459,12 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
             push_wait_task
         );
 
+        cgh.global_metadata->setup_tasks.push_back(alloc_task);
+        cgh.global_metadata->setup_tasks.push_back(assign_device_part_ptrs_task
+        );
+        cgh.global_metadata->setup_tasks.push_back(fetch_partitions_task);
+        cgh.global_metadata->setup_tasks.push_back(push_partitions_task);
+
         accessor<T, Dimensions, AccessMode> acsr{
             device_part_data_ptrs.get(),
             device_part_write_bits_ptrs.get(),
@@ -471,14 +475,14 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
     }
 
     [[nodiscard]] auto assign_device_part_ptrs(
-        ::sclx::shared_ptr<raw_partition_data_ptr[]> device_part_data_ptrs,
-        ::sclx::shared_ptr<raw_partition_write_bits_ptr[]>
+        ::sclx::shared_ptr<raw_partition_data_ptr> device_part_data_ptrs,
+        ::sclx::shared_ptr<raw_partition_write_bits_ptr>
             device_part_write_bits_ptrs,
         const std::vector<partition_ptr>& partitions
     ) const -> generic_task {
-        return create_task(
-            [](::sclx::shared_ptr<raw_partition_data_ptr[]>&& device_part_ptrs,
-               ::sclx::shared_ptr<raw_partition_write_bits_ptr[]>&&
+        return generic_task{create_task(
+            [](::sclx::shared_ptr<raw_partition_data_ptr> device_part_ptrs,
+               ::sclx::shared_ptr<raw_partition_write_bits_ptr>
                    device_part_write_bits_ptrs,
                std::vector<partition_ptr> partitions) {
                 std::vector<raw_partition_data_ptr> host_part_data_ptrs;
@@ -509,101 +513,100 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
                     host_part_write_bits_ptrs.size()
                         * sizeof(raw_partition_write_bits_ptr)
                 );
-                data_copy_event.wait();
+                data_copy_event.wait_and_throw();
+                write_bits_copy_event.wait_and_throw();
+                std::cout << "Assign pointer data complete" << std::endl;
             },
-            std::move(device_part_data_ptrs),
-            std::move(device_part_write_bits_ptrs),
+            device_part_data_ptrs,
+            device_part_write_bits_ptrs,
             partitions
-        );
+        )};
     }
 
     [[nodiscard]] auto fetch_partitions(std::vector<partition_ptr> partitions
     ) const -> generic_task {
-        auto partition_metadata_view
-            = partition_metadata_.template get_view<access_mode::write>(
-                std::defer_lock
+        auto& part_metadata_guard = partition_metadata_;
+        return generic_task{create_task([part_metadata_guard,
+                                         dst_partitions
+                                         = partitions]() mutable {
+            auto src_partitions_view
+                = part_metadata_guard.template get_view<access_mode::write>();
+            if (src_partitions_view->primary_partitions_.empty()) {
+                src_partitions_view->primary_partitions_ = dst_partitions;
+                src_partitions_view->potentially_active_partitions_.resize(
+                    dst_partitions.size(),
+                    {}
+                );
+                return;
+            }
+
+            std::vector<sycl::event> fetch_events;
+
+            std::transform(
+                dst_partitions.begin(),
+                dst_partitions.end(),
+                src_partitions_view->primary_partitions_.begin(),
+                std::back_inserter(fetch_events),
+                [](auto& dst_part, const auto& src_part) {
+                    return src_part->copy_to(dst_part);
+                }
             );
-        return create_task(
-            [](std::vector<partition_ptr> dst_partitions,
-               concurrent_view<partition_metadata> src_partitions_view) {
-                src_partitions_view.lock();
-                if (src_partitions_view->primary_partitions_.empty()) {
-                    src_partitions_view->primary_partitions_ = dst_partitions;
-                    return;
+
+            std::transform(
+                dst_partitions.begin(),
+                dst_partitions.end(),
+                src_partitions_view->primary_partitions_.begin(),
+                src_partitions_view->primary_partitions_.begin(),
+                [](auto& dst_part, const auto& src_part) {
+                    if (dst_part->pointer() != nullptr) {
+                        return dst_part;
+                    } else {
+                        return src_part;
+                    }
                 }
+            );
 
-                std::vector<sycl::event> fetch_events;
-
-                std::transform(
-                    dst_partitions.begin(),
-                    dst_partitions.end(),
-                    src_partitions_view->primary_partitions_.begin(),
-                    std::back_inserter(fetch_events),
-                    [](auto& dst_part, const auto& src_part) {
-                        return src_part->copy_to(dst_part);
+            std::transform(
+                dst_partitions.begin(),
+                dst_partitions.end(),
+                src_partitions_view->potentially_active_partitions_.begin(),
+                src_partitions_view->potentially_active_partitions_.begin(),
+                [](auto& dst_part, auto& active_parts) {
+                    if (dst_part->pointer() != nullptr
+                        && std::find_if(
+                               active_parts.begin(),
+                               active_parts.end(),
+                               [&dst_part](auto& active_part) {
+                                   return active_part.lock().get()
+                                       == dst_part.get();
+                               }
+                           ) == active_parts.end()) {
+                        active_parts.push_back(dst_part);
                     }
-                );
-
-                std::transform(
-                    dst_partitions.begin(),
-                    dst_partitions.end(),
-                    src_partitions_view->primary_partitions_.begin(),
-                    src_partitions_view->primary_partitions_.begin(),
-                    [](auto& dst_part, const auto& src_part) {
-                        if (dst_part->pointer() != nullptr) {
-                            return dst_part;
-                        } else {
-                            return src_part;
-                        }
-                    }
-                );
-
-                if (src_partitions_view->potentially_active_partitions_.size()
-                    != src_partitions_view->primary_partitions_.size()) {
-                    src_partitions_view->potentially_active_partitions_.resize(
-                        src_partitions_view->primary_partitions_.size(),
-                        {}
-                    );
+                    return active_parts;
                 }
+            );
 
-                std::transform(
-                    dst_partitions.begin(),
-                    dst_partitions.end(),
-                    src_partitions_view->potentially_active_partitions_.begin(),
-                    src_partitions_view->potentially_active_partitions_.begin(),
-                    [](auto& dst_part, auto& active_parts) {
-                        if (dst_part->pointer() != nullptr) {
-                            active_parts.push_back(dst_part);
-                        }
-                        return active_parts;
-                    }
-                );
-
-                std::for_each(
-                    fetch_events.begin(),
-                    fetch_events.end(),
-                    [](auto& event) { event.wait(); }
-                );
-            },
-            partitions,
-            std::move(partition_metadata_view)
-        );
+            std::for_each(
+                fetch_events.begin(),
+                fetch_events.end(),
+                [](auto& event) { event.wait_and_throw(); }
+            );
+        })};
     }
 
     template<access_mode AccessMode>
     [[nodiscard]] auto push_partitions(std::vector<partition_ptr> partitions
     ) const -> generic_task {
         if constexpr (AccessMode == access_mode::read) {
-            return create_task([]() {});
+            return generic_task{create_task([]() {})};
         }
-        auto partition_metadata_view
-            = partition_metadata_.template get_view<access_mode::write>(
-                std::defer_lock
-            );
-        return create_task(
+        auto& part_metadata = partition_metadata_;
+        return generic_task{create_task(
             [](std::vector<partition_ptr> src_partitions,
-               concurrent_view<partition_metadata> dst_partitions_view) {
-                dst_partitions_view.lock();
+               concurrent_guard<partition_metadata> part_metadata) {
+                auto dst_partitions_view
+                    = part_metadata.template get_view<access_mode::write>();
 
                 std::vector<sycl::event> push_events;
 
@@ -612,12 +615,8 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
                     src_partitions.end(),
                     dst_partitions_view->primary_partitions_.begin(),
                     std::back_inserter(push_events),
-                    [](auto& src_part, const auto& dst_part) {
-                        auto src_queue = src_part->queue();
+                    [](auto& src_part, auto& dst_part) {
                         auto dst_queue = dst_part->queue();
-                        if (dst_queue.get_device() == src_queue.get_device()) {
-                            return src_part->copy_to(dst_part);
-                        }
 
                         auto src_part_on_dst_device
                             = nd_partition<T, Dimensions>::
@@ -639,7 +638,7 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
                             dst_part->pointer()
                         );
                         auto write_bits_of_dst = dst_part->write_bits_pointer();
-                        return dst_queue.submit([&](sycl::handler& cgh) {
+                        auto event = dst_queue.submit([=](sycl::handler& cgh) {
                             cgh.depends_on(copy_event);
                             cgh.parallel_for(
                                 sycl::range<>(part_size),
@@ -651,49 +650,62 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
                                 }
                             );
                         });
+                        std::async([event,
+                                    dst_part,
+                                    src_part,
+                                    src_part_on_dst_device]() mutable {
+                            event.wait();
+                            src_part_on_dst_device.reset();
+                            dst_part.reset();
+                            src_part.reset();
+                        });
+                        return event;
                     }
                 );
 
                 std::for_each(
                     push_events.begin(),
                     push_events.end(),
-                    [](auto& event) { event.wait(); }
+                    [](auto& event) { event.wait_and_throw(); }
                 );
 
                 push_events.clear();
 
-                std::transform(
-                    dst_partitions_view->primary_partitions_.begin(),
-                    dst_partitions_view->primary_partitions_.end(),
-                    dst_partitions_view->potentially_active_partitions_.begin(),
-                    dst_partitions_view->potentially_active_partitions_.begin(),
-                    [&push_events](auto& primary_part, auto& active_parts) {
-                        std::erase_if(
-                            active_parts,
-                            [&](weak_partition_ptr active_part) {
-                                auto active_part_lock = active_part.lock();
-                                if (active_part_lock != nullptr) {
-                                    push_events.push_back(
-                                        primary_part->copy_to(active_part_lock)
-                                    );
-                                    return false;
-                                }
-                                return true;
-                            }
-                        );
-                        return active_parts;
-                    }
-                );
+                // std::transform(
+                //     dst_partitions_view->primary_partitions_.begin(),
+                //     dst_partitions_view->primary_partitions_.end(),
+                //     dst_partitions_view->potentially_active_partitions_.begin(),
+                //     dst_partitions_view->potentially_active_partitions_.begin(),
+                //     [&push_events](auto& primary_part, auto& active_parts) {
+                //         if (active_parts.size() == 0) {
+                //             return active_parts;
+                //         }
+                //         std::erase_if(
+                //             active_parts,
+                //             [&](weak_partition_ptr active_part) {
+                //                 auto active_part_lock = active_part.lock();
+                //                 if (active_part_lock != nullptr) {
+                //                     push_events.push_back(
+                //                         primary_part->copy_to(active_part_lock)
+                //                     );
+                //                     return false;
+                //                 }
+                //                 return true;
+                //             }
+                //         );
+                //         return active_parts;
+                //     }
+                // );
 
                 std::for_each(
                     push_events.begin(),
                     push_events.end(),
-                    [](auto& event) { event.wait(); }
+                    [](auto& event) { event.wait_and_throw(); }
                 );
             },
             partitions,
-            std::move(partition_metadata_view)
-        );
+            part_metadata
+        )};
     }
 
     template<access_mode AccessMode>
@@ -723,8 +735,7 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
             std::erase_if(
                 queue_commands_view->write_queue_commands_,
                 [&fetch_partitions_task, &push_wait_task](auto& task) {
-                    if (push_wait_task != task
-                        && AccessMode != access_mode::read) {
+                    if (push_wait_task != task) {
                         task.add_dependent_task(fetch_partitions_task);
                     }
                     return task.has_completed();
@@ -743,18 +754,16 @@ struct buffer_imp : public buffer_interface<T, Dimensions> {
         }
 
         alloc_task.add_dependent_task(assign_device_part_ptrs_task);
-        alloc_task.launch();
 
         assign_device_part_ptrs_task.add_dependent_task(fetch_partitions_task);
-        assign_device_part_ptrs_task.launch();
 
         fetch_partitions_task.add_dependent_task(fetch_wait_task);
-        fetch_partitions_task.launch();
+
+        fetch_wait_task.add_dependent_task(command_wait_task);
 
         command_wait_task.add_dependent_task(push_partitions_task);
 
         push_partitions_task.add_dependent_task(push_wait_task);
-        push_partitions_task.launch();
     }
 
     sycl::range<Dimensions> shape_;
@@ -774,14 +783,11 @@ struct default_access_strategy {
                 partitions,
             std::future<std::unique_ptr<command_config>> /*cmd_config*/
         ) -> generic_task override {
-            return create_task(
-                [](const std::decay_t<decltype(partitions)>& partitions) {
-                    for (const auto& partition : partitions) {
-                        partition->allocate();
-                    }
-                },
-                partitions
-            );
+            return generic_task{create_task([partitions]() {
+                for (const auto& partition : partitions) {
+                    partition->allocate();
+                }
+            })};
         }
     };
     auto create() -> std::unique_ptr<access_strategy> {
@@ -819,50 +825,51 @@ struct buffer {
 
 template<class FunctionType>
 auto queue::submit(FunctionType submission) {
-    auto fetch_wait_task  = create_task([]() {});
-    auto fetch_wait_event = future_to_event(
-        sub_queues.front(),
-        fetch_wait_task.get_future().share()
-    );
+    auto fetch_wait_task = create_task([]() {
+        std::cout << "Fetch wait has_completed" << std::endl;
+    });
+    auto fetch_wait_event
+        = future_to_event(sub_queues.front(), fetch_wait_task.get_future());
 
     std::promise<std::vector<sycl::event>> native_events_promise;
-    auto command_wait_task = create_task(
-        [](std::future<std::vector<sycl::event>> native_events_future) {
-            auto native_events = native_events_future.get();
-            for (auto& event : native_events) {
-                event.wait();
-            }
-        },
-        native_events_promise.get_future()
-    );
+    auto native_events_future = native_events_promise.get_future().share();
+    auto command_wait_task    = create_task([native_events_future]() {
+        for (auto event : native_events_future.get()) {
+            event.wait_and_throw();
+        }
+        std::cout << "Command wait has_completed" << std::endl;
+    });
 
-    std::promise<std::unique_ptr<global_metadata>> global_metadata_promise;
-    auto push_wait_task = create_task(
-        [](std::future<std::unique_ptr<global_metadata>> global_metadata_future
-        ) {
-            auto global_metadata = global_metadata_future.get();
-            global_metadata.reset();
-        },
-        global_metadata_promise.get_future()
-    );
+    std::promise<std::shared_ptr<global_metadata>> global_metadata_promise;
+    auto global_metadata_future = global_metadata_promise.get_future().share();
+    auto push_wait_task         = create_task([global_metadata_future]() {
+        auto metadata = global_metadata_future.get();
+        metadata.reset();
+        std::cout << "Push wait has_completed" << std::endl;
+    });
+    auto push_completion_future = push_wait_task.get_future();
 
     auto global_metadata_ptr
-        = std::unique_ptr<global_metadata>(new global_metadata{
+        = std::shared_ptr<global_metadata>(new global_metadata{
             sub_command_weights,
             sub_queues,
+            {},
             {},
             fetch_wait_task,
             command_wait_task,
             push_wait_task,
             0
         });
+    global_metadata_promise.set_value(global_metadata_ptr);
     auto* global_metadata_raw_ptr = global_metadata_ptr.get();
-    global_metadata_promise.set_value(std::move(global_metadata_ptr));
+    global_metadata_raw_ptr->setup_tasks.push_back(fetch_wait_task);
+    global_metadata_raw_ptr->setup_tasks.push_back(command_wait_task);
+    global_metadata_raw_ptr->setup_tasks.push_back(push_wait_task);
 
     std::vector<sycl::event> sub_cmd_events;
     for (uint sub_cmd_idx = 0; sub_cmd_idx < sub_queues.size(); ++sub_cmd_idx) {
         auto event
-            = sub_queues[sub_cmd_idx].submit([&](sycl::handler& native_cgh) {
+            = sub_queues[sub_cmd_idx].submit([=](sycl::handler& native_cgh) {
                   native_cgh.depends_on(fetch_wait_event);
                   command_handler cgh{
                       global_metadata_raw_ptr,
@@ -873,12 +880,15 @@ auto queue::submit(FunctionType submission) {
               });
         sub_cmd_events.push_back(event);
     }
-    native_events_promise.set_value(std::move(sub_cmd_events));
+    native_events_promise.set_value(sub_cmd_events);
 
-    return future_to_event(
-        sub_queues.front(),
-        push_wait_task.get_future().share()
-    );
+    auto event
+        = future_to_event(sub_queues.front(), push_completion_future.share());
+
+    for (auto& task : global_metadata_raw_ptr->setup_tasks) {
+        task.launch();
+    }
+    return event;
 }
 
 }  // namespace sclx

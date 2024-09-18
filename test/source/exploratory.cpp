@@ -48,24 +48,26 @@ int main() {
     dist_queue.submit([&](sclx::command_handler& cgh) {
         auto acc = buffer.get_access<sclx::access_mode::write>(cgh);
         cgh.parallel_for(sclx::range<>{10 * num_devices}, [=](sycl::id<> idx) {
-            acc[idx] = idx[0];
+            // acc[idx] = idx[0];
         });
     });
 
-    dist_queue.submit([&](sclx::command_handler& cgh) {
-        auto acc
-            = buffer_host.get_access<sycl::access_mode::write>(*cgh.sycl_handler
-            );
-        auto acc_src = buffer.get_access<sclx::access_mode::read>(cgh);
-        cgh.parallel_for(sclx::range<>{10 * num_devices}, [=](sycl::id<> idx) {
-            acc[idx] = acc_src[idx];
-        });
-    });
-
-    auto host_acc = buffer_host.get_access<sycl::access_mode::read>();
-    for (auto& val : host_acc) {
-        std::cout << val << " ";
-    }
+    // dist_queue.submit([&](sclx::command_handler& cgh) {
+    //     auto acc
+    //         =
+    //         buffer_host.get_access<sycl::access_mode::write>(*cgh.sycl_handler
+    //         );
+    //     auto acc_src = buffer.get_access<sclx::access_mode::read>(cgh);
+    //     cgh.parallel_for(sclx::range<>{10 * num_devices}, [=](sycl::id<> idx)
+    //     {
+    //         // acc[idx] = acc_src[idx];
+    //     });
+    // });
+    //
+    // auto host_acc = buffer_host.get_access<sycl::access_mode::read>();
+    // for (auto& val : host_acc) {
+    //     std::cout << val << " ";
+    // }
 
     return 0;
 }

@@ -78,7 +78,7 @@ class partition_interface {
         }
 
         page_ptr_t host_ptr = nullptr;
-        ::sclx::unique_ptr<byte[]> host_ptr_owner;
+        ::sclx::unique_ptr<byte> host_ptr_owner;
         sycl::event host_copy_event;
         if (dest_type == usm::alloc::host) {
             host_ptr = source;

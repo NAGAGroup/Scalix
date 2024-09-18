@@ -105,6 +105,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_impl_linux-64-13.3.0-hdbfa832_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gxx_linux-64-13.3.0-h6834431_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/icu-75.1-he02047a_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/intel-cmplr-lib-rt-2024.2.0-h04fd95a_982.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/intel-cmplr-lic-rt-2024.2.0-ha770c72_982.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/intel-opencl-rt-2024.2.0-h5a16d59_982.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/jinja2-3.1.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/kernel-headers_linux-64-4.18.0-he073ed8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.1-h166bdaf_0.tar.bz2
@@ -154,6 +157,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libglib-2.80.3-h315aac3_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgomp-13.3.0-h77fa898_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libgpg-error-1.50-h4f305b6_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/libhwloc-2.11.1-default_hecaa2ac_1000.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libiconv-1.17-hd590300_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/liblapack-3.9.0-23_linux64_openblas.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libllvm18-18.1.8-h8b73ec9_2.conda
@@ -216,6 +220,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/spirv-tools-2024.1-h297d8ca_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/sysroot_linux-64-2.28-he073ed8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tar-1.34-hb2e2bae_1.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.13.0-h84d6215_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tinyxml2-10.0.0-h59595ed_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h4845f30_101.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2024a-h8827d51_1.conda
@@ -2045,6 +2050,65 @@ packages:
   size: 12129203
   timestamp: 1720853576813
 - kind: conda
+  name: intel-cmplr-lib-rt
+  version: 2024.2.0
+  build: h04fd95a_982
+  build_number: 982
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/intel-cmplr-lib-rt-2024.2.0-h04fd95a_982.conda
+  sha256: 431de36e617bb60f377b729894c87e89c377c4cbfc6c907ccb04c6ee5e62949e
+  md5: f46eb124546a552203a3a4b72cfad388
+  depends:
+  - __glibc >=2.28,<3.0.a0
+  - libgcc
+  - libgcc-ng >=7.5.0
+  - libstdcxx
+  - libstdcxx-ng >=7.5.0
+  - libzlib >=1.3.1,<2.0a0
+  license: LicenseRef-Proprietary-Intel-End-User-License-Agreement-for-Developer-Tools
+  license_family: Proprietary
+  purls: []
+  size: 31273595
+  timestamp: 1724983853734
+- kind: conda
+  name: intel-cmplr-lic-rt
+  version: 2024.2.0
+  build: ha770c72_982
+  build_number: 982
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/intel-cmplr-lic-rt-2024.2.0-ha770c72_982.conda
+  sha256: 0d5df089e5bf4e8b119c811a3588e021a0f49392998d263f37726910ccfc2b2f
+  md5: a501881ff0dd7361baa067376696fb45
+  license: LicenseRef-Proprietary-Intel-End-User-License-Agreement-for-Developer-Tools
+  license_family: Proprietary
+  purls: []
+  size: 32592
+  timestamp: 1724983827493
+- kind: conda
+  name: intel-opencl-rt
+  version: 2024.2.0
+  build: h5a16d59_982
+  build_number: 982
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/intel-opencl-rt-2024.2.0-h5a16d59_982.conda
+  sha256: f1b0b8c882f3f2b1e6958a1c9afff4a11bf9a9e6e140ca6e87f23cedfd7bd4ae
+  md5: 543c58e083a58a3748b0d6c6cc480178
+  depends:
+  - __glibc >=2.28,<3.0.a0
+  - intel-cmplr-lib-rt 2024.2.0 h04fd95a_982
+  - intel-cmplr-lic-rt 2024.2.0 ha770c72_982
+  - libgcc
+  - libgcc-ng >=7.5.0
+  - libxml2 >=2.12.7,<3.0a0
+  - libzlib >=1.3.1,<2.0a0
+  - ocl-icd >=2.3.2,<3.0a0
+  - tbb >=2021.12.0
+  license: LicenseRef-Proprietary-Intel-End-User-License-Agreement-for-Developer-Tools
+  license_family: Proprietary
+  purls: []
+  size: 82090968
+  timestamp: 1724983995497
+- kind: conda
   name: jinja2
   version: 3.1.4
   build: pyhd8ed1ab_0
@@ -2957,6 +3021,25 @@ packages:
   purls: []
   size: 273774
   timestamp: 1719390736440
+- kind: conda
+  name: libhwloc
+  version: 2.11.1
+  build: default_hecaa2ac_1000
+  build_number: 1000
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/libhwloc-2.11.1-default_hecaa2ac_1000.conda
+  sha256: 8473a300e10b79557ce0ac81602506b47146aff3df4cc3568147a7dd07f480a2
+  md5: f54aeebefb5c5ff84eca4fb05ca8aa3a
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc-ng >=12
+  - libstdcxx-ng >=12
+  - libxml2 >=2.12.7,<3.0a0
+  license: BSD-3-Clause
+  license_family: BSD
+  purls: []
+  size: 2417964
+  timestamp: 1720460562447
 - kind: conda
   name: libiconv
   version: '1.17'
@@ -4122,6 +4205,24 @@ packages:
   purls: []
   size: 914685
   timestamp: 1666629652927
+- kind: conda
+  name: tbb
+  version: 2021.13.0
+  build: h84d6215_0
+  subdir: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/tbb-2021.13.0-h84d6215_0.conda
+  sha256: 7d4d3ad608dc6ae5a7e0f431f784985398a18bcde2ba3ce19cc32f61e2defd98
+  md5: ee6f7fd1e76061ef1fa307d41fa86a96
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=13
+  - libhwloc >=2.11.1,<2.11.2.0a0
+  - libstdcxx >=13
+  license: Apache-2.0
+  license_family: APACHE
+  purls: []
+  size: 175779
+  timestamp: 1725532539822
 - kind: conda
   name: tinyxml2
   version: 10.0.0

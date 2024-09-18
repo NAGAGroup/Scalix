@@ -43,6 +43,7 @@ catch2 = ">=3.7.0,<4"
 vcpkg = ">=2023.4.15,<2024"
 libstdcxx = "13.*"
 nvtop = ">=3.1.0,<4"
+intel-opencl-rt = ">=2024.2.0,<2025"
 
 [pypi-dependencies]
 cmake-init = ">=0.40.7, <0.41"

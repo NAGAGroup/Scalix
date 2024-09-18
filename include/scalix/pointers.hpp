@@ -94,12 +94,12 @@ auto make_unique(sycl::queue queue, sycl::usm::alloc alloc, Args&&... args)
         sycl::malloc<T>(1, queue, alloc),
         ::sclx::default_delete<T>{queue}
     );
-    auto host_val = std::make_unique<T>(std::forward<Args>(args)...);
-    if (alloc == usm::alloc::host) {
-        std::memcpy(ptr.get(), host_val.get(), sizeof(T));
-        return ptr;
-    }
-    queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait();
+    // auto host_val = std::make_unique<T>(std::forward<Args>(args)...);
+    // if (alloc == usm::alloc::host) {
+    //     std::memcpy(ptr.get(), host_val.get(), sizeof(T));
+    //     return ptr;
+    // }
+    // queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait();
     return ptr;
 }
 
@@ -107,34 +107,30 @@ template<class T>
 auto make_unique(sycl::queue queue, sycl::usm::alloc alloc, std::size_t size)
     -> std::enable_if_t<
         detail::is_unbounded_array_v<T>,
-        sclx::unique_ptr<std::remove_extent_t<T>[]>> {
-    auto ptr = unique_ptr<T>(
-        sycl::malloc<std::remove_extent_t<T>>(size, queue, alloc),
-        ::sclx::default_delete<T>{queue}
-    );
-    auto host_val = std::unique_ptr<std::remove_extent_t<T>>(
-        new std::remove_extent_t<T>[size]
-    );
-    if (alloc == usm::alloc::host) {
-        std::memcpy(
-            ptr.get(),
-            host_val.get(),
-            sizeof(std::remove_extent_t<T>) * size
-        );
-        return ptr;
-    }
-    queue
-        .memcpy(
-            ptr.get(),
-            host_val.get(),
-            sizeof(std::remove_extent_t<T>) * size
-        )
-        .wait();
-    return ptr;
+        sclx::unique_ptr<std::remove_extent_t<T>>> {
+    auto raw_ptr = sycl::malloc<std::remove_extent_t<T>>(size, queue, alloc);
+    // auto host_val = std::make_unique<T>(size);
+    // if (alloc == usm::alloc::host) {
+    //     std::memcpy(
+    //         ptr.get(),
+    //         host_val.get(),
+    //         sizeof(std::remove_extent_t<T>) * size
+    //     );
+    //     return ptr;
+    // }
+    // queue
+    //     .memcpy(
+    //         ptr.get(),
+    //         host_val.get(),
+    //         sizeof(std::remove_extent_t<T>) * size
+    //     )
+    //     .wait();
+    return {raw_ptr, ::sclx::default_delete<std::remove_extent_t<T>>{queue}};
 }
 
-template<class T>
-auto make_unique(sycl::queue queue, sycl::usm::alloc alloc)
+template<class T, class... Args>
+auto make_unique(Args&&...
+                 /*unused*/)
     -> std::enable_if_t<detail::is_bounded_array_v<T>, std::unique_ptr<T>> {
     static_assert(
         detail::is_bounded_array_v<T>,
@@ -146,19 +142,56 @@ auto make_unique(sycl::queue queue, sycl::usm::alloc alloc)
 template<class T, class... Args>
 auto make_shared(sycl::queue queue, sycl::usm::alloc alloc, Args&&... args)
     -> std::enable_if_t<!std::is_array_v<T>, sclx::shared_ptr<T>> {
-    return shared_ptr<T>(
-        make_unique<T>(queue, alloc, std::forward<Args>(args)...).release(),
+    auto ptr = shared_ptr<T>(
+        sycl::malloc<T>(1, queue, alloc),
         ::sclx::default_delete<T>{queue}
     );
+    // auto host_val = std::make_unique<T>(std::forward<Args>(args)...);
+    // if (alloc == usm::alloc::host) {
+    //     std::memcpy(ptr.get(), host_val.get(), sizeof(T));
+    //     return ptr;
+    // }
+    // queue.memcpy(ptr.get(), host_val.get(), sizeof(T)).wait();
+    return ptr;
 }
 
 template<class T>
 auto make_shared(sycl::queue queue, sycl::usm::alloc alloc, std::size_t size)
     -> std::enable_if_t<
         detail::is_unbounded_array_v<T>,
-        sclx::shared_ptr<std::remove_extent_t<T>[]>> {
-    auto ptr = make_unique<T>(queue, alloc, size);
-    return shared_ptr<T>(ptr.release(), ::sclx::default_delete<T>{queue});
+        sclx::shared_ptr<std::remove_extent_t<T>>> {
+    auto ptr = shared_ptr<std::remove_extent_t<T>>(
+        sycl::malloc<std::remove_extent_t<T>>(size, queue, alloc),
+        ::sclx::default_delete<std::remove_extent_t<T>>{queue}
+    );
+    // auto host_val = std::make_unique<T>(size);
+    // if (alloc == usm::alloc::host) {
+    //     std::memcpy(
+    //         ptr.get(),
+    //         host_val.get(),
+    //         sizeof(std::remove_extent_t<T>) * size
+    //     );
+    //     return ptr;
+    // }
+    // queue
+    //     .memcpy(
+    //         ptr.get(),
+    //         host_val.get(),
+    //         sizeof(std::remove_extent_t<T>) * size
+    //     )
+    //     .wait();
+    return ptr;
+}
+
+template<class T, class... Args>
+auto make_shared(Args&&...
+                 /*unused*/)
+    -> std::enable_if_t<detail::is_bounded_array_v<T>, std::shared_ptr<T>> {
+    static_assert(
+        detail::is_bounded_array_v<T>,
+        "make_unique does not support bounded arrays"
+    );
+    return {};
 }
 
 }  // namespace sclx
